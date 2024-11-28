@@ -7,9 +7,21 @@ module.exports = {
   ],
   theme: {
     extend: {
+      screens: {
+        "2xl": "1320px",
+        "3xl": "1620px",
+        "4xl": "1820px",
+      },
       colors: {
         background: "var(--background)",
         foreground: "var(--foreground)",
+        customRed: "#c6080a",
+      },
+      fontFamily: {
+        // Add your custom fonts here
+        sans: ["Roboto", "sans-serif"],
+        serif: ["Georgia", "serif"],
+        customFont: ["YourFontName", "sans-serif"],
       },
     },
   },
