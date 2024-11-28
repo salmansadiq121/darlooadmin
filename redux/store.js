@@ -13,13 +13,13 @@ export const store = configureStore({
     getDefaultMiddleware().concat(apiSlice.middleware),
 });
 
-const initialApp = async () => {
-  await store.dispatch(
-    apiSlice.endpoints.refreshToken.initiate({}, { forceRefetch: true })
-  );
-  await store.dispatch(
-    apiSlice.endpoints.loadUser.initiate({}, { forceRefetch: true })
-  );
-};
+// const initialApp = async () => {
+//   await store.dispatch(
+//     apiSlice.endpoints.refreshToken.initiate({}, { forceRefetch: true })
+//   );
+//   await store.dispatch(
+//     apiSlice.endpoints.loadUser.initiate({}, { forceRefetch: true })
+//   );
+// };
 
-initialApp();
+// initialApp();
