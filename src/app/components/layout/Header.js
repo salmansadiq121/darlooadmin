@@ -47,7 +47,7 @@ export default function Header() {
     // eslint-disable-next-line
   }, [data, user, isLoading]);
   return (
-    <div className="w-full h-[3.8rem] bg-white border-b">
+    <div className="w-full h-[3.8rem] bg-white border-b text-black">
       <div className="w-full h-full flex items-center justify-between px-2 sm:px-6 py-2">
         <div className=""></div>
         {/* end */}
@@ -183,7 +183,7 @@ export default function Header() {
                 <ul className="flex flex-col gap-2 w-full transition-all duration-200">
                   <span
                     // onClick={handleLogout}
-                    className="font-medium text-[16px]  w-full hover:bg-gray-200 hover:shadow-md rounded-md transition-all duration-200 cursor-pointer py-2 px-2"
+                    className="font-medium text-[16px]  w-full hover:bg-red-200 hover:text-red-600 hover:shadow-md rounded-sm transition-all duration-200 cursor-pointer py-[.3rem] px-2"
                   >
                     Logout
                   </span>

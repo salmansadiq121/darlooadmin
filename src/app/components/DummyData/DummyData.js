@@ -227,6 +227,7 @@ export const users = [
 
 export const products = [
   {
+    _id: 1,
     name: "Designer Silk Saree",
     description:
       "A luxurious silk saree featuring intricate zari work and a rich color palette, perfect for weddings or formal events.",
@@ -256,6 +257,7 @@ export const products = [
     orders: 10,
   },
   {
+    _id: 2,
     name: "Modern Leather Jacket",
     description:
       "A premium-quality leather jacket with a sleek design, ideal for casual and semi-formal occasions.",
@@ -290,6 +292,7 @@ export const products = [
     orders: 20,
   },
   {
+    _id: 3,
     name: "Wireless Bluetooth Earbuds",
     description:
       "Compact, high-quality sound earbuds with noise cancellation and extended battery life.",
@@ -320,6 +323,7 @@ export const products = [
     orders: 40,
   },
   {
+    _id: 4,
     name: "Vintage Wooden Table Lamp",
     description:
       "A handcrafted wooden lamp with a warm light glow, adding charm to any room.",
@@ -346,6 +350,7 @@ export const products = [
     orders: 45,
   },
   {
+    _id: 5,
     name: "Fitness Smartwatch",
     description:
       "A feature-packed smartwatch with fitness tracking, heart rate monitoring, and a sleek design.",

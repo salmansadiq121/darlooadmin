@@ -31,7 +31,10 @@ export default function UserModal({
           {userId ? "Edit User" : "Add User"}
         </h3>
         <span
-          onClick={() => setShowaddUser(false)}
+          onClick={() => {
+            setUserId("");
+            setShowaddUser(false);
+          }}
           className="p-1 rounded-full bg-black/20 hover:bg-black/40 text-white "
         >
           <CgClose className="text-[18px]" />
@@ -148,7 +151,10 @@ export default function UserModal({
           <div className="flex items-center justify-end w-full pb-3">
             <div className="flex items-center gap-4">
               <button
-                onClick={() => setShowaddUser(false)}
+                onClick={() => {
+                  setUserId("");
+                  setShowaddUser(false);
+                }}
                 className="w-[6rem] py-[.3rem] text-[14px] rounded-sm border-2 border-customRed text-red-700 hover:bg-gray-100 hover:shadow-md hover:scale-[1.03] transition-all duration-300 "
               >
                 CANCEL

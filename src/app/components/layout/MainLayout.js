@@ -27,7 +27,7 @@ export default function MainLayout({ children }) {
 
   return (
     // <AdminProtected>
-    <div className="relative w-full h-screen overflow-hidden flex flex-col ">
+    <div className="relative w-full h-screen overflow-hidden flex flex-col text-black ">
       <div className=" w-full flex-1 gap-0 flex h-screen  fixed top-0 left-0 z-[999] overflow-hidden">
         {!show && (
           <div className=" flex sm:hidden  absolute top-5 left-2 z-[9999]">

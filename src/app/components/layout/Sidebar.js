@@ -26,7 +26,7 @@ export default function Sidebar({ hide, setHide }) {
   }, [setActive]);
 
   return (
-    <div className="w-full h-screen py-2 border-r border-gray-200 bg-white">
+    <div className="w-full h-screen py-2 border-r border-gray-200 bg-white text-black">
       <div className="flex items-center justify-center w-full relative px-4 py-2 ">
         {hide ? (
           <div className="">

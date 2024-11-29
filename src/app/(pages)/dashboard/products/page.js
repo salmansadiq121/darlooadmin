@@ -7,12 +7,13 @@ import {
   useMaterialReactTable,
 } from "material-react-table";
 import Image from "next/image";
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import { CiCircleChevLeft, CiCircleChevRight } from "react-icons/ci";
 import { IoSearch } from "react-icons/io5";
 import { MdDelete, MdModeEditOutline, MdNotInterested } from "react-icons/md";
 import { products } from "@/app/components/DummyData/DummyData";
 import Ratings from "@/app/utils/Rating";
+import ProductModal from "@/app/components/Products/ProductModal";
 
 export default function Products() {
   const [currentUrl, setCurrentUrl] = useState("");
@@ -26,6 +27,9 @@ export default function Products() {
   const [disableProduct, setDisableProduct] = useState(0);
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 20;
+  const [showaddProduct, setShowaddProduct] = useState(false);
+  const [productId, setProductId] = useState("");
+  const closeModal = useRef(null);
 
   // ------Current Page URL-----
   useEffect(() => {
@@ -365,7 +369,13 @@ export default function Products() {
         Cell: ({ cell, row }) => {
           return (
             <div className="flex items-center justify-center gap-2 cursor-pointer text-[12px] text-black w-full h-full">
-              <span className="p-1 bg-yellow-500 hover:bg-yellow-600 rounded-full transition-all duration-300 hover:scale-[1.03]">
+              <span
+                onClick={() => {
+                  setProductId(row.original._id);
+                  setShowaddProduct(true);
+                }}
+                className="p-1 bg-yellow-500 hover:bg-yellow-600 rounded-full transition-all duration-300 hover:scale-[1.03]"
+              >
                 <MdModeEditOutline className="text-[16px] text-white" />
               </span>
               <span className="p-1 bg-sky-200 hover:bg-sky-300 rounded-full transition-all duration-300 hover:scale-[1.03]">
@@ -440,6 +450,19 @@ export default function Products() {
       },
     },
   });
+
+  // Close Modal
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (closeModal.current && !closeModal.current.contains(event.target)) {
+        setProductId("");
+        setShowaddProduct(false);
+      }
+    };
+
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
   return (
     <MainLayout>
       <div className="p-1 sm:p-2 h-[100%] w-full pb-4  scroll-smooth">
@@ -489,6 +512,7 @@ export default function Products() {
                   Delete All
                 </button>
                 <button
+                  onClick={() => setShowaddProduct(true)}
                   className={`flex text-[14px] items-center justify-center text-white bg-[#c6080a] hover:bg-red-800  py-2 rounded-md shadow-md hover:shadow-xl transition-all duration-300 cursor-pointer hover:scale-[1.03] px-4`}
                 >
                   ADD NEW Product
@@ -554,6 +578,17 @@ export default function Products() {
             </div>
           </div>
         </div>
+        {/* -------------Handle Product Modal------------ */}
+        {showaddProduct && (
+          <div className="fixed top-0 left-0 p-2 sm:p-4 w-full h-full flex items-center justify-center z-[9999999] bg-gray-300/80 overflow-y-auto shidden">
+            <ProductModal
+              closeModal={closeModal}
+              setShowaddProduct={setShowaddProduct}
+              productId={productId}
+              setProductId={setProductId}
+            />
+          </div>
+        )}
       </div>
     </MainLayout>
   );

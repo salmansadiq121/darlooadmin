@@ -93,12 +93,12 @@ export default function Login({ setActive }) {
   // };
 
   return (
-    <div className="w-full min-h-screen flex items-center justify-center py-4 px-4 bg-gradient-to-r from-[#FF8A00] via-[#E52E71] to-[#FF5F6D]">
-      <div className="w-[30rem] py-4 px-2 sm:px-4 bg-gray-100 shadow-md dark:bg-gray-800 rounded-md">
+    <div className="w-full min-h-screen flex items-center justify-center py-4 px-4 bg-white">
+      <div className="w-[30rem] py-4 px-2 sm:px-4 bg-gray-100 shadow-md  rounded-md">
         <form onSubmit={handleLogin} className="">
-          <div className="flex items-center justify-center flex-col gap-2 w-full">
+          <div className="flex items-center justify-center text-black flex-col gap-2 w-full">
             <Image src="/Sociallogo3.png" alt="Logo" width={60} height={60} />
-            <h2 className=" text-2xl sm:text-3xl font-semibold text-center">
+            <h2 className=" text-2xl sm:text-3xl font-semibold text-center text-black">
               Welcome to <span className="tgradient">Ayoob</span>
             </h2>
             <div className="flex flex-col gap-4 w-full mt-4 ">
@@ -110,7 +110,7 @@ export default function Login({ setActive }) {
                   required
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  className={`${Style.input} pl-8`}
+                  className={`${Style.input} text-black pl-8`}
                 />
               </div>
 
@@ -120,9 +120,9 @@ export default function Login({ setActive }) {
                   onClick={() => setShow(!show)}
                 >
                   {!show ? (
-                    <IoMdEyeOff className="h-6 w-6" />
+                    <IoMdEyeOff className="h-6 w-6 text-black" />
                   ) : (
-                    <IoEye className="h-6 w-6" />
+                    <IoEye className="h-6 w-6 text-black" />
                   )}
                 </span>
 
@@ -135,11 +135,11 @@ export default function Login({ setActive }) {
                   value={password}
                   minLength={8}
                   onChange={(e) => setPassword(e.target.value)}
-                  className={`${Style.input} pl-8`}
+                  className={`${Style.input} text-black pl-8`}
                 />
               </div>
               <div className="flex items-center justify-between">
-                <span className="flex items-center gap-1 text-[14px]">
+                <span className="flex items-center gap-1 text-[14px] text-gray-700">
                   <input
                     type="checkbox"
                     checked={rememberMe}
