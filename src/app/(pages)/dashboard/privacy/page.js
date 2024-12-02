@@ -1,19 +1,23 @@
 "use client";
-import MainLayout from "@/app/components/layout/MainLayout";
-import PrivacyModal from "@/app/components/PrivacyPolicy/PolicyModal";
-import Breadcrumb from "@/app/utils/Breadcrumb";
+import MainLayout from "./../../../components/layout/MainLayout";
+import PrivacyModal from "../../../components/PrivacyPolicy/PolicyModal";
+import Breadcrumb from "./../../../utils/Breadcrumb";
 import React, { useEffect, useState } from "react";
 
 export default function Privacy() {
   const [currentUrl, setCurrentUrl] = useState("");
   const [addPrivacy, setAddPrivacy] = useState(false);
   const [privacyId, setPrivacyId] = useState("");
-  useEffect(() => {
-    const pathArray = window.location.pathname;
-    setCurrentUrl(pathArray);
 
+  // Page URL
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const pathArray = window.location.pathname;
+      setCurrentUrl(pathArray);
+    }
     // exlint-disable-next-line
   }, []);
+
   return (
     <MainLayout>
       <div className="relative p-1 sm:p-2 px-1 sm:px-6 h-[100%] w-full pb-4 scroll-smooth">

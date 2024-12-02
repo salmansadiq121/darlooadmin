@@ -26,9 +26,10 @@ export default function OrderDetail() {
 
   //   Get Page URL
   useEffect(() => {
-    const pathArray = window.location.pathname;
-    setCurrentUrl(pathArray);
-
+    if (typeof window !== "undefined") {
+      const pathArray = window.location.pathname;
+      setCurrentUrl(pathArray);
+    }
     // exlint-disable-next-line
   }, []);
   return (

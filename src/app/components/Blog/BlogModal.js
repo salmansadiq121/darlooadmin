@@ -1,4 +1,5 @@
 "use client";
+
 import { Style } from "@/app/utils/CommonStyle";
 import Image from "next/image";
 import React, { useRef, useState } from "react";
@@ -6,8 +7,6 @@ import { CgClose } from "react-icons/cg";
 import { IoCameraOutline } from "react-icons/io5";
 import { IoIosClose } from "react-icons/io";
 import "react-datepicker/dist/react-datepicker.css";
-import toast from "react-hot-toast";
-import axios from "axios";
 import JoditEditor from "jodit-react";
 
 export default function BlogModal({
@@ -31,35 +30,9 @@ export default function BlogModal({
   };
 
   //   -----------Handle Submit--------------
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    if (!title || !thumnail) {
-      toast.error("Please fill out all required fields.");
-      return;
-    }
-    setIsloading(true);
-
-    const productData = {
-      title,
-      file: thumnail,
-    };
-
-    try {
-      const { data } = await axios.post(
-        `/api/v1/products/create/product`,
-        productData
-      );
-      if (data) {
-        console.log("Blog Data Submitted: ", productData);
-        toast.success("Blog added successfully!");
-      }
-    } catch (error) {
-      console.log(error);
-      toast.error(error?.response?.data?.message);
-    } finally {
-      setIsloading(false);
-    }
-  };
+  // const handleSubmit = async (e) => {
+  //   e.preventDefault();
+  // };
 
   // Editor configuration
   const config = {
@@ -91,7 +64,7 @@ export default function BlogModal({
       </div>
       <div className="w-full h-[98%] overflow-y-auto ">
         <form
-          onSubmit={handleSubmit}
+          // onSubmit={handleSubmit}
           className=" flex flex-col gap-4 px-4 py-2 mt-4 h-full w-full "
         >
           {/* Left */}

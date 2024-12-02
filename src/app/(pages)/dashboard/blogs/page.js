@@ -25,10 +25,10 @@ export default function Blogs() {
 
   // Fetch Link (URL)
   useEffect(() => {
-    const pathArray = window.location.pathname;
-    setCurrentUrl(pathArray);
-
-    // exlint-disable-next-line
+    if (typeof window !== "undefined") {
+      const pathArray = window.location.pathname;
+      setCurrentUrl(pathArray);
+    }
   }, []);
 
   // Get Blogs Length(Publish & Draft)

@@ -10,10 +10,13 @@ export default function Settings() {
   const [settingId, setSettingId] = useState("");
   const [addSetting, setAddSetting] = useState(false);
   const [type, setType] = useState("");
-  useEffect(() => {
-    const pathArray = window.location.pathname;
-    setCurrentUrl(pathArray);
 
+  // Page URL
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const pathArray = window.location.pathname;
+      setCurrentUrl(pathArray);
+    }
     // exlint-disable-next-line
   }, []);
   return (
