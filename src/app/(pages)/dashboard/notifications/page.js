@@ -4,6 +4,7 @@ import Image from "next/image";
 import React, { useEffect, useRef, useState } from "react";
 import { MdDelete, MdModeEditOutline, MdNotInterested } from "react-icons/md";
 import { BsThreeDotsVertical } from "react-icons/bs";
+import { notifications } from "@/app/components/DummyData/DummyData";
 const MainLayout = dynamic(
   () => import("./../../../components/layout/MainLayout"),
   {
@@ -19,17 +20,11 @@ const NotificationModal = dynamic(
     ssr: false,
   }
 );
-const notifications = dynamic(
-  () => import("./../../../components/DummyData/DummyData"),
-  {
-    ssr: false,
-  }
-);
 
 export default function Notifications() {
   const [currentUrl, setCurrentUrl] = useState("");
   const [searchQuery, setSearchQuery] = useState("");
-  const [notificationData, setNotificationData] = useState([]);
+  const [notificationData, setNotificationData] = useState(notifications || []);
   const [filteredData, setFilteredData] = useState([]);
   const [selectedNotificationId, setSelectedNotificationId] = useState([]);
   const [show, setShow] = useState(false);

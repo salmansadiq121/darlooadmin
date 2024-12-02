@@ -10,10 +10,10 @@ import toast from "react-hot-toast";
 import axios from "axios";
 import JoditEditor from "jodit-react";
 import Select from "react-select";
+import { users } from "../DummyData/DummyData";
 const Style = dynamic(() => import("./../../utils/CommonStyle"), {
   ssr: false,
 });
-const users = dynamic(() => import("./../DummyData/DummyData"), { ssr: false });
 
 export default function NotificationModal({
   closeModal,
@@ -21,7 +21,7 @@ export default function NotificationModal({
   notificationId,
   setNotificationId,
 }) {
-  const [usersData, setUsersData] = useState([]);
+  const [usersData, setUsersData] = useState(users || []);
   const [subject, setSubject] = useState("");
   const [content, setContent] = useState("");
   const [emails, setEmails] = useState([]);

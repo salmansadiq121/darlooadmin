@@ -1,6 +1,6 @@
 "use client";
+import { categories } from "@/app/components/DummyData/DummyData";
 import dynamic from "next/dynamic";
-
 import Image from "next/image";
 import React, { useEffect, useRef, useState } from "react";
 import { IoSearch } from "react-icons/io5";
@@ -17,12 +17,6 @@ const Breadcrumb = dynamic(() => import("./../../../utils/Breadcrumb"), {
 });
 const CategoryModal = dynamic(
   () => import("./../../../components/Category/CategoryModal"),
-  {
-    ssr: false,
-  }
-);
-const categories = dynamic(
-  () => import("./../../../components/DummyData/DummyData"),
   {
     ssr: false,
   }

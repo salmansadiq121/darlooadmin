@@ -11,14 +11,9 @@ import { CiCircleChevLeft, CiCircleChevRight } from "react-icons/ci";
 import { IoSearch } from "react-icons/io5";
 import { MdDelete, MdModeEditOutline, MdNotInterested } from "react-icons/md";
 import Ratings from "@/app/utils/Rating";
+import { products } from "@/app/components/DummyData/DummyData";
 const MainLayout = dynamic(
   () => import("./../../../components/layout/MainLayout"),
-  {
-    ssr: false,
-  }
-);
-const products = dynamic(
-  () => import("./../../../components/DummyData/DummyData"),
   {
     ssr: false,
   }

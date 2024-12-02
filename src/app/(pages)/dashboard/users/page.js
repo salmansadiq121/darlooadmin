@@ -16,6 +16,7 @@ import { MdModeEditOutline } from "react-icons/md";
 import { MdDelete } from "react-icons/md";
 import { MdNotInterested } from "react-icons/md";
 import { Style } from "@/app/utils/CommonStyle";
+import { users } from "@/app/components/DummyData/DummyData";
 const MainLayout = dynamic(
   () => import("./../../../components/layout/MainLayout"),
   {
@@ -27,12 +28,6 @@ const Breadcrumb = dynamic(() => import("./../../../utils/Breadcrumb"), {
 });
 const UserModal = dynamic(
   () => import("./../../../components/Users/UserModal"),
-  {
-    ssr: false,
-  }
-);
-const users = dynamic(
-  () => import("./../../../components/DummyData/DummyData"),
   {
     ssr: false,
   }

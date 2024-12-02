@@ -13,14 +13,9 @@ import { MdDelete, MdModeEditOutline, MdNotInterested } from "react-icons/md";
 import { format } from "date-fns";
 import { TiEye } from "react-icons/ti";
 import { useRouter } from "next/navigation";
+import { orders } from "@/app/components/DummyData/DummyData";
 const MainLayout = dynamic(
   () => import("./../../../components/layout/MainLayout"),
-  {
-    ssr: false,
-  }
-);
-const orders = dynamic(
-  () => import("./../../../components/DummyData/DummyData"),
   {
     ssr: false,
   }

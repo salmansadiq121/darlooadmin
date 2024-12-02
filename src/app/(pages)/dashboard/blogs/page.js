@@ -7,6 +7,7 @@ import { BsThreeDotsVertical } from "react-icons/bs";
 import { MdDelete, MdModeEditOutline } from "react-icons/md";
 import { TiEye } from "react-icons/ti";
 import { MdShare } from "react-icons/md";
+import { blogs } from "@/app/components/DummyData/DummyData";
 const MainLayout = dynamic(
   () => import("./../../../components/layout/MainLayout"),
   {
@@ -19,12 +20,6 @@ const Breadcrumb = dynamic(() => import("./../../../utils/Breadcrumb"), {
 const BlogModal = dynamic(() => import("../../../components/Blog/BlogModal"), {
   ssr: false,
 });
-const blogs = dynamic(
-  () => import("./../../../components/DummyData/DummyData"),
-  {
-    ssr: false,
-  }
-);
 
 export default function Blogs() {
   const [currentUrl, setCurrentUrl] = useState("");
