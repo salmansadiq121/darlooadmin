@@ -1,9 +1,22 @@
 "use client";
-import MainLayout from "@/app/components/layout/MainLayout";
-import SettingModal from "@/app/components/Settings/SettingModal";
-import Breadcrumb from "@/app/utils/Breadcrumb";
 import React, { useEffect, useState } from "react";
 import { AiOutlineExclamationCircle } from "react-icons/ai";
+import dynamic from "next/dynamic";
+const MainLayout = dynamic(
+  () => import("./../../../components/layout/MainLayout"),
+  {
+    ssr: false,
+  }
+);
+const Breadcrumb = dynamic(() => import("./../../../utils/Breadcrumb"), {
+  ssr: false,
+});
+const SettingModal = dynamic(
+  () => import("./../../../components/Settings/SettingModal"),
+  {
+    ssr: false,
+  }
+);
 
 export default function Settings() {
   const [currentUrl, setCurrentUrl] = useState("");

@@ -1,17 +1,37 @@
 "use client";
-import CategoryModal from "@/app/components/Category/CategoryModal";
-import { categories } from "@/app/components/DummyData/DummyData";
-import MainLayout from "@/app/components/layout/MainLayout";
-import Breadcrumb from "@/app/utils/Breadcrumb";
+import dynamic from "next/dynamic";
+
 import Image from "next/image";
 import React, { useEffect, useRef, useState } from "react";
 import { IoSearch } from "react-icons/io5";
 import { MdDelete, MdModeEditOutline, MdNotInterested } from "react-icons/md";
+const MainLayout = dynamic(
+  () => import("./../../../components/layout/MainLayout"),
+  {
+    ssr: false,
+  }
+);
+
+const Breadcrumb = dynamic(() => import("./../../../utils/Breadcrumb"), {
+  ssr: false,
+});
+const CategoryModal = dynamic(
+  () => import("./../../../components/Category/CategoryModal"),
+  {
+    ssr: false,
+  }
+);
+const categories = dynamic(
+  () => import("./../../../components/DummyData/DummyData"),
+  {
+    ssr: false,
+  }
+);
 
 export default function Categories() {
   const [currentUrl, setCurrentUrl] = useState("");
   const [searchQuery, setSearchQuery] = useState("");
-  const [categoryData, setCategoryData] = useState([...categories]);
+  const [categoryData, setCategoryData] = useState(categories || []);
   const [filteredData, setFilteredData] = useState([]);
   const [showAddCategory, setShowaddCategory] = useState(false);
   const [categoryId, setCategoryId] = useState("");

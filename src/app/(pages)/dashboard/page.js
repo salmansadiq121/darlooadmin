@@ -1,7 +1,5 @@
 "use client";
 import React, { useEffect, useState } from "react";
-import MainLayout from "@/app/components/layout/MainLayout";
-import Breadcrumb from "@/app/utils/Breadcrumb";
 import {
   Chart as ChartJS,
   LineElement,
@@ -15,6 +13,16 @@ import { Line } from "react-chartjs-2";
 import RevenueCharts from "@/app/components/dashboard/RevenueChart";
 import RevenueByDevice from "@/app/components/dashboard/RevenueByDevice";
 import TrafficChart from "@/app/components/dashboard/TrafficChart";
+import dynamic from "next/dynamic";
+const MainLayout = dynamic(
+  () => import("./../../components/layout/MainLayout"),
+  {
+    ssr: false,
+  }
+);
+const Breadcrumb = dynamic(() => import("./../../utils/Breadcrumb"), {
+  ssr: false,
+});
 
 // Register the required modules
 ChartJS.register(

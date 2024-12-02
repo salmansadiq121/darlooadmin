@@ -1,6 +1,5 @@
 "use client";
-import MainLayout from "@/app/components/layout/MainLayout";
-import Breadcrumb from "@/app/utils/Breadcrumb";
+import dynamic from "next/dynamic";
 import Image from "next/image";
 import React, { useEffect, useState } from "react";
 import { TbShoppingCartCopy } from "react-icons/tb";
@@ -8,6 +7,15 @@ import { AiOutlineSync } from "react-icons/ai";
 import { BiPackage } from "react-icons/bi";
 import { FaTruck } from "react-icons/fa";
 import { MdOutlineDoneAll } from "react-icons/md";
+const MainLayout = dynamic(
+  () => import("./../../../../components/layout/MainLayout"),
+  {
+    ssr: false,
+  }
+);
+const Breadcrumb = dynamic(() => import("./../../../../utils/Breadcrumb"), {
+  ssr: false,
+});
 
 const order = {
   _id: "order001",

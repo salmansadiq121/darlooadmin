@@ -1,18 +1,35 @@
 "use client";
-import MainLayout from "@/app/components/layout/MainLayout";
-import Breadcrumb from "@/app/utils/Breadcrumb";
+import dynamic from "next/dynamic";
 import Image from "next/image";
 import React, { useEffect, useRef, useState } from "react";
-import { IoSearch } from "react-icons/io5";
 import { MdDelete, MdModeEditOutline, MdNotInterested } from "react-icons/md";
 import { BsThreeDotsVertical } from "react-icons/bs";
-import { notifications } from "@/app/components/DummyData/DummyData";
-import NotificationModal from "@/app/components/Notification/NotificationModal";
+const MainLayout = dynamic(
+  () => import("./../../../components/layout/MainLayout"),
+  {
+    ssr: false,
+  }
+);
+const Breadcrumb = dynamic(() => import("./../../../utils/Breadcrumb"), {
+  ssr: false,
+});
+const NotificationModal = dynamic(
+  () => import("./../../../components/Notification/NotificationModal"),
+  {
+    ssr: false,
+  }
+);
+const notifications = dynamic(
+  () => import("./../../../components/DummyData/DummyData"),
+  {
+    ssr: false,
+  }
+);
 
 export default function Notifications() {
   const [currentUrl, setCurrentUrl] = useState("");
   const [searchQuery, setSearchQuery] = useState("");
-  const [notificationData, setNotificationData] = useState([...notifications]);
+  const [notificationData, setNotificationData] = useState([]);
   const [filteredData, setFilteredData] = useState([]);
   const [selectedNotificationId, setSelectedNotificationId] = useState([]);
   const [show, setShow] = useState(false);
@@ -56,7 +73,7 @@ export default function Notifications() {
   // Handle selecting all notifications
   const handleSelectAll = (checked) => {
     if (checked) {
-      setSelectedNotificationId(notificationData.map((notify) => notify._id));
+      setSelectedNotificationId(notificationData?.map((notify) => notify?._id));
     } else {
       setSelectedNotificationId([]);
     }
@@ -134,104 +151,105 @@ export default function Notifications() {
                 </div>
                 {/* Data */}
                 <div className="flex flex-col gap-4 w-full h-full ">
-                  {notificationData?.map((notify) => (
-                    <div
-                      className="w-full flex items-start gap-4"
-                      key={notify._id}
-                    >
-                      <input
-                        type="checkbox"
-                        className="h-5 w-5 accent-red-600 cursor-pointer"
-                        onChange={(e) =>
-                          handleSelectSingle(notify._id, e.target.checked)
-                        }
-                        checked={selectedNotificationId.includes(notify._id)}
-                      />
-                      <div className=" relative flex items-start  gap-2 rounded-lg border border-gray-300 hover:shadow-md cursor-pointer bg-gray-50 hover:100 p-3 w-full ">
-                        <div className="w-[3.2rem] h-[3.2rem] rounded-full">
-                          <div className="w-[3rem] h-[3rem] relative rounded-full overflow-hidden flex items-center justify-center">
-                            <Image
-                              src={notify?.image}
-                              layout="fill"
-                              alt={"Avatar"}
-                              className="w-full h-full "
-                            />
+                  {notificationData &&
+                    notificationData?.map((notify) => (
+                      <div
+                        className="w-full flex items-start gap-4"
+                        key={notify?._id}
+                      >
+                        <input
+                          type="checkbox"
+                          className="h-5 w-5 accent-red-600 cursor-pointer"
+                          onChange={(e) =>
+                            handleSelectSingle(notify._id, e.target.checked)
+                          }
+                          checked={selectedNotificationId?.includes(notify._id)}
+                        />
+                        <div className=" relative flex items-start  gap-2 rounded-lg border border-gray-300 hover:shadow-md cursor-pointer bg-gray-50 hover:100 p-3 w-full ">
+                          <div className="w-[3.2rem] h-[3.2rem] rounded-full">
+                            <div className="w-[3rem] h-[3rem] relative rounded-full overflow-hidden flex items-center justify-center">
+                              <Image
+                                src={notify?.image}
+                                layout="fill"
+                                alt={"Avatar"}
+                                className="w-full h-full "
+                              />
+                            </div>
                           </div>
-                        </div>
-                        <div className="flex flex-col gap-2 w-full">
-                          <div className="w-full relative flex items-center justify-between">
-                            <h3 className="text-[15px] text-gray-900 font-medium w-full">
-                              {notify?.name}
-                            </h3>
-                            <span
-                              onClick={() => {
-                                setNotificationId(notify._id);
-                                setShow(!show);
-                              }}
-                              className="bg-gray-100 hover:bg-red-200 p-1 rounded-full hover:shadow-md text-black hover:text-red-600 transition-all duration-200 cursor-pointer"
-                            >
-                              <BsThreeDotsVertical className="text-[20px]" />
-                            </span>
-                            {show && notify._id === notificationId && (
-                              <div
-                                ref={closeMenu}
-                                className="absolute top-6 right-6 w-[11rem] border bg-gray-50 border-gray-200 z-20 px-2 py-2 rounded-sm flex flex-col gap-2 "
+                          <div className="flex flex-col gap-2 w-full">
+                            <div className="w-full relative flex items-center justify-between">
+                              <h3 className="text-[15px] text-gray-900 font-medium w-full">
+                                {notify?.name}
+                              </h3>
+                              <span
+                                onClick={() => {
+                                  setNotificationId(notify._id);
+                                  setShow(!show);
+                                }}
+                                className="bg-gray-100 hover:bg-red-200 p-1 rounded-full hover:shadow-md text-black hover:text-red-600 transition-all duration-200 cursor-pointer"
                               >
-                                <button
-                                  onClick={() => {
-                                    setNotificationId(notify._id);
-                                    setAddNotification(true);
-                                  }}
-                                  className="w-full text-[13px] text-gray-600 flex items-center gap-1 bg-gray-100 hover:bg-yellow-100 transition-all duration-200 rounded-sm p-1"
+                                <BsThreeDotsVertical className="text-[20px]" />
+                              </span>
+                              {show && notify?._id === notificationId && (
+                                <div
+                                  ref={closeMenu}
+                                  className="absolute top-6 right-6 w-[11rem] border bg-gray-50 border-gray-200 z-20 px-2 py-2 rounded-sm flex flex-col gap-2 "
                                 >
-                                  <span className="p-1 bg-yellow-500 hover:bg-yellow-600 rounded-full transition-all duration-300 hover:scale-[1.03]">
-                                    <MdModeEditOutline className="text-[16px] text-white" />
-                                  </span>
-                                  <div className="flex flex-col items-start w-full ">
-                                    <span className="text-[13px] text-gray-800 font-medium">
-                                      Edit
+                                  <button
+                                    onClick={() => {
+                                      setNotificationId(notify?._id);
+                                      setAddNotification(true);
+                                    }}
+                                    className="w-full text-[13px] text-gray-600 flex items-center gap-1 bg-gray-100 hover:bg-yellow-100 transition-all duration-200 rounded-sm p-1"
+                                  >
+                                    <span className="p-1 bg-yellow-500 hover:bg-yellow-600 rounded-full transition-all duration-300 hover:scale-[1.03]">
+                                      <MdModeEditOutline className="text-[16px] text-white" />
                                     </span>
-                                    <span className="text-gray-500 text-[12px]">
-                                      Edit notification
+                                    <div className="flex flex-col items-start w-full ">
+                                      <span className="text-[13px] text-gray-800 font-medium">
+                                        Edit
+                                      </span>
+                                      <span className="text-gray-500 text-[12px]">
+                                        Edit notification
+                                      </span>
+                                    </div>
+                                  </button>
+                                  <button className="w-full text-[13px] text-gray-600 flex items-center gap-1 bg-gray-100 hover:bg-sky-100 transition-all duration-200 rounded-sm p-1">
+                                    <span className="p-1 bg-sky-200 hover:bg-sky-300 rounded-full transition-all duration-300 hover:scale-[1.03]">
+                                      <MdNotInterested className="text-[16px] text-sky-500 hover:text-sky-600" />
                                     </span>
-                                  </div>
-                                </button>
-                                <button className="w-full text-[13px] text-gray-600 flex items-center gap-1 bg-gray-100 hover:bg-sky-100 transition-all duration-200 rounded-sm p-1">
-                                  <span className="p-1 bg-sky-200 hover:bg-sky-300 rounded-full transition-all duration-300 hover:scale-[1.03]">
-                                    <MdNotInterested className="text-[16px] text-sky-500 hover:text-sky-600" />
-                                  </span>
-                                  <div className="flex flex-col items-start w-full ">
-                                    <span className="text-[13px] text-gray-800 font-medium">
-                                      Archived
+                                    <div className="flex flex-col items-start w-full ">
+                                      <span className="text-[13px] text-gray-800 font-medium">
+                                        Archived
+                                      </span>
+                                      <span className="text-gray-500 text-[12px]">
+                                        Archived notification
+                                      </span>
+                                    </div>
+                                  </button>
+                                  <button className="w-full text-[13px] text-gray-600 flex items-center gap-1 bg-gray-100 hover:bg-red-100 transition-all duration-200 rounded-sm p-1">
+                                    <span className="p-1 bg-red-200 hover:bg-red-300   rounded-full transition-all duration-300 hover:scale-[1.03]">
+                                      <MdDelete className="text-[16px] text-red-500 hover:text-red-600" />
                                     </span>
-                                    <span className="text-gray-500 text-[12px]">
-                                      Archived notification
-                                    </span>
-                                  </div>
-                                </button>
-                                <button className="w-full text-[13px] text-gray-600 flex items-center gap-1 bg-gray-100 hover:bg-red-100 transition-all duration-200 rounded-sm p-1">
-                                  <span className="p-1 bg-red-200 hover:bg-red-300   rounded-full transition-all duration-300 hover:scale-[1.03]">
-                                    <MdDelete className="text-[16px] text-red-500 hover:text-red-600" />
-                                  </span>
-                                  <div className="flex flex-col items-start w-full ">
-                                    <span className="text-[13px] text-gray-800 font-medium">
-                                      Delete
-                                    </span>
-                                    <span className="text-gray-500 text-[12px]">
-                                      Delete notification
-                                    </span>
-                                  </div>
-                                </button>
-                              </div>
-                            )}
+                                    <div className="flex flex-col items-start w-full ">
+                                      <span className="text-[13px] text-gray-800 font-medium">
+                                        Delete
+                                      </span>
+                                      <span className="text-gray-500 text-[12px]">
+                                        Delete notification
+                                      </span>
+                                    </div>
+                                  </button>
+                                </div>
+                              )}
+                            </div>
+                            <p className="text-[13px] text-gray-500 text-justify">
+                              {notify?.description}
+                            </p>
                           </div>
-                          <p className="text-[13px] text-gray-500 text-justify">
-                            {notify?.description}
-                          </p>
                         </div>
                       </div>
-                    </div>
-                  ))}
+                    ))}
                 </div>
               </div>
             </div>

@@ -1,5 +1,5 @@
 "use client";
-import { Style } from "@/app/utils/CommonStyle";
+import dynamic from "next/dynamic";
 import Image from "next/image";
 import React, { useEffect, useRef, useState } from "react";
 import { CgClose } from "react-icons/cg";
@@ -9,8 +9,11 @@ import "react-datepicker/dist/react-datepicker.css";
 import toast from "react-hot-toast";
 import axios from "axios";
 import JoditEditor from "jodit-react";
-import { users } from "../DummyData/DummyData";
 import Select from "react-select";
+const Style = dynamic(() => import("./../../utils/CommonStyle"), {
+  ssr: false,
+});
+const users = dynamic(() => import("./../DummyData/DummyData"), { ssr: false });
 
 export default function NotificationModal({
   closeModal,
@@ -18,7 +21,7 @@ export default function NotificationModal({
   notificationId,
   setNotificationId,
 }) {
-  const [usersData, setUsersData] = useState([...users]);
+  const [usersData, setUsersData] = useState([]);
   const [subject, setSubject] = useState("");
   const [content, setContent] = useState("");
   const [emails, setEmails] = useState([]);
@@ -29,10 +32,10 @@ export default function NotificationModal({
   console.log("emails:", emails);
 
   useEffect(() => {
-    if (usersData && Array.isArray(usersData)) {
-      const formattedOptions = usersData.map((user) => ({
-        value: user.email,
-        label: user.name,
+    if (usersData && Array?.isArray(usersData)) {
+      const formattedOptions = usersData?.map((user) => ({
+        value: user.email || "",
+        label: user.name || "",
       }));
       setUsersOptions(formattedOptions);
     }
@@ -46,27 +49,6 @@ export default function NotificationModal({
       return;
     }
     setIsloading(true);
-
-    const productData = {
-      title,
-      file: thumnail,
-    };
-
-    try {
-      const { data } = await axios.post(
-        `/api/v1/products/create/product`,
-        productData
-      );
-      if (data) {
-        console.log("Blog Data Submitted: ", productData);
-        toast.success("Blog added successfully!");
-      }
-    } catch (error) {
-      console.log(error);
-      toast.error(error?.response?.data?.message);
-    } finally {
-      setIsloading(false);
-    }
   };
 
   // Editor configuration
@@ -78,21 +60,9 @@ export default function NotificationModal({
     color: "#111",
     placeholder: "Write content here...",
   };
-  //   Handle Multiple Select Emails
-  //   const handleChange = (selectedOptions) => {
-  //     const selectedEmails = selectedOptions
-  //       ? selectedOptions.map((option) => option.value)
-  //       : [];
 
-  //     const updatedEmails = Array.from(new Set([...emails, ...selectedEmails]));
-
-  //     setEmails(updatedEmails);
-  //   };
   return (
-    <div
-      //   ref={closeModal}
-      className="w-[40rem] bg-white rounded-md overflow-hidden shadow min-h-[15rem] max-h-[99%] flex flex-col"
-    >
+    <div className="w-[40rem] bg-white rounded-md overflow-hidden shadow min-h-[15rem] max-h-[99%] flex flex-col">
       <div className="flex items-center justify-between bg-customRed px-4 py-2 sm:py-4 ">
         <h3 className="text-lg font-medium text-white">
           {notificationId ? "Edit Notification" : "Add Notification"}

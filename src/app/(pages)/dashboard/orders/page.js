@@ -1,8 +1,6 @@
 "use client";
-import { orders } from "@/app/components/DummyData/DummyData";
-import MainLayout from "@/app/components/layout/MainLayout";
-import Breadcrumb from "@/app/utils/Breadcrumb";
 import Loader from "@/app/utils/Loader";
+import dynamic from "next/dynamic";
 import {
   MaterialReactTable,
   useMaterialReactTable,
@@ -15,10 +13,25 @@ import { MdDelete, MdModeEditOutline, MdNotInterested } from "react-icons/md";
 import { format } from "date-fns";
 import { TiEye } from "react-icons/ti";
 import { useRouter } from "next/navigation";
+const MainLayout = dynamic(
+  () => import("./../../../components/layout/MainLayout"),
+  {
+    ssr: false,
+  }
+);
+const orders = dynamic(
+  () => import("./../../../components/DummyData/DummyData"),
+  {
+    ssr: false,
+  }
+);
+const Breadcrumb = dynamic(() => import("./../../../utils/Breadcrumb"), {
+  ssr: false,
+});
 
 export default function Orders() {
   const [currentUrl, setCurrentUrl] = useState("");
-  const [orderData, setOrderData] = useState([...orders]);
+  const [orderData, setOrderData] = useState(orders || []);
   const [filterOrders, setFilterOrders] = useState([]);
   const [isLoading, setIsloading] = useState(false);
   const [rowSelection, setRowSelection] = useState({});

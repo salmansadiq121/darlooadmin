@@ -1311,7 +1311,7 @@ export const blogs = [
     description:
       "Artificial intelligence is revolutionizing the way developers approach web development. This blog discusses cutting-edge AI tools that can automate repetitive tasks, generate code suggestions, and even help with UI/UX design. Discover how AI enhances performance optimization and personalizes user experiences. Learn about the potential of ChatGPT-like tools in debugging and how AI-driven frameworks are transforming the landscape of front-end and back-end development.",
     thumbnail:
-      "https://socialface.s3.eu-north-1.amazonaws.com/1732368311301_c3.jpgg",
+      "https://socialface.s3.eu-north-1.amazonaws.com/1732368311327_c4.jpg",
     createdAt: "2024-11-25T14:30:00Z",
     status: "Published",
   },
@@ -1341,7 +1341,7 @@ export const blogs = [
     description:
       "CSS frameworks simplify the process of designing visually appealing websites. This blog compares the top frameworks of 2024, including Tailwind CSS, Bootstrap, Bulma, and others. Each framework is reviewed based on performance, customization, and community support. Learn which framework is best suited for your next project, whether you're focused on speed, flexibility, or design consistency. This comprehensive guide will help you make an informed decision for your front-end development needs.",
     thumbnail:
-      "https://socialface.s3.eu-north-1.amazonaws.com/1732368311301_c3.jpgg",
+      "https://socialface.s3.eu-north-1.amazonaws.com/1732368311327_c4.jpg",
     createdAt: "2024-11-22T12:00:00Z",
     status: "Draft",
   },
@@ -1371,7 +1371,7 @@ export const blogs = [
     description:
       "TypeScript has emerged as a must-have tool for JavaScript developers. This blog is designed for beginners who want to understand the basics of TypeScript and why it matters. From defining static types to implementing interfaces, learn how TypeScript reduces errors and improves code maintainability. The post includes simple examples and comparisons with JavaScript, making it easy to follow for developers at any level.",
     thumbnail:
-      "https://socialface.s3.eu-north-1.amazonaws.com/1732368311301_c3.jpgg",
+      "https://socialface.s3.eu-north-1.amazonaws.com/1732368311327_c4.jpg",
     createdAt: "2024-11-19T11:00:00Z",
     status: "Draft",
   },

@@ -1,7 +1,6 @@
 "use client";
-import MainLayout from "@/app/components/layout/MainLayout";
-import Breadcrumb from "@/app/utils/Breadcrumb";
 import Loader from "@/app/utils/Loader";
+import dynamic from "next/dynamic";
 import {
   MaterialReactTable,
   useMaterialReactTable,
@@ -11,13 +10,32 @@ import React, { useEffect, useMemo, useRef, useState } from "react";
 import { CiCircleChevLeft, CiCircleChevRight } from "react-icons/ci";
 import { IoSearch } from "react-icons/io5";
 import { MdDelete, MdModeEditOutline, MdNotInterested } from "react-icons/md";
-import { products } from "@/app/components/DummyData/DummyData";
 import Ratings from "@/app/utils/Rating";
-import ProductModal from "@/app/components/Products/ProductModal";
+const MainLayout = dynamic(
+  () => import("./../../../components/layout/MainLayout"),
+  {
+    ssr: false,
+  }
+);
+const products = dynamic(
+  () => import("./../../../components/DummyData/DummyData"),
+  {
+    ssr: false,
+  }
+);
+const Breadcrumb = dynamic(() => import("./../../../utils/Breadcrumb"), {
+  ssr: false,
+});
+const ProductModal = dynamic(
+  () => import("./../../../components/Products/ProductModal"),
+  {
+    ssr: false,
+  }
+);
 
 export default function Products() {
   const [currentUrl, setCurrentUrl] = useState("");
-  const [productData, setProductData] = useState([...products]);
+  const [productData, setProductData] = useState(products || []);
   const [filterProducts, setFilterProducts] = useState([]);
   const [isLoading, setIsloading] = useState(false);
   const [rowSelection, setRowSelection] = useState({});

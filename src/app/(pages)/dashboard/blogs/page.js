@@ -1,18 +1,34 @@
 "use client";
-import { blogs } from "@/app/components/DummyData/DummyData";
-import MainLayout from "@/app/components/layout/MainLayout";
-import Breadcrumb from "@/app/utils/Breadcrumb";
+import dynamic from "next/dynamic";
+
 import Image from "next/image";
 import React, { useEffect, useRef, useState } from "react";
 import { BsThreeDotsVertical } from "react-icons/bs";
 import { MdDelete, MdModeEditOutline } from "react-icons/md";
 import { TiEye } from "react-icons/ti";
 import { MdShare } from "react-icons/md";
-import BlogModal from "@/app/components/Blog/BlogModal";
+const MainLayout = dynamic(
+  () => import("./../../../components/layout/MainLayout"),
+  {
+    ssr: false,
+  }
+);
+const Breadcrumb = dynamic(() => import("./../../../utils/Breadcrumb"), {
+  ssr: false,
+});
+const BlogModal = dynamic(() => import("../../../components/Blog/BlogModal"), {
+  ssr: false,
+});
+const blogs = dynamic(
+  () => import("./../../../components/DummyData/DummyData"),
+  {
+    ssr: false,
+  }
+);
 
 export default function Blogs() {
   const [currentUrl, setCurrentUrl] = useState("");
-  const [blogsData, setBlogsData] = useState([...blogs]);
+  const [blogsData, setBlogsData] = useState(blogs || []);
   const [filterBlogs, setFilterBlogs] = useState([]);
   const [activeTab, setActiveTab] = useState("All");
   const [selectedBlogIds, setSelectedBlogIds] = useState([]);

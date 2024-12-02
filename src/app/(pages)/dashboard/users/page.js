@@ -1,9 +1,8 @@
 "use client";
-import MainLayout from "@/app/components/layout/MainLayout";
-import Breadcrumb from "@/app/utils/Breadcrumb";
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import axios from "axios";
 import Loader from "@/app/utils/Loader";
+import dynamic from "next/dynamic";
 import { IoClose, IoSearch } from "react-icons/io5";
 import { CiCircleChevLeft } from "react-icons/ci";
 import { CiCircleChevRight } from "react-icons/ci";
@@ -17,12 +16,31 @@ import { MdModeEditOutline } from "react-icons/md";
 import { MdDelete } from "react-icons/md";
 import { MdNotInterested } from "react-icons/md";
 import { Style } from "@/app/utils/CommonStyle";
-import UserModal from "@/app/components/Users/UserModal";
-import { users } from "@/app/components/DummyData/DummyData";
+const MainLayout = dynamic(
+  () => import("./../../../components/layout/MainLayout"),
+  {
+    ssr: false,
+  }
+);
+const Breadcrumb = dynamic(() => import("./../../../utils/Breadcrumb"), {
+  ssr: false,
+});
+const UserModal = dynamic(
+  () => import("./../../../components/Users/UserModal"),
+  {
+    ssr: false,
+  }
+);
+const users = dynamic(
+  () => import("./../../../components/DummyData/DummyData"),
+  {
+    ssr: false,
+  }
+);
 
 export default function Users() {
   const [currentUrl, setCurrentUrl] = useState("");
-  const [userData, setUserData] = useState([...users]);
+  const [userData, setUserData] = useState(users || []);
   const [filterUser, setFilterUsers] = useState([]);
   const [isLoading, setIsloading] = useState(false);
   const [rowSelection, setRowSelection] = useState({});

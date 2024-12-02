@@ -1,8 +1,21 @@
 "use client";
-import MainLayout from "./../../../components/layout/MainLayout";
-import PrivacyModal from "../../../components/PrivacyPolicy/PolicyModal";
-import Breadcrumb from "./../../../utils/Breadcrumb";
+import dynamic from "next/dynamic";
 import React, { useEffect, useState } from "react";
+const MainLayout = dynamic(
+  () => import("./../../../components/layout/MainLayout"),
+  {
+    ssr: false,
+  }
+);
+const Breadcrumb = dynamic(() => import("./../../../utils/Breadcrumb"), {
+  ssr: false,
+});
+const PrivacyModal = dynamic(
+  () => import("./../../../components/PrivacyPolicy/PolicyModal"),
+  {
+    ssr: false,
+  }
+);
 
 export default function Privacy() {
   const [currentUrl, setCurrentUrl] = useState("");

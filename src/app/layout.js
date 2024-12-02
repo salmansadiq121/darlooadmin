@@ -1,4 +1,4 @@
-"use client";
+"use client"; // Ensure this is the first line in the file
 
 import { Inter } from "next/font/google";
 import "./globals.css";
