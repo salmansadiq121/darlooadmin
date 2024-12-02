@@ -7,6 +7,7 @@ import { IoSearch } from "react-icons/io5";
 import { MdDelete, MdModeEditOutline, MdNotInterested } from "react-icons/md";
 import { BsThreeDotsVertical } from "react-icons/bs";
 import { notifications } from "@/app/components/DummyData/DummyData";
+import NotificationModal from "@/app/components/Notification/NotificationModal";
 
 export default function Notifications() {
   const [currentUrl, setCurrentUrl] = useState("");
@@ -17,7 +18,7 @@ export default function Notifications() {
   const [show, setShow] = useState(false);
   const [notificationId, setNotificationId] = useState("");
   const closeMenu = useRef(null);
-  console.log("selectedNotificationId:", selectedNotificationId);
+  const [addNotification, setAddNotification] = useState(false);
 
   // Fetch Page Link
   useEffect(() => {
@@ -101,6 +102,7 @@ export default function Notifications() {
                   Delete All
                 </button>
                 <button
+                  onClick={() => setAddNotification(true)}
                   className={`flex text-[12px] sm:text-[14px] items-center justify-center text-white bg-[#c6080a] hover:bg-red-800  py-2 rounded-md shadow-md hover:shadow-xl transition-all duration-300 cursor-pointer hover:scale-[1.03] px-2 sm:px-4`}
                 >
                   CREATE NOTIFICATION
@@ -174,7 +176,13 @@ export default function Notifications() {
                                 ref={closeMenu}
                                 className="absolute top-6 right-6 w-[11rem] border bg-gray-50 border-gray-200 z-20 px-2 py-2 rounded-sm flex flex-col gap-2 "
                               >
-                                <button className="w-full text-[13px] text-gray-600 flex items-center gap-1 bg-gray-100 hover:bg-yellow-100 transition-all duration-200 rounded-sm p-1">
+                                <button
+                                  onClick={() => {
+                                    setNotificationId(notify._id);
+                                    setAddNotification(true);
+                                  }}
+                                  className="w-full text-[13px] text-gray-600 flex items-center gap-1 bg-gray-100 hover:bg-yellow-100 transition-all duration-200 rounded-sm p-1"
+                                >
                                   <span className="p-1 bg-yellow-500 hover:bg-yellow-600 rounded-full transition-all duration-300 hover:scale-[1.03]">
                                     <MdModeEditOutline className="text-[16px] text-white" />
                                   </span>
@@ -229,6 +237,18 @@ export default function Notifications() {
             {/*  */}
           </div>
         </div>
+
+        {/* -------------Handle Notification Modal------------ */}
+        {addNotification && (
+          <div className="fixed top-0 left-0 p-2 sm:p-4 w-full h-full flex items-center justify-center z-[9999999] bg-gray-300/80 overflow-y-auto shidden">
+            <NotificationModal
+              closeModal={closeMenu}
+              setAddNotification={setAddNotification}
+              notificationId={notificationId}
+              setNotificationId={setNotificationId}
+            />
+          </div>
+        )}
       </div>
     </MainLayout>
   );

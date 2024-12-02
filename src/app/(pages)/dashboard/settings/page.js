@@ -1,11 +1,15 @@
 "use client";
 import MainLayout from "@/app/components/layout/MainLayout";
+import SettingModal from "@/app/components/Settings/SettingModal";
 import Breadcrumb from "@/app/utils/Breadcrumb";
 import React, { useEffect, useState } from "react";
 import { AiOutlineExclamationCircle } from "react-icons/ai";
 
 export default function Settings() {
   const [currentUrl, setCurrentUrl] = useState("");
+  const [settingId, setSettingId] = useState("");
+  const [addSetting, setAddSetting] = useState(false);
+  const [type, setType] = useState("");
   useEffect(() => {
     const pathArray = window.location.pathname;
     setCurrentUrl(pathArray);
@@ -41,6 +45,10 @@ export default function Settings() {
                       </span>
                     </div>
                     <button
+                      onClick={() => {
+                        setType("account");
+                        setAddSetting("true");
+                      }}
                       className={`flex text-[15px] w-[9rem] items-center justify-center text-white bg-[#c6080a] hover:bg-red-800  py-2 rounded-md shadow-md hover:shadow-xl transition-all duration-300 cursor-pointer hover:scale-[1.03]`}
                     >
                       EDIT ACCOUNT
@@ -64,6 +72,10 @@ export default function Settings() {
                       </span>
                     </div>
                     <button
+                      onClick={() => {
+                        setType("address");
+                        setAddSetting("true");
+                      }}
                       className={`flex text-[15px] w-[9rem] items-center justify-center text-white bg-[#c6080a] hover:bg-red-800  py-2 rounded-md shadow-md hover:shadow-xl transition-all duration-300 cursor-pointer hover:scale-[1.03]`}
                     >
                       EDIT ACCOUNT
@@ -74,6 +86,17 @@ export default function Settings() {
             </div>
           </div>
         </div>
+        {/* -------------Handle Setting Modal------------ */}
+        {addSetting && (
+          <div className="fixed top-0 left-0 p-2 sm:p-4 w-full h-full flex items-center justify-center z-[9999999] bg-gray-300/80 overflow-y-auto shidden">
+            <SettingModal
+              setAddSetting={setAddSetting}
+              settingId={settingId}
+              setSettingId={setSettingId}
+              type={type}
+            />
+          </div>
+        )}
       </div>
     </MainLayout>
   );

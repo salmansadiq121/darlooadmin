@@ -1,10 +1,13 @@
 "use client";
 import MainLayout from "@/app/components/layout/MainLayout";
+import PrivacyModal from "@/app/components/PrivacyPolicy/PolicyModal";
 import Breadcrumb from "@/app/utils/Breadcrumb";
 import React, { useEffect, useState } from "react";
 
 export default function Privacy() {
   const [currentUrl, setCurrentUrl] = useState("");
+  const [addPrivacy, setAddPrivacy] = useState(false);
+  const [privacyId, setPrivacyId] = useState("");
   useEffect(() => {
     const pathArray = window.location.pathname;
     setCurrentUrl(pathArray);
@@ -13,7 +16,7 @@ export default function Privacy() {
   }, []);
   return (
     <MainLayout>
-      <div className="p-1 sm:p-2 px-1 sm:px-6 h-[100%] w-full pb-4 scroll-smooth">
+      <div className="relative p-1 sm:p-2 px-1 sm:px-6 h-[100%] w-full pb-4 scroll-smooth">
         <div className="flex flex-col pb-2 h-full">
           <Breadcrumb path={currentUrl} />
           <div className="flex flex-col gap-4 mt-4  w-full h-full">
@@ -22,7 +25,13 @@ export default function Privacy() {
                 Terms & Policy
               </h1>
               <div className="flex items-center gap-4">
-                <button className="flex text-[15px] w-[8rem] items-center justify-center text-white bg-slate-400 hover:bg-slate-500  py-2 rounded-md shadow-md hover:shadow-xl transition-all duration-300 cursor-pointer hover:scale-[1.03]">
+                <button
+                  onClick={() => {
+                    setPrivacyId("1");
+                    setAddPrivacy(true);
+                  }}
+                  className="flex text-[15px] w-[8rem] items-center justify-center text-white bg-slate-400 hover:bg-slate-500  py-2 rounded-md shadow-md hover:shadow-xl transition-all duration-300 cursor-pointer hover:scale-[1.03]"
+                >
                   EDIT
                 </button>
                 <button
@@ -156,6 +165,16 @@ export default function Privacy() {
             </div>
           </div>
         </div>
+        {/* -------------Handle Product Modal------------ */}
+        {addPrivacy && (
+          <div className="fixed top-0 left-0 p-2 sm:p-4 w-full h-full flex items-center justify-center z-[9999999] bg-gray-300/80 overflow-y-auto shidden">
+            <PrivacyModal
+              setAddPrivacy={setAddPrivacy}
+              privacyId={privacyId}
+              setPrivacyId={setPrivacyId}
+            />
+          </div>
+        )}
       </div>
     </MainLayout>
   );

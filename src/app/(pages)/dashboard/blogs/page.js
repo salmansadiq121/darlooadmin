@@ -8,6 +8,7 @@ import { BsThreeDotsVertical } from "react-icons/bs";
 import { MdDelete, MdModeEditOutline } from "react-icons/md";
 import { TiEye } from "react-icons/ti";
 import { MdShare } from "react-icons/md";
+import BlogModal from "@/app/components/Blog/BlogModal";
 
 export default function Blogs() {
   const [currentUrl, setCurrentUrl] = useState("");
@@ -20,6 +21,7 @@ export default function Blogs() {
   const closeMenu = useRef(null);
   const [publishBlogs, setPublishBlogs] = useState(0);
   const [draftBlogs, setDraftBlogs] = useState(0);
+  const [addBlog, setAddBlog] = useState(false);
 
   // Fetch Link (URL)
   useEffect(() => {
@@ -90,15 +92,17 @@ export default function Blogs() {
       if (closeMenu.current && !closeMenu.current.contains(event.target)) {
         setBlogId("");
         setShow(false);
+        setAddBlog(false);
       }
     };
 
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
+
   return (
     <MainLayout>
-      <div className="p-1 sm:p-2 h-[100%] w-full pb-4 ">
+      <div className="relative p-1 sm:p-2 h-[100%] w-full pb-4 ">
         <div className="flex flex-col pb-2 ">
           <Breadcrumb path={currentUrl} />
           <div className="flex flex-col gap-5 mt-4">
@@ -149,6 +153,7 @@ export default function Blogs() {
                 </button>
 
                 <button
+                  onClick={() => setAddBlog(true)}
                   className={`flex text-[12px] font-medium sm:text-[14px] w-[6rem] sm:w-[8rem] items-center justify-center text-white bg-[#c6080a] hover:bg-red-800   py-2 rounded-md shadow-md hover:shadow-xl transition-all duration-300 cursor-pointer hover:scale-[1.03]`}
                 >
                   CREATE NEW
@@ -230,7 +235,13 @@ export default function Blogs() {
                                   </span>
                                 </div>
                               </button>
-                              <button className="w-full cursor-pointer text-[13px] text-gray-600 flex items-center gap-1 bg-gray-100 hover:bg-yellow-100 transition-all duration-200 rounded-sm p-1">
+                              <button
+                                onClick={() => {
+                                  setAddBlog(true);
+                                  setBlogId(blog._id);
+                                }}
+                                className="w-full cursor-pointer text-[13px] text-gray-600 flex items-center gap-1 bg-gray-100 hover:bg-yellow-100 transition-all duration-200 rounded-sm p-1"
+                              >
                                 <span className="p-1 bg-yellow-500 hover:bg-yellow-600 rounded-full transition-all duration-300 hover:scale-[1.03]">
                                   <MdModeEditOutline className="text-[16px] text-white" />
                                 </span>
@@ -285,6 +296,18 @@ export default function Blogs() {
           </div>
           {/*  */}
         </div>
+
+        {/* -------------Handle Blog Modal------------ */}
+        {addBlog && (
+          <div className="fixed top-0 left-0 p-2 sm:p-4 w-full h-full flex items-center justify-center z-[9999999] bg-gray-300/80 overflow-y-auto shidden">
+            <BlogModal
+              closeModal={closeMenu}
+              setAddBlog={setAddBlog}
+              blogId={blogId}
+              setBlogId={setBlogId}
+            />
+          </div>
+        )}
       </div>
     </MainLayout>
   );

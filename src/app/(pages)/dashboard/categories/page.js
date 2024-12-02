@@ -1,9 +1,10 @@
 "use client";
+import CategoryModal from "@/app/components/Category/CategoryModal";
 import { categories } from "@/app/components/DummyData/DummyData";
 import MainLayout from "@/app/components/layout/MainLayout";
 import Breadcrumb from "@/app/utils/Breadcrumb";
 import Image from "next/image";
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { IoSearch } from "react-icons/io5";
 import { MdDelete, MdModeEditOutline, MdNotInterested } from "react-icons/md";
 
@@ -12,6 +13,9 @@ export default function Categories() {
   const [searchQuery, setSearchQuery] = useState("");
   const [categoryData, setCategoryData] = useState([...categories]);
   const [filteredData, setFilteredData] = useState([]);
+  const [showAddCategory, setShowaddCategory] = useState(false);
+  const [categoryId, setCategoryId] = useState("");
+  const closeModal = useRef(null);
 
   // Fetch Page Link
   useEffect(() => {
@@ -45,9 +49,22 @@ export default function Categories() {
     setFilteredData(filtered);
   };
 
+  // Close Modal
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (closeModal.current && !closeModal.current.contains(event.target)) {
+        setCategoryId("");
+        setShowaddCategory(false);
+      }
+    };
+
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
   return (
     <MainLayout>
-      <div className="p-1 sm:p-2 px-1 sm:px-6 h-[100%] w-full pb-4 scroll-smooth">
+      <div className="relative p-1 sm:p-2 px-1 sm:px-6 h-[100%] w-full pb-4 scroll-smooth">
         <div className="flex flex-col pb-2 h-full">
           <Breadcrumb path={currentUrl} />
           <div className="flex flex-col gap-4 mt-4  w-full h-full">
@@ -55,11 +72,12 @@ export default function Categories() {
               <h1 className="text-2xl font-sans font-semibold text-black">
                 Categories
               </h1>
-              <div className="flex items-center gap-4">
+              <div className="flex items-center gap-4 sm:w-fit w-full justify-end">
                 <button className="text-[14px] py-2 px-4 hover:border-2 hover:rounded-md hover:shadow-md hover:scale-[1.03] text-gray-600 hover:text-gray-800 border-b-2 border-gray-600 transition-all duration-300 ">
                   Delete All
                 </button>
                 <button
+                  onClick={() => setShowaddCategory(true)}
                   className={`flex text-[14px] items-center justify-center text-white bg-[#c6080a] hover:bg-red-800  py-2 rounded-md shadow-md hover:shadow-xl transition-all duration-300 cursor-pointer hover:scale-[1.03] px-4`}
                 >
                   ADD NEW CATEGORY
@@ -89,7 +107,13 @@ export default function Categories() {
                     className=" relative  flex flex-col items-center justify-center p-4 rounded-md bg-gradient-to-tr from-red-50 to-grey-500 shadow hover:bg-red-100 hover:shadow-md transition-all duration-300 cursor-pointer"
                   >
                     <div className="absolute top-2 right-1 z-20 flex flex-col gap-2">
-                      <span className="p-1 bg-yellow-500 hover:bg-yellow-600 rounded-full transition-all duration-300 hover:scale-[1.03]">
+                      <span
+                        onClick={() => {
+                          setCategoryId(category?.id);
+                          setShowaddCategory(true);
+                        }}
+                        className="p-1 bg-yellow-500 hover:bg-yellow-600 rounded-full transition-all duration-300 hover:scale-[1.03]"
+                      >
                         <MdModeEditOutline className="text-[14px] text-white" />
                       </span>
                       <span className="p-1 bg-sky-200 hover:bg-sky-300 rounded-full transition-all duration-300 hover:scale-[1.03]">
@@ -117,6 +141,18 @@ export default function Categories() {
             {/*  */}
           </div>
         </div>
+
+        {/* -------------Handle Category Modal------------ */}
+        {showAddCategory && (
+          <div className="fixed top-0 left-0 p-2 sm:p-4 w-full h-full flex items-center justify-center z-[9999999] bg-gray-300/80 overflow-y-auto shidden">
+            <CategoryModal
+              closeModal={closeModal}
+              setShowaddCategory={setShowaddCategory}
+              categoryId={categoryId}
+              setCategoryId={setCategoryId}
+            />
+          </div>
+        )}
       </div>
     </MainLayout>
   );
