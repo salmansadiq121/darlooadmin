@@ -21,6 +21,15 @@ export default function Login({ setActive }) {
   const [rememberMe, setRememberMe] = useState(false);
   const router = useRouter();
 
+  // Redirect if the user is already logged in
+  useEffect(() => {
+    if (auth?.token) {
+      router.push("/dashboard");
+    }
+
+    // eslint-disable-next-line
+  }, [auth]);
+
   const handleLogin = async (e) => {
     e.preventDefault();
     setLoading(true);
