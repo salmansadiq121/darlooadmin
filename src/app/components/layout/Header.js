@@ -5,20 +5,16 @@ import Link from "next/link";
 import Image from "next/image";
 import { FaAngleDown } from "react-icons/fa6";
 import { FaAngleUp } from "react-icons/fa6";
-import { useSelector } from "react-redux";
-import { useLoadUserQuery } from "../../../../redux/features/api/apiSlice";
+import { useAuth } from "@/app/context/authContext";
+import { redirect } from "next/navigation";
 
 export default function Header() {
+  const { auth, setAuth, refreshToken, getUserInfo } = useAuth();
+  const user = auth.user;
   const [open, setOpen] = useState(false);
   const [notificationData, setNotificationData] = useState(false);
   const [show, setShow] = useState(false);
   const headerNotification = useRef(null);
-  const { data, isLoading, refetch } = useLoadUserQuery(undefined, {
-    refetchOnMountOrArgChange: true,
-  });
-
-  const { user } = useSelector((state) => state.auth);
-  console.log("Header user:", user);
 
   // Close Menu to click any where
   useEffect(() => {
@@ -36,16 +32,19 @@ export default function Header() {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  // Fetch User
-
   useEffect(() => {
-    if (!isLoading) {
-      if (!user) {
-        refetch();
-      }
-    }
+    refreshToken();
+    getUserInfo();
     // eslint-disable-next-line
-  }, [data, user, isLoading]);
+  }, [auth.token]);
+
+  // handle Logout
+  const handleLogout = () => {
+    setAuth({ ...auth, user: null, token: "" });
+    localStorage.removeItem("auth");
+    redirect("/");
+  };
+
   return (
     <div className="w-full h-[3.8rem] bg-white border-b text-black">
       <div className="w-full h-full flex items-center justify-between px-2 sm:px-6 py-2">
@@ -62,10 +61,10 @@ export default function Header() {
                 }}
               >
                 <FaRegBell className="text-xl container text-black " />
-                {notificationData.length > 0 ? (
+                {notificationData?.length > 0 ? (
                   <div className="absolute -top-[0.4rem] -right-2 bg-red-600 rounded-full w-[18px] h-[18px] text-[12px] text-white flex items-center justify-center">
                     <span className="text-[12px]">
-                      {notificationData.length}
+                      {notificationData?.length}
                     </span>
                   </div>
                 ) : (
@@ -93,7 +92,7 @@ export default function Header() {
                             <p className="text-black ">{item?.title}</p>
                             <p
                               className="text-sky-500 hover:text-sky-600 text-[14px] transition-all duration-200  cursor-pointer"
-                              onClick={() => updateNotification(item._id)}
+                              onClick={() => updateNotification(item?._id)}
                             >
                               Mark as read
                             </p>
@@ -123,7 +122,7 @@ export default function Header() {
                   </div>
                   <div
                     className="w-full  cursor-pointer bg-gray-200    px-2 flex  items-center justify-end"
-                    onClick={() => updateAllNotification(auth.user.id)}
+                    onClick={() => updateAllNotification(auth.user._id)}
                   >
                     <button
                       disabled={notificationData.length === 0}
@@ -151,16 +150,16 @@ export default function Header() {
                   />
                 ) : (
                   <h3 className="text-[20px] font-medium uppercase">
-                    {user?.name?.slice(0, 1)}
+                    {user?.name ? user?.name?.slice(0, 1) : ""}
                   </h3>
                 )}
               </div>
               <div className="flex flex-col">
                 <h3 className="text-[13px] sm:text-[14px] font-medium text-gray-900">
-                  {user.name}
+                  {user?.name ? user?.name : ""}
                 </h3>
                 <span className=" text-[11px] sm:text-[12px] font-normal text-gray-600">
-                  {user?.email}
+                  {user?.email ? user?.email : ""}
                 </span>
               </div>
               <span
@@ -182,7 +181,7 @@ export default function Header() {
               >
                 <ul className="flex flex-col gap-2 w-full transition-all duration-200">
                   <span
-                    // onClick={handleLogout}
+                    onClick={handleLogout}
                     className="font-medium text-[16px]  w-full hover:bg-red-200 hover:text-red-600 hover:shadow-md rounded-sm transition-all duration-200 cursor-pointer py-[.3rem] px-2"
                   >
                     Logout

@@ -16,7 +16,8 @@ import { MdModeEditOutline } from "react-icons/md";
 import { MdDelete } from "react-icons/md";
 import { MdNotInterested } from "react-icons/md";
 import { Style } from "@/app/utils/CommonStyle";
-import { users } from "@/app/components/DummyData/DummyData";
+import toast from "react-hot-toast";
+import Swal from "sweetalert2";
 const MainLayout = dynamic(
   () => import("./../../../components/layout/MainLayout"),
   {
@@ -35,7 +36,7 @@ const UserModal = dynamic(
 
 export default function Users() {
   const [currentUrl, setCurrentUrl] = useState("");
-  const [userData, setUserData] = useState(users || []);
+  const [userData, setUserData] = useState([]);
   const [filterUser, setFilterUsers] = useState([]);
   const [isLoading, setIsloading] = useState(false);
   const [rowSelection, setRowSelection] = useState({});
@@ -48,27 +49,33 @@ export default function Users() {
   const [showAddUser, setShowaddUser] = useState(false);
   const closeModal = useRef(null);
   const [userId, setUserId] = useState("");
+  const isInitialRender = useRef(true);
 
-  // const fetchUsers = async () => {
-  //   setIsloading(true);
-  //   try {
-  //     const { data } = await axios.get(
-  //       `${process.env.NEXT_PUBLIC_SERVER_URI}/api/v1/auth/allUsers`
-  //     );
-  //     if (data) {
-  //       setUserData(data.users);
-  //     }
-  //   } catch (error) {
-  //     console.log(error);
-  //   } finally {
-  //     setIsloading(false);
-  //   }
-  // };
+  const fetchUsers = async () => {
+    if (isInitialRender.current) {
+      setIsloading(true);
+    }
+    try {
+      const { data } = await axios.get(
+        `${process.env.NEXT_PUBLIC_SERVER_URI}/api/v1/auth/allUsers`
+      );
+      if (data) {
+        setUserData(data.users);
+      }
+    } catch (error) {
+      console.log(error);
+    } finally {
+      if (isInitialRender.current) {
+        setIsloading(false);
+        isInitialRender.current = false;
+      }
+    }
+  };
 
-  // useEffect(() => {
-  //   fetchUsers();
-  //   // eslint-disable-next-line
-  // }, []);
+  useEffect(() => {
+    fetchUsers();
+    // eslint-disable-next-line
+  }, []);
 
   useEffect(() => {
     setFilterUsers(userData);
@@ -161,6 +168,40 @@ export default function Users() {
     (currentPage - 1) * itemsPerPage,
     currentPage * itemsPerPage
   );
+
+  // ------Delete User------>
+  const handleDeleteConfirmation = (userId) => {
+    Swal.fire({
+      title: "Are you sure?",
+      text: "You won't be able to revert this user!",
+      icon: "warning",
+      showCancelButton: true,
+      confirmButtonColor: "#3085d6",
+      cancelButtonColor: "#d33",
+      confirmButtonText: "Yes, delete it!",
+    }).then((result) => {
+      if (result.isConfirmed) {
+        handleDelete(userId);
+        Swal.fire("Deleted!", "User has been deleted.", "success");
+      }
+    });
+  };
+
+  const handleDelete = async (id) => {
+    try {
+      const { data } = await axios.delete(
+        `${process.env.NEXT_PUBLIC_SERVER_URI}/api/v1/auth/delete/user/${id}`
+      );
+      if (data) {
+        fetchUsers();
+      }
+    } catch (error) {
+      console.log(error);
+      toast.error(error.response?.data?.message);
+    }
+  };
+
+  // Update User Role
 
   const columns = useMemo(
     () => [
@@ -278,11 +319,11 @@ export default function Users() {
           );
         },
         Cell: ({ cell, row }) => {
-          const accountHolder = row.original.bankDetails.accountHolder;
+          const accountHolder = cell.getValue();
 
           return (
             <div className="flex items-center justify-start cursor-pointer text-[12px] text-black w-full h-full">
-              {accountHolder}
+              {accountHolder ? accountHolder : ""}
             </div>
           );
         },
@@ -307,11 +348,11 @@ export default function Users() {
           );
         },
         Cell: ({ cell, row }) => {
-          const accountNumber = row.original.bankDetails.accountNumber;
+          const accountNumber = cell.getValue();
 
           return (
             <div className=" flex items-center justify-start cursor-pointer text-[12px] text-black w-full h-full">
-              {accountNumber}
+              {accountNumber ? accountNumber : ""}
             </div>
           );
         },
@@ -336,11 +377,11 @@ export default function Users() {
           );
         },
         Cell: ({ cell, row }) => {
-          const ifscCode = row.original.bankDetails.ifscCode;
+          const ifscCode = cell.getValue();
 
           return (
             <div className=" flex items-center justify-start cursor-pointer text-[12px] text-black w-full h-full">
-              {ifscCode}
+              {ifscCode ? ifscCode : ""}
             </div>
           );
         },
@@ -526,10 +567,83 @@ export default function Users() {
         },
       },
       {
-        accessorKey: "status",
-        minSize: 100,
+        accessorKey: "role",
+        minSize: 70,
         maxSize: 140,
-        size: 120,
+        size: 100,
+        grow: false,
+        Header: ({ column }) => {
+          return (
+            <div className=" flex flex-col gap-[2px]">
+              <span className="ml-1 cursor-pointer">Role</span>
+            </div>
+          );
+        },
+        Cell: ({ cell, row }) => {
+          const role = cell.getValue();
+          const [userRole, setUserRole] = useState(role);
+          const [show, setShow] = useState(false);
+
+          const handleUpdate = async (value) => {
+            setUserRole(value);
+            try {
+              const { data } = await axios.put(
+                `${process.env.NEXT_PUBLIC_SERVER_URI}/api/v1/auth/update/role/${row.original._id}`,
+                { role: value }
+              );
+              if (data) {
+                fetchUsers();
+                setShow(false);
+              }
+            } catch (error) {
+              console.log(error);
+              toast.error(error.response?.data?.message);
+            }
+          };
+
+          return (
+            <div className="w-full h-full">
+              {!show ? (
+                <div
+                  onDoubleClick={() => setShow(true)}
+                  className="flex items-center justify-start cursor-pointer text-[12px] text-black w-full h-full"
+                >
+                  {role === "admin" ? (
+                    <button className=" py-[.35rem] px-4 rounded-[2rem] border-2 border-sky-600 bg-sky-200 hover:bg-sky-300 text-sky-900 hover:shadow-md cursor-pointer transition-all duration-300 hover:scale-[1.03]">
+                      Admin
+                    </button>
+                  ) : (
+                    <button className=" py-[.35rem] px-4 rounded-[2rem] border-2 border-green-600 bg-green-200 hover:bg-green-300 text-green-900 hover:shadow-md cursor-pointer transition-all duration-300 hover:scale-[1.03]">
+                      User
+                    </button>
+                  )}
+                </div>
+              ) : (
+                <select
+                  value={userRole}
+                  onChange={(e) => handleUpdate(e.target.value)}
+                  onBlur={() => setShow(false)}
+                  className="w-full border rounded-md p-1 text-black text-[14px]"
+                >
+                  <option value="admin">Admin</option>
+                  <option value="user">User</option>
+                </select>
+              )}
+            </div>
+          );
+        },
+        filterFn: (row, columnId, filterValue) => {
+          const cellValue =
+            row.original[columnId]?.toString().toLowerCase() || "";
+
+          return cellValue.includes(filterValue.toLowerCase());
+        },
+      },
+      {
+        accessorKey: "status",
+        minSize: 80,
+        maxSize: 140,
+        size: 100,
         grow: false,
         Header: ({ column }) => {
           return (
@@ -540,17 +654,53 @@ export default function Users() {
         },
         Cell: ({ cell, row }) => {
           const status = row.original.status;
+          const [userStatus, setUserStatus] = useState(status);
+          const [show, setShow] = useState(false);
+
+          const handleUpdate = async (value) => {
+            setUserStatus(value);
+            try {
+              const { data } = await axios.put(
+                `${process.env.NEXT_PUBLIC_SERVER_URI}/api/v1/auth/update/role/${row.original._id}`,
+                { status: value }
+              );
+              if (data) {
+                fetchUsers();
+                setShow(false);
+              }
+            } catch (error) {
+              console.log(error);
+              toast.error(error.response?.data?.message);
+            }
+          };
 
           return (
-            <div className="flex items-center justify-start cursor-pointer text-[12px] text-black w-full h-full">
-              {status === true ? (
-                <button className=" py-[.35rem] px-4 rounded-[2rem] border-2 border-green-600 bg-green-200 hover:bg-green-300 text-green-900 hover:shadow-md cursor-pointer transition-all duration-300 hover:scale-[1.03]">
-                  Active
-                </button>
+            <div className="w-full h-full">
+              {!show ? (
+                <div
+                  onDoubleClick={() => setShow(true)}
+                  className="flex items-center justify-start cursor-pointer text-[12px] text-black w-full h-full"
+                >
+                  {status === true ? (
+                    <button className=" py-[.35rem] px-4 rounded-[2rem] border-2 border-green-600 bg-green-200 hover:bg-green-300 text-green-900 hover:shadow-md cursor-pointer transition-all duration-300 hover:scale-[1.03]">
+                      Active
+                    </button>
+                  ) : (
+                    <button className=" py-[.35rem] px-4 rounded-[2rem] border-2 border-red-600 bg-red-200 hover:bg-red-300 text-red-900 hover:shadow-md cursor-pointer transition-all duration-300 hover:scale-[1.03]">
+                      Blocked
+                    </button>
+                  )}
+                </div>
               ) : (
-                <button className=" py-[.35rem] px-4 rounded-[2rem] border-2 border-red-600 bg-red-200 hover:bg-red-300 text-red-900 hover:shadow-md cursor-pointer transition-all duration-300 hover:scale-[1.03]">
-                  Blocked
-                </button>
+                <select
+                  value={userStatus}
+                  onChange={(e) => handleUpdate(e.target.value)}
+                  onBlur={() => setShow(false)}
+                  className="w-full border rounded-md p-1 text-black text-[14px]"
+                >
+                  <option value="true">Active</option>
+                  <option value="false">Blocked</option>
+                </select>
               )}
             </div>
           );
@@ -590,7 +740,10 @@ export default function Users() {
               <span className="p-1 bg-sky-200 hover:bg-sky-300 rounded-full transition-all duration-300 hover:scale-[1.03]">
                 <MdNotInterested className="text-[16px] text-sky-500 hover:text-sky-600" />
               </span>
-              <span className="p-1 bg-red-200 hover:bg-red-300   rounded-full transition-all duration-300 hover:scale-[1.03]">
+              <span
+                onClick={() => handleDeleteConfirmation(row.original._id)}
+                className="p-1 bg-red-200 hover:bg-red-300   rounded-full transition-all duration-300 hover:scale-[1.03]"
+              >
                 <MdDelete className="text-[16px] text-red-500 hover:text-red-600" />
               </span>
             </div>
@@ -795,6 +948,7 @@ export default function Users() {
               setShowaddUser={setShowaddUser}
               userId={userId}
               setUserId={setUserId}
+              fetchUsers={fetchUsers}
             />
           </div>
         )}

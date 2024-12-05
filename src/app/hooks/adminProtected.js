@@ -1,16 +1,17 @@
 import { redirect } from "next/navigation";
 import React from "react";
-import { useSelector } from "react-redux";
+import { useAuth } from "../context/authContext";
 
 export default function AdminProtected({ children }) {
-  const { user } = useSelector((state) => state.auth);
+  const { auth } = useAuth();
+  const user = auth.user;
 
   if (!user) {
     redirect("/");
     return null;
   }
 
-  const isAdmin = user.role === "admin";
+  const isAdmin = user?.role === "admin";
   if (!isAdmin) {
     redirect("/");
     return null;

@@ -10,87 +10,48 @@ import { IoMdEyeOff } from "react-icons/io";
 import { IoEye } from "react-icons/io5";
 import { BiLoaderCircle } from "react-icons/bi";
 import { useRouter } from "next/navigation";
-import { useLoginMutation } from "../../../../redux/features/auth/authApi";
-import { useLoadUserQuery } from "../../../../redux/features/api/apiSlice";
-import { useSelector } from "react-redux";
+import { useAuth } from "@/app/context/authContext";
 
 export default function Login({ setActive }) {
+  const { auth, setAuth } = useAuth();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [show, setShow] = useState(false);
   const [loading, setLoading] = useState(false);
   const [rememberMe, setRememberMe] = useState(false);
   const router = useRouter();
-  const [login, { isSuccess, error }] = useLoginMutation();
-  const {
-    data: userData,
-    isLoading,
-    refetch,
-  } = useLoadUserQuery(undefined, { refetchOnMountOrArgChange: true });
-  const { user } = useSelector((state) => state.auth);
 
   const handleLogin = async (e) => {
     e.preventDefault();
-
+    setLoading(true);
     try {
-      setLoading(true);
-      await login({ email, password }).unwrap();
-      refetch();
+      const { data } = await axios.post(
+        `${process.env.NEXT_PUBLIC_SERVER_URI}/api/v1/auth/login`,
+        { email, password, rememberMe },
+        {
+          withCredentials: true,
+        }
+      );
+      if (data) {
+        router.push("/dashboard");
+        setAuth({ ...auth, user: data?.user, token: data?.token });
+        localStorage.setItem("auth", JSON.stringify(data));
+        toast.success(data.message);
+        setLoading(false);
+      }
+    } catch (error) {
+      console.log(error);
       setLoading(false);
-      router.push("/dashboard");
-    } catch (err) {
-      setLoading(false);
-      const errorMessage = err?.data?.message || "An error occurred!";
-      toast.error(errorMessage);
-      console.error(err);
+      toast.error(error?.response?.data?.message);
+      if (
+        error?.response?.data?.message === "User not found. Please login again."
+      ) {
+        setAuth({ user: null, token: "" });
+        localStorage.removeItem("auth");
+        router.push("/login");
+      }
     }
   };
-
-  useEffect(() => {
-    if (isSuccess) {
-      toast.success("Login successfully!");
-    }
-
-    if (error) {
-      const errorMessage = error?.data?.message || "An error occurred!";
-      toast.error(errorMessage);
-    }
-    // eslint-disable-next-line
-  }, [isSuccess, error]);
-
-  console.log("user:", user);
-
-  // const handleLogin = async (e) => {
-  //   e.preventDefault();
-  //   setLoading(true);
-  //   try {
-  //     const { data } = await axios.post(
-  //       `${process.env.NEXT_PUBLIC_SERVER_URI}/api/v1/auth/login`,
-  //       { email, password, rememberMe },
-  //       {
-  //         withCredentials: true,
-  //       }
-  //     );
-  //     if (data) {
-  //       router.push("/dashboard");
-  //       setAuth({ ...auth, user: data?.user, token: data?.accessToken });
-  //       localStorage.setItem("auth", JSON.stringify(data));
-  //       toast.success(data.message);
-  //       setLoading(false);
-  //     }
-  //   } catch (error) {
-  //     console.log(error);
-  //     setLoading(false);
-  //     toast.error(error?.response?.data?.message);
-  //     if (
-  //       error?.response?.data?.message === "User not found. Please login again."
-  //     ) {
-  //       setAuth({ user: null, token: "" });
-  //       localStorage.removeItem("auth");
-  //       router.push("/login");
-  //     }
-  //   }
-  // };
 
   return (
     <div className="w-full min-h-screen flex items-center justify-center py-4 px-4 bg-white">
