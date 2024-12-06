@@ -1,7 +1,7 @@
 "use client";
 import { Style } from "@/app/utils/CommonStyle";
 import Image from "next/image";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { CgClose } from "react-icons/cg";
 import { IoCameraOutline } from "react-icons/io5";
 import { IoIosClose } from "react-icons/io";
@@ -11,14 +11,17 @@ import "react-datepicker/dist/react-datepicker.css";
 import { categories } from "../DummyData/DummyData";
 import toast from "react-hot-toast";
 import axios from "axios";
+import { colorOptions, sizeOptions } from "@/app/utils/CommonFunctions";
+import { FaSpinner } from "react-icons/fa";
 
 export default function ProductModal({
   closeModal,
   setShowaddProduct,
   productId,
   setProductId,
+  fetchProducts,
 }) {
-  const [categoryData, setCategoryData] = useState([...categories]);
+  const [categoryData, setCategoryData] = useState([]);
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
   const [category, setCategory] = useState("");
@@ -34,7 +37,106 @@ export default function ProductModal({
     discountPercentage: 0,
     saleExpiry: null,
   });
+  const [deletedImages, setDeletedImages] = useState([]);
   const [isloading, setIsloading] = useState(false);
+
+  // Get Product Detail
+  const getProductInfo = async () => {
+    try {
+      const { data } = await axios.get(
+        `${process.env.NEXT_PUBLIC_SERVER_URI}/api/v1/products/product/detail/${productId}`
+      );
+      if (data) {
+        const product = data.product;
+        setName(product.name || "");
+        setDescription(product.description || "");
+        setCategory(product.category || []);
+        setCategory({
+          value: product.category._id,
+          label: (
+            <div className="flex items-center gap-1">
+              <div className="w-6 h-6 rounded-full relative overflow-hidden flex items-center justify-center">
+                <Image
+                  src={product.category.image}
+                  layout="fill"
+                  alt={product.category.name}
+                  className="w-full h-full"
+                />
+              </div>
+              {product.category.name}
+            </div>
+          ),
+        });
+        setPrice(product.price || "");
+        setEstimatedPrice(product.estimatedPrice || "");
+        setThumbnails(product.thumbnails || []);
+        setQuantity(product.quantity || "");
+        setColors(
+          product.colors?.map((color) => {
+            const matchedColor = colorOptions.find((c) => c.value === color);
+            return matchedColor
+              ? matchedColor
+              : {
+                  value: color,
+                  label: (
+                    <div className="flex items-center gap-1">
+                      <div
+                        className="w-3 h-3 rounded-full"
+                        style={{ backgroundColor: color }}
+                      ></div>
+                      {color}
+                    </div>
+                  ),
+                };
+          }) || []
+        );
+
+        // Map size values to options
+        setSizes(
+          product.sizes?.map((size) => {
+            const matchedSize = sizeOptions.find((s) => s.value === size);
+            return matchedSize
+              ? { value: matchedSize.value, label: matchedSize.label }
+              : { value: size, label: size };
+          }) || []
+        );
+        setTrending(product.trending || false);
+        setSale({
+          isActive: product.sale?.isActive || false,
+          discountPercentage: product.sale?.discountPercentage || 0,
+          saleExpiry: product.sale?.saleExpiry
+            ? new Date(product.sale.saleExpiry)
+            : null,
+        });
+      }
+    } catch (error) {
+      console.log(error);
+    }
+  };
+
+  useEffect(() => {
+    getProductInfo();
+    // eslint-disable-next-line
+  }, [productId]);
+
+  // Get Categories
+  const getCategories = async () => {
+    try {
+      const { data } = await axios.get(
+        `${process.env.NEXT_PUBLIC_SERVER_URI}/api/v1/categories/all/categories`
+      );
+      if (data) {
+        setCategoryData(data.categories);
+      }
+    } catch (error) {
+      console.log(error);
+    }
+  };
+
+  useEffect(() => {
+    getCategories();
+    // eslint-disable-next-line
+  }, []);
 
   // Handle Media Upload
   const handleMediaUpload = (e) => {
@@ -44,9 +146,13 @@ export default function ProductModal({
 
   // Handle Media Removal
   const removeMedia = (indexToRemove) => {
-    setThumbnails((prevMedia) =>
-      prevMedia.filter((_, index) => index !== indexToRemove)
-    );
+    setThumbnails((prevMedia) => {
+      const removedItem = prevMedia[indexToRemove];
+      if (typeof removedItem === "string") {
+        setDeletedImages((prevDeleted) => [...prevDeleted, removedItem]);
+      }
+      return prevMedia.filter((_, index) => index !== indexToRemove);
+    });
   };
 
   // Handle Sale Activation
@@ -59,70 +165,78 @@ export default function ProductModal({
     }));
   };
 
-  const categoryOptions = categoryData.map((cat) => ({
-    value: cat.id,
-    label: (
-      <div className="flex items-center gap-1">
-        <div className="w-6 h-6 rounded-full relative  overflow-hidden flex items-center justify-center">
-          <Image
-            src={cat.image_id}
-            layout="fill"
-            alt={cat.name}
-            className="w-full h-full"
-          />
+  //Category Options
+  const categoryOptions =
+    categoryData &&
+    categoryData?.map((cat) => ({
+      value: cat._id,
+      label: (
+        <div className="flex items-center gap-1">
+          <div className="w-6 h-6 rounded-full relative  overflow-hidden flex items-center justify-center">
+            <Image
+              src={cat.image}
+              layout="fill"
+              alt={cat.name}
+              className="w-full h-full"
+            />
+          </div>
+          {cat.name}
         </div>
-        {cat.name}
-      </div>
-    ),
-  }));
-
-  const colorOptions = [
-    { value: "#FFD700", label: "Gold" },
-    { value: "#50C878", label: "Emerald" },
-  ];
-
-  const sizeOptions = [
-    { value: "One Size", label: "One Size" },
-    { value: "Small", label: "Small" },
-    { value: "Medium", label: "Medium" },
-    { value: "Large", label: "Large" },
-  ];
+      ),
+    }));
 
   //   -----------Handle Submit--------------
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!productName || !description || !price || !category) {
+    if (!name || !description || !price || !category) {
       toast.error("Please fill out all required fields.");
       return;
     }
     setIsloading(true);
-
-    const productData = {
-      productName,
-      description,
-      category: category,
-      price,
-      media,
-      colors: colors.map((color) => color.value),
-      sizes: sizes ? sizes.value : null,
-      trending,
-      sale,
-    };
+    const productData = new FormData();
+    productData.append("name", name);
+    productData.append("description", description);
+    productData.append("category", category.value);
+    productData.append("price", price);
+    productData.append("estimatedPrice", estimatedPrice);
+    thumbnails.forEach((file) => productData.append("file", file));
+    productData.append("quantity", quantity);
+    const colorIds = colors.map((color) => color.value);
+    const sizeIds = sizes.map((size) => size.value);
+    productData.append("colors", colorIds);
+    productData.append("sizes", sizeIds);
+    productData.append("trending", trending);
+    productData.append("sale", JSON.stringify(sale));
+    productData.append("deletedImages", JSON.stringify(deletedImages));
 
     try {
-      const { data } = await axios.post(
-        `/api/v1/products/create/product`,
-        productData
-      );
-      if (data) {
-        console.log("Product Data Submitted: ", productData);
-        toast.success("Product submitted successfully!");
+      if (productId) {
+        const { data } = await axios.put(
+          `${process.env.NEXT_PUBLIC_SERVER_URI}/api/v1/products/update/product/${productId}`,
+          productData
+        );
+
+        if (data) {
+          toast.success(data?.message || "Product info updated successfully");
+        }
+      } else {
+        const { data } = await axios.post(
+          `${process.env.NEXT_PUBLIC_SERVER_URI}/api/v1/products/create/product`,
+          productData
+        );
+        if (data) {
+          toast.success(data?.message || "Product added successfully");
+        }
       }
     } catch (error) {
       console.log(error);
       toast.error(error?.response?.data?.message);
     } finally {
+      fetchProducts();
+      setShowaddProduct(false);
       setIsloading(false);
+      setProductId("");
+      setDeletedImages([]);
     }
   };
   return (
@@ -172,32 +286,30 @@ export default function ProductModal({
               </div>
               {thumbnails && (
                 <div className="flex mt-4 gap-2 flex-wrap">
-                  {thumbnails.map((file, index) => (
+                  {thumbnails?.map((file, index) => (
                     <div
                       key={index}
                       className="relative w-[3.9rem] h-[3.2rem] bg-gray-200 flex items-center justify-center rounded-md "
                     >
-                      {file.type.startsWith("image/") ? (
-                        <div className="w-[3.5rem] h-[2.8rem] relative rounded-md overflow-hidden flex items-center justify-center">
-                          <Image
-                            src={URL.createObjectURL(file)}
-                            layout="fill"
-                            alt={"Thumnail"}
-                            className="w-full h-full"
-                          />
-                        </div>
-                      ) : (
-                        <video
-                          src={URL.createObjectURL(file)}
+                      <div className="w-[3.5rem] h-[2.8rem] relative rounded-md overflow-hidden flex items-center justify-center">
+                        <Image
+                          src={
+                            file instanceof File
+                              ? URL.createObjectURL(file)
+                              : file
+                          }
+                          layout="fill"
+                          alt={"Thumnail"}
                           className="w-full h-full"
-                        ></video>
-                      )}
-                      <button
+                        />
+                      </div>
+
+                      <span
                         onClick={() => removeMedia(index)}
                         className="absolute top-[-.4rem] right-[-.4rem] z-10 bg-red-600 text-white text-xs rounded-full cursor-pointer"
                       >
                         <IoIosClose className="text-[20px]" />
-                      </button>
+                      </span>
                     </div>
                   ))}
                 </div>
@@ -213,6 +325,7 @@ export default function ProductModal({
                   onChange={(e) => setName(e.target.value)}
                   className={`${Style.input} w-full`}
                   placeholder="Enter product name"
+                  required
                 />
               </div>
               {/* -----Category---- */}
@@ -225,6 +338,7 @@ export default function ProductModal({
                   value={category}
                   onChange={setCategory}
                   placeholder="Select category"
+                  required
                 />
               </div>
               {/* Price */}
@@ -238,6 +352,7 @@ export default function ProductModal({
                   onChange={(e) => setPrice(e.target.value)}
                   className={`${Style.input} w-full`}
                   placeholder="Enter price"
+                  required
                 />
               </div>
               {/* Estimate Price */}
@@ -268,6 +383,7 @@ export default function ProductModal({
                   onChange={(e) => setDescription(e.target.value)}
                   className={`${Style.input} w-full h-[5rem]`}
                   placeholder="Enter product description "
+                  required
                 ></textarea>
               </div>
               {/* Colors */}
@@ -307,6 +423,7 @@ export default function ProductModal({
                   onChange={(e) => setQuantity(e.target.value)}
                   className={`${Style.input} w-full`}
                   placeholder="Enter quantity"
+                  required
                 />
               </div>
               {/* Trending */}
@@ -369,10 +486,13 @@ export default function ProductModal({
                       <label className="block text-sm font-medium text-gray-700">
                         Sale Expiry
                       </label>
-                      <DatePicker
-                        selected={sale.saleExpiry}
-                        onChange={(date) =>
-                          setSale({ ...sale, saleExpiry: date })
+                      <input
+                        type="date"
+                        value={
+                          new Date(sale.saleExpiry).toISOString().split("T")[0]
+                        }
+                        onChange={(e) =>
+                          setSale({ ...sale, saleExpiry: e.target.value })
                         }
                         className={`${Style.input} w-full`}
                         placeholderText="Select expiry date"
@@ -396,8 +516,14 @@ export default function ProductModal({
               >
                 CANCEL
               </button>
-              <button className="w-[6rem] py-[.4rem] text-[14px] rounded-sm bg-customRed hover:bg-red-700 hover:shadow-md hover:scale-[1.03] transition-all duration-300 text-white">
-                {productId ? "Save" : "SUBMIT"}
+              <button className="w-[6rem] py-[.4rem] text-[14px] flex items-center justify-center rounded-sm bg-customRed hover:bg-red-700 hover:shadow-md hover:scale-[1.03] transition-all duration-300 text-white">
+                {isloading ? (
+                  <span>
+                    <FaSpinner className="h-5 w-5 text-white animate-spin" />
+                  </span>
+                ) : (
+                  <span>{productId ? "Save" : "SUBMIT"}</span>
+                )}
               </button>
             </div>
           </div>

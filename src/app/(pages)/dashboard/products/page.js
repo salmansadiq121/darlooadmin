@@ -11,7 +11,7 @@ import { CiCircleChevLeft, CiCircleChevRight } from "react-icons/ci";
 import { IoSearch } from "react-icons/io5";
 import { MdDelete, MdModeEditOutline, MdNotInterested } from "react-icons/md";
 import Ratings from "@/app/utils/Rating";
-import { products } from "@/app/components/DummyData/DummyData";
+import axios from "axios";
 const MainLayout = dynamic(
   () => import("./../../../components/layout/MainLayout"),
   {
@@ -30,7 +30,7 @@ const ProductModal = dynamic(
 
 export default function Products() {
   const [currentUrl, setCurrentUrl] = useState("");
-  const [productData, setProductData] = useState(products || []);
+  const [productData, setProductData] = useState([]);
   const [filterProducts, setFilterProducts] = useState([]);
   const [isLoading, setIsloading] = useState(false);
   const [rowSelection, setRowSelection] = useState({});
@@ -43,6 +43,34 @@ export default function Products() {
   const [showaddProduct, setShowaddProduct] = useState(false);
   const [productId, setProductId] = useState("");
   const closeModal = useRef(null);
+  const isInitialRender = useRef(true);
+
+  // <---------Fetch All Products-------->
+  const fetchProducts = async () => {
+    if (isInitialRender.current) {
+      setIsloading(true);
+    }
+    try {
+      const { data } = await axios.get(
+        `${process.env.NEXT_PUBLIC_SERVER_URI}/api/v1/products/all/products`
+      );
+      if (data) {
+        setProductData(data.products);
+      }
+    } catch (error) {
+      console.log(error);
+    } finally {
+      if (isInitialRender.current) {
+        setIsloading(false);
+        isInitialRender.current = false;
+      }
+    }
+  };
+
+  useEffect(() => {
+    fetchProducts();
+    // eslint-disable-next-line
+  }, []);
 
   // ------Current Page URL-----
   useEffect(() => {
@@ -157,7 +185,7 @@ export default function Products() {
         Cell: ({ cell, row }) => {
           const name = row.original.name;
           const rating = row.original.ratings;
-          const avatar = row.original.thumbnails[0].url;
+          const avatar = row.original.thumbnails[0];
 
           return (
             <div className="cursor-pointer text-[12px] text-black w-full h-full">
@@ -466,17 +494,17 @@ export default function Products() {
   });
 
   // Close Modal
-  useEffect(() => {
-    const handleClickOutside = (event) => {
-      if (closeModal.current && !closeModal.current.contains(event.target)) {
-        setProductId("");
-        setShowaddProduct(false);
-      }
-    };
+  // useEffect(() => {
+  //   const handleClickOutside = (event) => {
+  //     if (closeModal.current && !closeModal.current.contains(event.target)) {
+  //       setProductId("");
+  //       setShowaddProduct(false);
+  //     }
+  //   };
 
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, []);
+  //   document.addEventListener("mousedown", handleClickOutside);
+  //   return () => document.removeEventListener("mousedown", handleClickOutside);
+  // }, []);
   return (
     <MainLayout>
       <div className="p-1 sm:p-2 h-[100%] w-full pb-4  scroll-smooth">
@@ -600,6 +628,7 @@ export default function Products() {
               setShowaddProduct={setShowaddProduct}
               productId={productId}
               setProductId={setProductId}
+              fetchProducts={fetchProducts}
             />
           </div>
         )}

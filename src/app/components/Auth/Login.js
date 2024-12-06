@@ -36,10 +36,7 @@ export default function Login({ setActive }) {
     try {
       const { data } = await axios.post(
         `${process.env.NEXT_PUBLIC_SERVER_URI}/api/v1/auth/login`,
-        { email, password, rememberMe },
-        {
-          withCredentials: true,
-        }
+        { email, password, rememberMe }
       );
       if (data) {
         router.push("/dashboard");

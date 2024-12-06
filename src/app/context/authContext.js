@@ -43,10 +43,7 @@ const AuthProvider = ({ children }) => {
     }
     try {
       const { data } = await axios.get(
-        `${process.env.NEXT_PUBLIC_SERVER_URI}/api/v1/auth/refresh`,
-        {
-          withCredentials: true,
-        }
+        `${process.env.NEXT_PUBLIC_SERVER_URI}/api/v1/auth/refresh`
       );
       console.log("data.accessToken:", data.accessToken);
       if (data.accessToken) {
@@ -77,10 +74,7 @@ const AuthProvider = ({ children }) => {
     }
     try {
       const { data } = await axios.get(
-        `${process.env.NEXT_PUBLIC_SERVER_URI}/api/v1/auth/userinfo`,
-        {
-          withCredentials: true,
-        }
+        `${process.env.NEXT_PUBLIC_SERVER_URI}/api/v1/auth/userinfo`
       );
       if (data) {
         setAuth((prevAuth) => ({

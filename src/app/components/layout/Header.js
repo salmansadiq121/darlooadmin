@@ -32,11 +32,11 @@ export default function Header() {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  useEffect(() => {
-    refreshToken();
-    getUserInfo();
-    // eslint-disable-next-line
-  }, [auth.token]);
+  // useEffect(() => {
+  //   refreshToken();
+  //   getUserInfo();
+  //   // eslint-disable-next-line
+  // }, [auth.token]);
 
   // handle Logout
   const handleLogout = () => {
