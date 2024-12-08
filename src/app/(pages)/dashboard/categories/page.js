@@ -1,8 +1,12 @@
 "use client";
-import { categories } from "@/app/components/DummyData/DummyData";
+// import { categories } from "@/app/components/DummyData/DummyData";
 import dynamic from "next/dynamic";
 import Image from "next/image";
 import React, { useEffect, useRef, useState } from "react";
+import axios from "axios";
+import toast from "react-hot-toast";
+import Loader from "@/app/utils/Loader";
+
 import { IoSearch } from "react-icons/io5";
 import { MdDelete, MdModeEditOutline, MdNotInterested } from "react-icons/md";
 const MainLayout = dynamic(
@@ -25,7 +29,7 @@ const CategoryModal = dynamic(
 export default function Categories() {
   const [currentUrl, setCurrentUrl] = useState("");
   const [searchQuery, setSearchQuery] = useState("");
-  const [categoryData, setCategoryData] = useState(categories || []);
+  const [categoryData, setCategoryData] = useState([]);
   const [filteredData, setFilteredData] = useState([]);
   const [showAddCategory, setShowaddCategory] = useState(false);
   const [categoryId, setCategoryId] = useState("");
@@ -77,6 +81,50 @@ export default function Categories() {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
+  // State for categories
+  const [categoriesData, setCategoriesData] = useState([]);
+  const [isLoading, setIsloading] = useState(false);
+
+  // Fetch all categories function
+  const fetchAllCategories = async () => {
+    try {
+      const { data } = await axios.get(
+        `${process.env.NEXT_PUBLIC_SERVER_URI}/api/v1/categories/all/categories`
+      );
+      console.log(data);
+
+      if (data?.categories) {
+        setCategoryData(data.categories);
+      }
+    } catch (error) {
+      console.error("Error fetching categories:", error);
+    } finally {
+    }
+  };
+
+  // Fetch categories on component mount
+  useEffect(() => {
+    fetchAllCategories();
+  }, []);
+
+  // Function to delete category
+  const deleteCategory = async (categoryId) => {
+    try {
+      // Send DELETE request to the server with the category ID
+      const { data } = await axios.delete(
+        `${process.env.NEXT_PUBLIC_SERVER_URI}/api/v1/categories/delete/category/${categoryId}`
+      );
+      if (data) {
+        console.log("Category deleted successfully:", data);
+        toast.success("Category deleted successfully!");
+        fetchAllCategories();
+      }
+    } catch (error) {
+      console.log("Error deleting category:", error);
+      // toast.error(error?.response?.data?.message || "An error occurred.");
+    }
+  };
+
   return (
     <MainLayout>
       <div className="relative p-1 sm:p-2 px-1 sm:px-6 h-[100%] w-full pb-4 scroll-smooth">
@@ -115,43 +163,52 @@ export default function Categories() {
                   />
                 </div>
               </div>
-              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 2xl:grid-cols-6 3xl:grid-cols-7 4xl:grid-cols-8 gap-3 sm:gap-4 mt-4">
-                {filteredData?.map((category) => (
-                  <div
-                    key={category?.id}
-                    className=" relative  flex flex-col items-center justify-center p-4 rounded-md bg-gradient-to-tr from-red-50 to-grey-500 shadow hover:bg-red-100 hover:shadow-md transition-all duration-300 cursor-pointer"
-                  >
-                    <div className="absolute top-2 right-1 z-20 flex flex-col gap-2">
-                      <span
-                        onClick={() => {
-                          setCategoryId(category?.id);
-                          setShowaddCategory(true);
-                        }}
-                        className="p-1 bg-yellow-500 hover:bg-yellow-600 rounded-full transition-all duration-300 hover:scale-[1.03]"
-                      >
-                        <MdModeEditOutline className="text-[14px] text-white" />
-                      </span>
-                      <span className="p-1 bg-sky-200 hover:bg-sky-300 rounded-full transition-all duration-300 hover:scale-[1.03]">
-                        <MdNotInterested className="text-[14px] text-sky-500 hover:text-sky-600" />
-                      </span>
-                      <span className="p-1 bg-red-200 hover:bg-red-300   rounded-full transition-all duration-300 hover:scale-[1.03]">
-                        <MdDelete className="text-[14px] text-red-500 hover:text-red-600" />
-                      </span>
+              {isLoading ? (
+                <div className="w-full col-span-5">
+                  <Loader />
+                </div>
+              ) : (
+                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 2xl:grid-cols-6 3xl:grid-cols-7 4xl:grid-cols-8 gap-3 sm:gap-4 mt-4">
+                  {categoryData?.map((category) => (
+                    <div
+                      key={category?._id}
+                      className=" relative  flex flex-col items-center justify-center p-4 rounded-md bg-gradient-to-tr from-red-50 to-grey-500 shadow hover:bg-red-100 hover:shadow-md transition-all duration-300 cursor-pointer"
+                    >
+                      <div className="absolute top-2 right-1 z-20 flex flex-col gap-2">
+                        <span
+                          onClick={() => {
+                            setCategoryId(category?._id);
+                            setShowaddCategory(true);
+                          }}
+                          className="p-1 bg-yellow-500 hover:bg-yellow-600 rounded-full transition-all duration-300 hover:scale-[1.03]"
+                        >
+                          <MdModeEditOutline className="text-[14px] text-white" />
+                        </span>
+                        <span className="p-1 bg-sky-200 hover:bg-sky-300 rounded-full transition-all duration-300 hover:scale-[1.03]">
+                          <MdNotInterested className="text-[14px] text-sky-500 hover:text-sky-600" />
+                        </span>
+                        <span
+                          onClick={() => deleteCategory(category?._id)}
+                          className="p-1 bg-red-200 hover:bg-red-300   rounded-full transition-all duration-300 hover:scale-[1.03]"
+                        >
+                          <MdDelete className="text-[14px] text-red-500 hover:text-red-600" />
+                        </span>
+                      </div>
+                      <div className="w-[5.4rem] h-[5.4rem] relative rounded-full overflow-hidden flex items-center justify-center">
+                        <Image
+                          src={category?.image}
+                          layout="fill"
+                          alt={"Avatar"}
+                          className="w-full h-full "
+                        />
+                      </div>
+                      <h3 className="text-[16px] text-gray-800 font-medium">
+                        {category?.name}
+                      </h3>
                     </div>
-                    <div className="w-[5.4rem] h-[5.4rem] relative rounded-full overflow-hidden flex items-center justify-center">
-                      <Image
-                        src={category?.image_id}
-                        layout="fill"
-                        alt={"Avatar"}
-                        className="w-full h-full "
-                      />
-                    </div>
-                    <h3 className="text-[16px] text-gray-800 font-medium">
-                      {category?.name}
-                    </h3>
-                  </div>
-                ))}
-              </div>
+                  ))}
+                </div>
+              )}
             </div>
             {/*  */}
           </div>
@@ -165,6 +222,7 @@ export default function Categories() {
               setShowaddCategory={setShowaddCategory}
               categoryId={categoryId}
               setCategoryId={setCategoryId}
+              refreshCategories={fetchAllCategories}
             />
           </div>
         )}

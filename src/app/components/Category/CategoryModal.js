@@ -1,7 +1,7 @@
 "use client";
 import { Style } from "@/app/utils/CommonStyle";
 import Image from "next/image";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { CgClose } from "react-icons/cg";
 import { IoCameraOutline } from "react-icons/io5";
 import { IoIosClose } from "react-icons/io";
@@ -14,6 +14,7 @@ export default function CategoryModal({
   setShowaddCategory,
   categoryId,
   setCategoryId,
+  refreshCategories,
 }) {
   const [name, setName] = useState("");
   const [image, setImage] = useState("");
@@ -29,33 +30,78 @@ export default function CategoryModal({
   //   -----------Handle Submit--------------
   const handleSubmit = async (e) => {
     e.preventDefault();
+
+    // Validate input fields
     if (!name || !image) {
       toast.error("Please fill out all required fields.");
       return;
     }
-    setIsloading(true);
 
-    const productData = {
-      name,
-      file: image,
-    };
+    // Create a new FormData object
+    const formData = new FormData();
+    formData.append("name", name);
+    formData.append("file", image);
 
     try {
       const { data } = await axios.post(
-        `/api/v1/products/create/product`,
-        productData
+        `${process.env.NEXT_PUBLIC_SERVER_URI}/api/v1/categories/create/category`,
+        formData,
+        {
+          headers: {
+            "Content-Type": "multipart/form-data",
+          },
+        }
       );
+
       if (data) {
-        console.log("Category Data Submitted: ", productData);
+        console.log("Category Data Submitted: ", formData);
         toast.success("Category added successfully!");
+        setShowaddCategory(false);
+        refreshCategories();
       }
     } catch (error) {
-      console.log(error);
-      toast.error(error?.response?.data?.message);
-    } finally {
-      setIsloading(false);
+      console.error("Error adding category:", error);
+      toast.error(error?.response?.data?.message || "An error occurred.");
     }
   };
+
+  const handleEditCategory = async (e) => {
+    e.preventDefault();
+
+    // Validate input fields
+    if (!name || !image) {
+      toast.error("Please fill out all required fields.");
+      return;
+    }
+
+    // Create a new FormData object
+    const formData = new FormData();
+    formData.append("name", name);
+    if (image) {
+      formData.append("file", image);
+    }
+
+    try {
+      const res = await axios.put(
+        `${process.env.NEXT_PUBLIC_SERVER_URI}/api/v1/categories/update/category/${categoryId}`,
+        formData,
+        {
+          headers: {
+            "Content-Type": "multipart/form-data",
+          },
+        }
+      );
+      console.log("Response:", res);
+      if (res) {
+        setShowaddCategory(false);
+        setCategoryId("");
+        refreshCategories();
+      }
+    } catch (error) {
+      console.error("Error updating category:", error);
+    }
+  };
+
   return (
     <div
       ref={closeModal}
@@ -77,8 +123,8 @@ export default function CategoryModal({
       </div>
       <div className="w-full h-[98%] overflow-y-auto ">
         <form
-          onSubmit={handleSubmit}
-          className=" flex flex-col gap-4 px-4 py-2 mt-4 h-full w-full "
+          onSubmit={categoryId ? handleEditCategory : handleSubmit}
+          className="flex flex-col gap-4 px-4 py-2 mt-4 h-full w-full"
         >
           {/* Left */}
           <div className="flex flex-col gap-4">

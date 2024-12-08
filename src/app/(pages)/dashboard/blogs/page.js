@@ -111,6 +111,27 @@ export default function Blogs() {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
+  // Fetch all blogs function
+  const fetchAllBlogs = async () => {
+    try {
+      const { data } = await axios.get(
+        `${process.env.NEXT_PUBLIC_SERVER_URI}/api/v1/blogs/all`
+      );
+      console.log(data);
+
+      // if (data?.blogs) {
+      //   setBlogData(data.blogs); // Assuming `setBlogData` is a state setter for blogs
+      // }
+    } catch (error) {
+      console.error("Error fetching blogs:", error);
+    }
+  };
+
+  // Fetch blogs on component mount
+  useEffect(() => {
+    // fetchAllBlogs();
+  }, []);
+
   return (
     <MainLayout>
       <div className="relative p-1 sm:p-2 h-[100%] w-full pb-4 ">
