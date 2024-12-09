@@ -14,7 +14,7 @@ export default function CategoryModal({
   setShowaddCategory,
   categoryId,
   setCategoryId,
-  refreshCategories,
+  setCategories,
 }) {
   const [name, setName] = useState("");
   const [image, setImage] = useState("");
@@ -45,19 +45,15 @@ export default function CategoryModal({
     try {
       const { data } = await axios.post(
         `${process.env.NEXT_PUBLIC_SERVER_URI}/api/v1/categories/create/category`,
-        formData,
-        {
-          headers: {
-            "Content-Type": "multipart/form-data",
-          },
-        }
+        formData
       );
+      console.log("category res:", data);
 
       if (data) {
         console.log("Category Data Submitted: ", formData);
         toast.success("Category added successfully!");
         setShowaddCategory(false);
-        refreshCategories();
+        // setCategories(prev => [...prev, newCategory]);
       }
     } catch (error) {
       console.error("Error adding category:", error);
@@ -84,18 +80,13 @@ export default function CategoryModal({
     try {
       const res = await axios.put(
         `${process.env.NEXT_PUBLIC_SERVER_URI}/api/v1/categories/update/category/${categoryId}`,
-        formData,
-        {
-          headers: {
-            "Content-Type": "multipart/form-data",
-          },
-        }
+        formData
       );
-      console.log("Response:", res);
+      console.log("Edit Response:", res);
       if (res) {
         setShowaddCategory(false);
         setCategoryId("");
-        refreshCategories();
+        // setCategories(prev => prev.filter(category => category.id !== categoryId));
       }
     } catch (error) {
       console.error("Error updating category:", error);

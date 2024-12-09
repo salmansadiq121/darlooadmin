@@ -8,6 +8,8 @@ import { MdDelete, MdModeEditOutline } from "react-icons/md";
 import { TiEye } from "react-icons/ti";
 import { MdShare } from "react-icons/md";
 import { blogs } from "@/app/components/DummyData/DummyData";
+import axios from "axios";
+
 const MainLayout = dynamic(
   () => import("./../../../components/layout/MainLayout"),
   {
@@ -115,7 +117,7 @@ export default function Blogs() {
   const fetchAllBlogs = async () => {
     try {
       const { data } = await axios.get(
-        `${process.env.NEXT_PUBLIC_SERVER_URI}/api/v1/blogs/all`
+        `${process.env.NEXT_PUBLIC_SERVER_URI}/api/v1/blogs/al`
       );
       console.log(data);
 
@@ -129,7 +131,7 @@ export default function Blogs() {
 
   // Fetch blogs on component mount
   useEffect(() => {
-    // fetchAllBlogs();
+    fetchAllBlogs();
   }, []);
 
   return (

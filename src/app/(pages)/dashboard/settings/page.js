@@ -2,6 +2,10 @@
 import React, { useEffect, useState } from "react";
 import { AiOutlineExclamationCircle } from "react-icons/ai";
 import dynamic from "next/dynamic";
+import axios from "axios";
+import Loader from "@/app/utils/Loader";
+import Image from "next/image";
+
 const MainLayout = dynamic(
   () => import("./../../../components/layout/MainLayout"),
   {
@@ -17,12 +21,20 @@ const SettingModal = dynamic(
     ssr: false,
   }
 );
+const BannerGallery = dynamic(
+  () => import("./../../../components/Settings/BannerGallery"),
+  {
+    ssr: false,
+  }
+);
 
 export default function Settings() {
   const [currentUrl, setCurrentUrl] = useState("");
   const [settingId, setSettingId] = useState("");
   const [addSetting, setAddSetting] = useState(false);
   const [type, setType] = useState("");
+
+  const [isLoading, setIsLoading] = useState(false);
 
   // Page URL
   useEffect(() => {
@@ -32,6 +44,7 @@ export default function Settings() {
     }
     // exlint-disable-next-line
   }, []);
+
   return (
     <MainLayout>
       <div className="p-1 sm:p-2 px-1 sm:px-6 h-[100%] w-full pb-4 scroll-smooth">
@@ -99,6 +112,26 @@ export default function Settings() {
                   </div>
                 </div>
               </div>
+
+              {/* BANNERS CODE */}
+              <div className="flex items-center justify-between flex-wrap gap-4">
+                <h1 className="text-2xl font-sans font-semibold text-black">
+                  Banner Settings
+                </h1>
+              </div>
+              {isLoading ? (
+                <div className="w-full col-span-5">
+                  <Loader />
+                </div>
+              ) : (
+                <div className="relative overflow-hidden w-full  py-3 sm:py-4 bg-white rounded-md shadow px-3 sm:px-4  overflow-y-auto shidden">
+                  <BannerGallery
+                  // bannersData={banners}
+                  // onAddBanner={handleAddBanner}
+                  // onDeleteBanner={handleDeleteBanner}
+                  />
+                </div>
+              )}
             </div>
           </div>
         </div>

@@ -91,7 +91,7 @@ export default function Categories() {
       const { data } = await axios.get(
         `${process.env.NEXT_PUBLIC_SERVER_URI}/api/v1/categories/all/categories`
       );
-      console.log(data);
+      // console.log(data);
 
       if (data?.categories) {
         setCategoryData(data.categories);
@@ -222,7 +222,7 @@ export default function Categories() {
               setShowaddCategory={setShowaddCategory}
               categoryId={categoryId}
               setCategoryId={setCategoryId}
-              refreshCategories={fetchAllCategories}
+              setCategories={setCategoryData}
             />
           </div>
         )}

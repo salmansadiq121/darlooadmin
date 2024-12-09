@@ -20,6 +20,7 @@
     "emoji-picker-react": "^4.12.0",
     "jodit-react": "^4.1.2",
     "js-cookie": "^3.0.5",
+    "lucide-react": "^0.468.0",
     "material-react-table": "^3.0.1",
     "next": "^15.0.3",
     "punycode": "^2.3.1",
