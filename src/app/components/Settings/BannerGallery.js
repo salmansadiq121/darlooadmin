@@ -1,59 +1,56 @@
 import Image from "next/image";
 import { PlusCircle, Trash2 } from "lucide-react";
-import { useState, useEffect } from "react";
+import Swal from "sweetalert2";
 import axios from "axios";
+import toast from "react-hot-toast";
 
-export default function BannerGallery(
-  {
-    // bannersData,
-    // onAddBanner,
-    // onDeleteBanner,
-  }
-) {
-  const [bannersData, setBannersData] = useState([]);
+export default function BannerGallery({ bannerData, fetchBanners }) {
+  // ------Delete Banner------>
+  const handleDeleteConfirmation = (bannerId) => {
+    Swal.fire({
+      title: "Are you sure?",
+      text: "You won't be able to revert this user!",
+      icon: "warning",
+      showCancelButton: true,
+      confirmButtonColor: "#3085d6",
+      cancelButtonColor: "#d33",
+      confirmButtonText: "Yes, delete it!",
+    }).then((result) => {
+      if (result.isConfirmed) {
+        handleDelete(bannerId);
+        Swal.fire("Deleted!", "Banner has been deleted.", "success");
+      }
+    });
+  };
 
-  // Fetch all Banners function
-  const fetchAllBanners = async () => {
+  const handleDelete = async (id) => {
     try {
-      const { data } = await axios.get(
-        `${process.env.NEXT_PUBLIC_SERVER_URI}/api/v1/banners/fatch/banners`
+      const { data } = await axios.delete(
+        `${process.env.NEXT_PUBLIC_SERVER_URI}/api/v1/banners/delete/banner/${id}`
       );
-      console.log(data);
-
-      if (data?.banners) {
-        setBannersData(data.banners);
+      if (data) {
+        fetchBanners();
       }
     } catch (error) {
-      console.log("Error fetching banners:", error);
+      console.log(error);
+      toast.error(error.response?.data?.message);
     }
   };
 
-  // Fetch blogs on component mount
-  useEffect(() => {
-    fetchAllBanners();
-  }, []);
-
   return (
-    <div className="relative bg-white rounded-md shadow p-4 sm:p-6">
-      <div className="flex items-center gap-4 w-full justify-end">
-        <button
-          className={`flex text-[14px] items-center justify-center text-white bg-[#c6080a] hover:bg-red-800  py-2 rounded-md shadow-md hover:shadow-xl transition-all duration-300 cursor-pointer hover:scale-[1.03] px-4`}
-        >
-          ADD NEW BANNER
-        </button>
-      </div>
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 mt-8 sm:mt-10">
-        {bannersData.map((banner) => (
+    <div className="relative bg-white rounded-md shadow p-3 sm:p-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mt-4">
+        {bannerData.map((banner) => (
           <div
             key={banner._id}
-            className="relative w-full h-64 overflow-hidden rounded-lg shadow-lg shadow-red-200 border-2 border-red-300 transition-transform hover:scale-105 group"
+            className="relative w-full h-[13rem] overflow-hidden rounded-lg  hover:shadow-md border-2 border-red-300  transition-transform duration-300 hover:scale-105 group"
           >
             <Image
               src={banner.image}
               alt={`Banner-${banner._id}`}
-              fill
-              sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
-              className="object-cover"
+              layout="fill"
+              // sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
+              className="w-full h-full hover:scale-110 transition-all duration-500 ease-in-out"
               unoptimized
               onError={(e) =>
                 console.error("Failed to load image:", banner.image)
@@ -61,7 +58,7 @@ export default function BannerGallery(
             />
 
             <button
-              // onClick={() => onDeleteBanner(banner.id)}
+              onClick={() => handleDeleteConfirmation(banner._id)}
               className="absolute top-2 right-2 bg-red-500 hover:bg-red-600 text-white p-2 rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
               aria-label={`Delete banner ${banner.id}`}
             >

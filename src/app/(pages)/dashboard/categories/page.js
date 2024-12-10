@@ -5,6 +5,7 @@ import React, { useEffect, useRef, useState } from "react";
 import axios from "axios";
 import toast from "react-hot-toast";
 import Loader from "@/app/utils/Loader";
+import { ImSpinner4 } from "react-icons/im";
 
 import { IoSearch } from "react-icons/io5";
 import { MdDelete, MdModeEditOutline, MdNotInterested } from "react-icons/md";
@@ -32,11 +33,10 @@ export default function Categories() {
   const [filteredData, setFilteredData] = useState([]);
   const [showAddCategory, setShowaddCategory] = useState(false);
   const [categoryId, setCategoryId] = useState("");
-  // State for categories
-  const [categoriesData, setCategoriesData] = useState([]);
   const [isLoading, setIsloading] = useState(false);
   const closeModal = useRef(null);
-  const [isLoading, setIsloading] = useState(false);
+  const isInitialRender = useRef(true);
+  const [isLoad, setIsLoad] = useState(false);
 
   // Fetch Page Link
   useEffect(() => {
@@ -80,22 +80,26 @@ export default function Categories() {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  // Fetch all categories function
+  // -------------Fetch all categories function--------->
   const fetchAllCategories = async () => {
-    setIsloading(true);
+    if (isInitialRender.current) {
+      setIsloading(true);
+    }
     try {
       const { data } = await axios.get(
         `${process.env.NEXT_PUBLIC_SERVER_URI}/api/v1/categories/all/categories`
       );
-      // console.log(data);
       if (data?.categories) {
-        setCategoryData(data.categories); // Set the full list of categories
-        setFilteredData(data.categories); // Initialize `filteredData` with the full list
+        setCategoryData(data.categories);
+        setFilteredData(data.categories);
       }
     } catch (error) {
       console.error("Error fetching categories:", error);
     } finally {
-      setIsloading(false);
+      if (isInitialRender.current) {
+        setIsloading(false);
+        isInitialRender.current = false;
+      }
     }
   };
 
@@ -106,8 +110,8 @@ export default function Categories() {
 
   // Function to delete category
   const deleteCategory = async (categoryId) => {
+    setIsLoad(true);
     try {
-      // Send DELETE request to the server with the category ID
       const { data } = await axios.delete(
         `${process.env.NEXT_PUBLIC_SERVER_URI}/api/v1/categories/delete/category/${categoryId}`
       );
@@ -120,6 +124,8 @@ export default function Categories() {
     } catch (error) {
       console.log("Error deleting category:", error);
       toast.error(error?.response?.data?.message || "An error occurred.");
+    } finally {
+      setIsLoad(false);
     }
   };
 
@@ -186,10 +192,19 @@ export default function Categories() {
                           <MdNotInterested className="text-[14px] text-sky-500 hover:text-sky-600" />
                         </span>
                         <span
-                          onClick={() => deleteCategory(category?._id)}
-                          className="p-1 bg-red-200 hover:bg-red-300   rounded-full transition-all duration-300 hover:scale-[1.03]"
+                          onClick={() => {
+                            deleteCategory(category?._id);
+                            setCategoryId(category?._id);
+                          }}
+                          className={`p-1 bg-red-200 hover:bg-red-300   rounded-full transition-all duration-300 hover:scale-[1.03]  ${
+                            isLoading && "cursor-not-allowed"
+                          }`}
                         >
-                          <MdDelete className="text-[14px] text-red-500 hover:text-red-600" />
+                          {isLoad && categoryId === category?._id ? (
+                            <ImSpinner4 className="text-[14px] text-red-600 animate-spin" />
+                          ) : (
+                            <MdDelete className="text-[14px] text-red-500 hover:text-red-600" />
+                          )}
                         </span>
                       </div>
                       <div className="w-[5.4rem] h-[5.4rem] relative rounded-full overflow-hidden flex items-center justify-center">
@@ -221,6 +236,7 @@ export default function Categories() {
               categoryId={categoryId}
               setCategoryId={setCategoryId}
               setFilteredData={setFilteredData}
+              fetchCategories={fetchAllCategories}
             />
           </div>
         )}

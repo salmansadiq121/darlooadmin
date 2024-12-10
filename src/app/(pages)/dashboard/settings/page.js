@@ -1,10 +1,12 @@
 "use client";
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { AiOutlineExclamationCircle } from "react-icons/ai";
 import dynamic from "next/dynamic";
 import axios from "axios";
 import Loader from "@/app/utils/Loader";
 import Image from "next/image";
+import toast from "react-hot-toast";
+import HandleBannerModal from "@/app/components/Settings/HandleBannerModal";
 
 const MainLayout = dynamic(
   () => import("./../../../components/layout/MainLayout"),
@@ -33,8 +35,12 @@ export default function Settings() {
   const [settingId, setSettingId] = useState("");
   const [addSetting, setAddSetting] = useState(false);
   const [type, setType] = useState("");
-
+  const [selectedTab, setSelectedtab] = useState("Account");
   const [isLoading, setIsLoading] = useState(false);
+  const [bannerData, setBannerData] = useState([]);
+  const isInitialRender = useRef(true);
+  const [showBanner, setShowBanner] = useState(false);
+  const [bannerId, setBannerId] = useState("");
 
   // Page URL
   useEffect(() => {
@@ -45,94 +51,149 @@ export default function Settings() {
     // exlint-disable-next-line
   }, []);
 
+  // ------------All Banners---------->
+  const fetchBanners = async () => {
+    if (isInitialRender.current) {
+      setIsLoading(true);
+    }
+    try {
+      const { data } = await axios.get(
+        `${process.env.NEXT_PUBLIC_SERVER_URI}/api/v1/banners/list`
+      );
+      if (data) {
+        setBannerData(data?.banners);
+      }
+    } catch (error) {
+      console.log(error);
+      toast.error(error?.response?.data?.message);
+    } finally {
+      if (isInitialRender.current) {
+        setIsLoading(false);
+        isInitialRender.current = false;
+      }
+    }
+  };
+
+  useEffect(() => {
+    fetchBanners();
+  }, []);
+
   return (
     <MainLayout>
       <div className="p-1 sm:p-2 px-1 sm:px-6 h-[100%] w-full pb-4 scroll-smooth">
         <div className="flex flex-col pb-2 h-full">
           <Breadcrumb path={currentUrl} />
+          <div className="flex h-[2.5rem] items-center mt-4 w-fit border-2 border-red-600 rounded-sm">
+            <button
+              className={`w-[6.5rem] h-full py-[.3rem]  text-[14px] font-normal ${
+                selectedTab === "Account"
+                  ? "bg-red-600 text-white"
+                  : "text-red-600 bg-white"
+              }`}
+              onClick={() => setSelectedtab("Account")}
+            >
+              Account
+            </button>
+            <button
+              className={`w-[6.5rem] h-full py-[.3rem] text-[14px] font-normal  ${
+                selectedTab === "Banner"
+                  ? "bg-red-600 text-white"
+                  : "text-red-600 bg-white"
+              }`}
+              onClick={() => setSelectedtab("Banner")}
+            >
+              Banner
+            </button>
+          </div>
           <div className="flex flex-col gap-4 mt-4  w-full h-full">
-            <div className="flex items-center justify-between flex-wrap gap-4">
-              <h1 className="text-2xl font-sans font-semibold text-black">
-                Settings
-              </h1>
-            </div>
             {/*  */}
-            <div className="flex flex-col gap-4">
-              <div className="relative overflow-hidden w-full  py-3 sm:py-4 bg-white rounded-md shadow px-3 sm:px-4  overflow-y-auto shidden">
-                <div className="flex flex-col gap-2">
-                  <h3 className="text-md font-semibold text-gray-900">
-                    Setup / Edit Bank Account
-                  </h3>
-                  <div className="flex items-center flex-wrap gap-4 ">
-                    <div className="flex flex-col gap-3 p-4 rounded-md bg-red-100">
-                      <span className="text-[14px] text-gray-600 flex items-center gap-2">
-                        Setup / Edit Bank Account{" "}
-                        <AiOutlineExclamationCircle className="text-gray-500 hover:text-gray-700 cursor-pointer text-[17px]" />
-                      </span>
-                      <span className="text-[14px] text-gray-600">
-                        **** **** **** 7685
-                      </span>
-                    </div>
-                    <button
-                      onClick={() => {
-                        setType("account");
-                        setAddSetting("true");
-                      }}
-                      className={`flex text-[15px] w-[9rem] items-center justify-center text-white bg-[#c6080a] hover:bg-red-800  py-2 rounded-md shadow-md hover:shadow-xl transition-all duration-300 cursor-pointer hover:scale-[1.03]`}
-                    >
-                      EDIT ACCOUNT
-                    </button>
-                  </div>
+            {selectedTab === "Account" ? (
+              <div className="flex flex-col gap-4">
+                <div className="flex items-center justify-between flex-wrap gap-4">
+                  <h1 className="text-2xl font-sans font-semibold text-black">
+                    Settings
+                  </h1>
                 </div>
-              </div>
-              <div className="relative overflow-hidden w-full  py-3 sm:py-4 bg-white rounded-md shadow px-3 sm:px-4  overflow-y-auto shidden">
-                <div className="flex flex-col gap-2">
-                  <h3 className="text-md font-semibold text-gray-900">
-                    Setup / Edit Pick-Up Location
-                  </h3>
-                  <div className="flex items-center flex-wrap gap-4 ">
-                    <div className="flex flex-col gap-3 p-4 rounded-md bg-red-100">
-                      <span className="text-[14px] text-gray-600 flex items-center gap-2">
-                        Setup / Edit Pick-Up Location{" "}
-                        <AiOutlineExclamationCircle className="text-gray-500 hover:text-gray-700 cursor-pointer text-[17px]" />
-                      </span>
-                      <span className="text-[14px] text-gray-600">
-                        29 Street, NY 21342
-                      </span>
-                    </div>
-                    <button
-                      onClick={() => {
-                        setType("address");
-                        setAddSetting("true");
-                      }}
-                      className={`flex text-[15px] w-[9rem] items-center justify-center text-white bg-[#c6080a] hover:bg-red-800  py-2 rounded-md shadow-md hover:shadow-xl transition-all duration-300 cursor-pointer hover:scale-[1.03]`}
-                    >
-                      EDIT ACCOUNT
-                    </button>
-                  </div>
-                </div>
-              </div>
-
-              {/* BANNERS CODE */}
-              <div className="flex items-center justify-between flex-wrap gap-4">
-                <h1 className="text-2xl font-sans font-semibold text-black">
-                  Banner Settings
-                </h1>
-              </div>
-              {isLoading ? (
-                <div className="w-full col-span-5">
-                  <Loader />
-                </div>
-              ) : (
                 <div className="relative overflow-hidden w-full  py-3 sm:py-4 bg-white rounded-md shadow px-3 sm:px-4  overflow-y-auto shidden">
-                  <BannerGallery
-                  // bannersData={banners}
-                  // onAddBanner={handleAddBanner}
-                  // onDeleteBanner={handleDeleteBanner}
-                  />
+                  <div className="flex flex-col gap-2">
+                    <h3 className="text-md font-semibold text-gray-900">
+                      Setup / Edit Bank Account
+                    </h3>
+                    <div className="flex items-center flex-wrap gap-4 ">
+                      <div className="flex flex-col gap-3 p-4 rounded-md bg-red-100">
+                        <span className="text-[14px] text-gray-600 flex items-center gap-2">
+                          Setup / Edit Bank Account{" "}
+                          <AiOutlineExclamationCircle className="text-gray-500 hover:text-gray-700 cursor-pointer text-[17px]" />
+                        </span>
+                        <span className="text-[14px] text-gray-600">
+                          **** **** **** 7685
+                        </span>
+                      </div>
+                      <button
+                        onClick={() => {
+                          setType("account");
+                          setAddSetting("true");
+                        }}
+                        className={`flex text-[15px] w-[9rem] items-center justify-center text-white bg-[#c6080a] hover:bg-red-800  py-2 rounded-md shadow-md hover:shadow-xl transition-all duration-300 cursor-pointer hover:scale-[1.03]`}
+                      >
+                        EDIT ACCOUNT
+                      </button>
+                    </div>
+                  </div>
                 </div>
-              )}
-            </div>
+                <div className="relative overflow-hidden w-full  py-3 sm:py-4 bg-white rounded-md shadow px-3 sm:px-4  overflow-y-auto shidden">
+                  <div className="flex flex-col gap-2">
+                    <h3 className="text-md font-semibold text-gray-900">
+                      Setup / Edit Pick-Up Location
+                    </h3>
+                    <div className="flex items-center flex-wrap gap-4 ">
+                      <div className="flex flex-col gap-3 p-4 rounded-md bg-red-100">
+                        <span className="text-[14px] text-gray-600 flex items-center gap-2">
+                          Setup / Edit Pick-Up Location{" "}
+                          <AiOutlineExclamationCircle className="text-gray-500 hover:text-gray-700 cursor-pointer text-[17px]" />
+                        </span>
+                        <span className="text-[14px] text-gray-600">
+                          29 Street, NY 21342
+                        </span>
+                      </div>
+                      <button
+                        onClick={() => {
+                          setType("address");
+                          setAddSetting("true");
+                        }}
+                        className={`flex text-[15px] w-[9rem] items-center justify-center text-white bg-[#c6080a] hover:bg-red-800  py-2 rounded-md shadow-md hover:shadow-xl transition-all duration-300 cursor-pointer hover:scale-[1.03]`}
+                      >
+                        EDIT ACCOUNT
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            ) : (
+              <div className="flex flex-col gap-4">
+                <div className="flex items-center justify-between flex-wrap gap-4">
+                  <h1 className="text-2xl font-sans font-semibold text-black">
+                    Banner Settings
+                  </h1>
+                  <div className="flex items-center gap-4 w-full sm:w-fit justify-end">
+                    <button
+                      onClick={() => setShowBanner(true)}
+                      className={`flex text-[14px] items-center justify-center text-white bg-[#c6080a] hover:bg-red-800  py-2 rounded-md shadow-md hover:shadow-xl transition-all duration-300 cursor-pointer hover:scale-[1.03] px-4`}
+                    >
+                      ADD NEW BANNER
+                    </button>
+                  </div>
+                </div>
+                <div className="w-full h-full">
+                  <div className="">
+                    <BannerGallery
+                      bannerData={bannerData}
+                      fetchBanners={fetchBanners}
+                    />
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
         </div>
         {/* -------------Handle Setting Modal------------ */}
@@ -143,6 +204,17 @@ export default function Settings() {
               settingId={settingId}
               setSettingId={setSettingId}
               type={type}
+            />
+          </div>
+        )}
+        {/* ----------------Handel Banner Modal---------------- */}
+        {showBanner && (
+          <div className="fixed top-0 left-0 p-2 sm:p-4 w-full h-full flex items-center justify-center z-[9999999] bg-gray-300/80 overflow-y-auto shidden">
+            <HandleBannerModal
+              setShowBanner={setShowBanner}
+              bannerId={bannerId}
+              setBannerId={setBannerId}
+              setBannerData={setBannerData}
             />
           </div>
         )}

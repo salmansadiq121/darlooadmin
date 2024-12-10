@@ -12,6 +12,9 @@ import { IoSearch } from "react-icons/io5";
 import { MdDelete, MdModeEditOutline, MdNotInterested } from "react-icons/md";
 import Ratings from "@/app/utils/Rating";
 import axios from "axios";
+import { ImSpinner4 } from "react-icons/im";
+import toast from "react-hot-toast";
+import Swal from "sweetalert2";
 const MainLayout = dynamic(
   () => import("./../../../components/layout/MainLayout"),
   {
@@ -44,6 +47,7 @@ export default function Products() {
   const [productId, setProductId] = useState("");
   const closeModal = useRef(null);
   const isInitialRender = useRef(true);
+  const [isLoad, setIsLoad] = useState(false);
 
   // <---------Fetch All Products-------->
   const fetchProducts = async () => {
@@ -167,6 +171,81 @@ export default function Products() {
     currentPage * itemsPerPage
   );
 
+  // -----------------handle Delete --------------->
+
+  const handleDeleteConfirmation = (productId) => {
+    Swal.fire({
+      title: "Are you sure?",
+      text: "You won't be able to revert this user!",
+      icon: "warning",
+      showCancelButton: true,
+      confirmButtonColor: "#3085d6",
+      cancelButtonColor: "#d33",
+      confirmButtonText: "Yes, delete it!",
+    }).then((result) => {
+      if (result.isConfirmed) {
+        handleDelete(productId);
+        Swal.fire("Deleted!", "Product has been deleted.", "success");
+      }
+    });
+  };
+  const handleDelete = async (productId) => {
+    setIsLoad(true);
+    try {
+      const { data } = await axios.delete(
+        `${process.env.NEXT_PUBLIC_SERVER_URI}/api/v1/products/delete/product/${productId}`
+      );
+      if (data) {
+        setFilterProducts((prev) =>
+          prev.filter((product) => product._id !== productId)
+        );
+        toast.success("Product deleted successfully!");
+      }
+    } catch (error) {
+      console.log("Error deleting product:", error);
+      toast.error(error?.response?.data?.message || "An error occurred.");
+    } finally {
+      setIsLoad(false);
+    }
+  };
+
+  // -------------Handle Update Status----------->
+  //
+  const handleStatusConfirmation = (productId, status) => {
+    Swal.fire({
+      title: "Are you sure?",
+      text: "You won't be able to revert this user!",
+      icon: "warning",
+      showCancelButton: true,
+      confirmButtonColor: "#3085d6",
+      cancelButtonColor: "#d33",
+      confirmButtonText: `Yes, ${status === true ? "enabled" : "disabled"} it!`,
+    }).then((result) => {
+      if (result.isConfirmed) {
+        handleStatus(productId, status);
+        Swal.fire("Update!", "Product status has been updated.", "success");
+      }
+    });
+  };
+  const handleStatus = async (productId, status) => {
+    setIsLoad(true);
+    try {
+      const { data } = await axios.put(
+        `${process.env.NEXT_PUBLIC_SERVER_URI}/api/v1/products/update/status/${productId}`,
+        { status }
+      );
+      if (data) {
+        fetchProducts();
+        toast.success("Product status updated!");
+      }
+    } catch (error) {
+      console.log("Error update product status:", error);
+      toast.error(error?.response?.data?.message || "An error occurred.");
+    } finally {
+      setIsLoad(false);
+    }
+  };
+
   const columns = useMemo(
     () => [
       {
@@ -235,7 +314,7 @@ export default function Products() {
           );
         },
         Cell: ({ cell, row }) => {
-          const category = row.original.category.name;
+          const category = row?.original?.category?.name || "";
 
           return (
             <div className="cursor-pointer text-[12px] flex items-center justify-start text-black w-full h-full">
@@ -377,11 +456,21 @@ export default function Products() {
           return (
             <div className="flex items-center justify-start cursor-pointer text-[12px] text-black w-full h-full">
               {status === true ? (
-                <button className=" py-[.35rem] px-4 rounded-[2rem] border-2 border-green-600 bg-green-200 hover:bg-green-300 text-green-900 hover:shadow-md cursor-pointer transition-all duration-300 hover:scale-[1.03]">
+                <button
+                  onClick={() =>
+                    handleStatusConfirmation(row.original._id, false)
+                  }
+                  className=" py-[.35rem] px-4 rounded-[2rem] border-2 border-green-600 bg-green-200 hover:bg-green-300 text-green-900 hover:shadow-md cursor-pointer transition-all duration-300 hover:scale-[1.03]"
+                >
                   Enabled
                 </button>
               ) : (
-                <button className=" py-[.35rem] px-4 rounded-[2rem] border-2 border-red-600 bg-red-200 hover:bg-red-300 text-red-900 hover:shadow-md cursor-pointer transition-all duration-300 hover:scale-[1.03]">
+                <button
+                  onClick={() =>
+                    handleStatusConfirmation(row.original._id, true)
+                  }
+                  className=" py-[.35rem] px-4 rounded-[2rem] border-2 border-red-600 bg-red-200 hover:bg-red-300 text-red-900 hover:shadow-md cursor-pointer transition-all duration-300 hover:scale-[1.03]"
+                >
                   Disabled
                 </button>
               )}
@@ -423,8 +512,18 @@ export default function Products() {
               <span className="p-1 bg-sky-200 hover:bg-sky-300 rounded-full transition-all duration-300 hover:scale-[1.03]">
                 <MdNotInterested className="text-[16px] text-sky-500 hover:text-sky-600" />
               </span>
-              <span className="p-1 bg-red-200 hover:bg-red-300   rounded-full transition-all duration-300 hover:scale-[1.03]">
-                <MdDelete className="text-[16px] text-red-500 hover:text-red-600" />
+              <span
+                onClick={() => {
+                  handleDeleteConfirmation(row.original._id);
+                  setProductId(row.original._id);
+                }}
+                className="p-1 bg-red-200 hover:bg-red-300   rounded-full transition-all duration-300 hover:scale-[1.03]"
+              >
+                {isLoad && productId === row.original._id ? (
+                  <ImSpinner4 className="text-[16px] text-white animate-spin" />
+                ) : (
+                  <MdDelete className="text-[16px] text-red-500 hover:text-red-600" />
+                )}
               </span>
             </div>
           );
