@@ -8,17 +8,21 @@ import { IoCameraOutline } from "react-icons/io5";
 import { IoIosClose } from "react-icons/io";
 import "react-datepicker/dist/react-datepicker.css";
 import JoditEditor from "jodit-react";
+import toast from "react-hot-toast";
+
+import axios from "axios";
 
 export default function BlogModal({
   closeModal,
   setAddBlog,
   blogId,
   setBlogId,
+  setFilterBlogs,
 }) {
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [published, setPublished] = useState("");
-  const [thumnail, setThumnail] = useState("");
+  const [thumbnail, setThumbnail] = useState("");
   const editor = useRef(null);
 
   const [isloading, setIsloading] = useState(false);
@@ -26,13 +30,37 @@ export default function BlogModal({
   // Handle Media Upload
   const handleMediaUpload = (e) => {
     const files = e.target.files[0];
-    setThumnail(files);
+    setThumbnail(files);
   };
 
   //   -----------Handle Submit--------------
-  // const handleSubmit = async (e) => {
-  //   e.preventDefault();
-  // };
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    if (!title || !description || !thumbnail) {
+      toast.error("Please fill all the required fields.");
+      return;
+    }
+    // Prepare the data from the states
+    const formData = new FormData();
+    formData.append("title", title);
+    formData.append("description", description);
+    formData.append("published", published ? "true" : "false");
+    formData.append("file", thumbnail);
+
+    try {
+      const { data } = await axios.post(
+        `${process.env.NEXT_PUBLIC_SERVER_URI}/api/v1/blogs/create/blog`,
+        formData
+      );
+      if (data.success) {
+        console.log("Blog created successfully:", data.success);
+        setFilterBlogs((prev) => [...prev, data.blog]);
+        setAddBlog(false);
+      }
+    } catch (error) {
+      console.error("Error creating blog:", error.response || error.message);
+    }
+  };
 
   // Editor configuration
   const config = {
@@ -64,7 +92,7 @@ export default function BlogModal({
       </div>
       <div className="w-full h-[98%] overflow-y-auto ">
         <form
-          // onSubmit={handleSubmit}
+          onSubmit={handleSubmit}
           className=" flex flex-col gap-4 px-4 py-2 mt-4 h-full w-full "
         >
           {/* Left */}
@@ -87,14 +115,14 @@ export default function BlogModal({
                 />
               </label>
             </div>
-            {thumnail && (
+            {thumbnail && (
               <div className="flex mt-4 gap-2 flex-wrap">
                 <div className="relative w-[3.9rem] h-[3.2rem] bg-gray-200 flex items-center justify-center rounded-md ">
                   <div className="w-[3.5rem] h-[2.8rem] relative rounded-md overflow-hidden flex items-center justify-center">
                     <Image
-                      src={URL.createObjectURL(thumnail)}
+                      src={URL.createObjectURL(thumbnail)}
                       layout="fill"
-                      alt={"Thumnail"}
+                      alt={"thumbnail"}
                       className="w-full h-full"
                     />
                   </div>
