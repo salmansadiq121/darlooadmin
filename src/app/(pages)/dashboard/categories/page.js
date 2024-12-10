@@ -1,5 +1,4 @@
 "use client";
-// import { categories } from "@/app/components/DummyData/DummyData";
 import dynamic from "next/dynamic";
 import Image from "next/image";
 import React, { useEffect, useRef, useState } from "react";
@@ -34,6 +33,7 @@ export default function Categories() {
   const [showAddCategory, setShowaddCategory] = useState(false);
   const [categoryId, setCategoryId] = useState("");
   const closeModal = useRef(null);
+  const [isLoading, setIsloading] = useState(false);
 
   // Fetch Page Link
   useEffect(() => {
@@ -81,12 +81,9 @@ export default function Categories() {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  // State for categories
-  const [categoriesData, setCategoriesData] = useState([]);
-  const [isLoading, setIsloading] = useState(false);
-
   // Fetch all categories function
   const fetchAllCategories = async () => {
+    setIsloading(true);
     try {
       const { data } = await axios.get(
         `${process.env.NEXT_PUBLIC_SERVER_URI}/api/v1/categories/all/categories`
@@ -99,6 +96,7 @@ export default function Categories() {
     } catch (error) {
       console.error("Error fetching categories:", error);
     } finally {
+      setIsloading(false);
     }
   };
 
