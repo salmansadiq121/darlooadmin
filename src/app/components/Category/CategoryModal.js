@@ -14,7 +14,7 @@ export default function CategoryModal({
   setShowaddCategory,
   categoryId,
   setCategoryId,
-  setCategories,
+  setFilteredData,
 }) {
   const [name, setName] = useState("");
   const [image, setImage] = useState("");
@@ -47,13 +47,11 @@ export default function CategoryModal({
         `${process.env.NEXT_PUBLIC_SERVER_URI}/api/v1/categories/create/category`,
         formData
       );
-      console.log("category res:", data);
-
+      // console.log("Add category response:", data);
       if (data) {
-        console.log("Category Data Submitted: ", formData);
         toast.success("Category added successfully!");
         setShowaddCategory(false);
-        // setCategories(prev => [...prev, newCategory]);
+        setFilteredData((prev) => [...prev, data.category]);
       }
     } catch (error) {
       console.error("Error adding category:", error);
@@ -82,11 +80,10 @@ export default function CategoryModal({
         `${process.env.NEXT_PUBLIC_SERVER_URI}/api/v1/categories/update/category/${categoryId}`,
         formData
       );
-      console.log("Edit Response:", res);
+      // console.log("Edit Response:", res);
       if (res) {
         setShowaddCategory(false);
         setCategoryId("");
-        // setCategories(prev => prev.filter(category => category.id !== categoryId));
       }
     } catch (error) {
       console.error("Error updating category:", error);

@@ -57,9 +57,9 @@ export default function Blogs() {
     setDraftBlogs(draftCount);
   }, [blogsData]);
 
-  useEffect(() => {
-    setFilterBlogs(blogsData);
-  }, [blogsData]);
+  // useEffect(() => {
+  //   setFilterBlogs(blogsData);
+  // }, [blogsData]);
 
   const filterData = (statusFilter = activeTab) => {
     let filtered = blogsData;
@@ -117,13 +117,13 @@ export default function Blogs() {
   const fetchAllBlogs = async () => {
     try {
       const { data } = await axios.get(
-        `${process.env.NEXT_PUBLIC_SERVER_URI}/api/v1/blogs/al`
+        `${process.env.NEXT_PUBLIC_SERVER_URI}/api/v1/blogs/all`
       );
-      console.log(data);
+      console.log("res", data);
 
-      // if (data?.blogs) {
-      //   setBlogData(data.blogs); // Assuming `setBlogData` is a state setter for blogs
-      // }
+      if (data?.blogs) {
+        setFilterBlogs(data.blogs);
+      }
     } catch (error) {
       console.error("Error fetching blogs:", error);
     }
@@ -230,8 +230,9 @@ export default function Blogs() {
                       <div className="w-full sm:w-[9rem] h-[9rem] sm:h-[8rem] rounded-full">
                         <div className=" w-full sm:w-[8.9rem] h-[8.9rem] sm:h-[7.9rem] relative rounded-md overflow-hidden flex items-center justify-center">
                           <Image
-                            src={blog?.thumbnail}
+                            src={blog?.thumnail}
                             layout="fill"
+                            fill
                             alt={"Avatar"}
                             className="w-full h-full "
                           />
@@ -339,6 +340,7 @@ export default function Blogs() {
               setAddBlog={setAddBlog}
               blogId={blogId}
               setBlogId={setBlogId}
+              setFilterBlogs={setFilterBlogs}
             />
           </div>
         )}

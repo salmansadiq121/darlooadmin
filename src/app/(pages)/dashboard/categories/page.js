@@ -33,6 +33,9 @@ export default function Categories() {
   const [filteredData, setFilteredData] = useState([]);
   const [showAddCategory, setShowaddCategory] = useState(false);
   const [categoryId, setCategoryId] = useState("");
+  // State for categories
+  const [categoriesData, setCategoriesData] = useState([]);
+  const [isLoading, setIsloading] = useState(false);
   const closeModal = useRef(null);
 
   // Fetch Page Link
@@ -43,10 +46,6 @@ export default function Categories() {
     }
     // exlint-disable-next-line
   }, []);
-
-  useEffect(() => {
-    setFilteredData(categoryData);
-  }, [categoryData]);
 
   const handleSearch = (value) => {
     setSearchQuery(value);
@@ -81,10 +80,6 @@ export default function Categories() {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  // State for categories
-  const [categoriesData, setCategoriesData] = useState([]);
-  const [isLoading, setIsloading] = useState(false);
-
   // Fetch all categories function
   const fetchAllCategories = async () => {
     try {
@@ -92,9 +87,9 @@ export default function Categories() {
         `${process.env.NEXT_PUBLIC_SERVER_URI}/api/v1/categories/all/categories`
       );
       // console.log(data);
-
       if (data?.categories) {
-        setCategoryData(data.categories);
+        setCategoryData(data.categories); // Set the full list of categories
+        setFilteredData(data.categories); // Initialize `filteredData` with the full list
       }
     } catch (error) {
       console.error("Error fetching categories:", error);
@@ -115,13 +110,14 @@ export default function Categories() {
         `${process.env.NEXT_PUBLIC_SERVER_URI}/api/v1/categories/delete/category/${categoryId}`
       );
       if (data) {
-        console.log("Category deleted successfully:", data);
         toast.success("Category deleted successfully!");
-        fetchAllCategories();
+        setFilteredData((prev) =>
+          prev.filter((category) => category._id !== categoryId)
+        );
       }
     } catch (error) {
       console.log("Error deleting category:", error);
-      // toast.error(error?.response?.data?.message || "An error occurred.");
+      toast.error(error?.response?.data?.message || "An error occurred.");
     }
   };
 
@@ -169,7 +165,7 @@ export default function Categories() {
                 </div>
               ) : (
                 <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 2xl:grid-cols-6 3xl:grid-cols-7 4xl:grid-cols-8 gap-3 sm:gap-4 mt-4">
-                  {categoryData?.map((category) => (
+                  {filteredData?.map((category) => (
                     <div
                       key={category?._id}
                       className=" relative  flex flex-col items-center justify-center p-4 rounded-md bg-gradient-to-tr from-red-50 to-grey-500 shadow hover:bg-red-100 hover:shadow-md transition-all duration-300 cursor-pointer"
@@ -199,7 +195,7 @@ export default function Categories() {
                           src={category?.image}
                           layout="fill"
                           alt={"Avatar"}
-                          className="w-full h-full "
+                          className="w-full h-full"
                         />
                       </div>
                       <h3 className="text-[16px] text-gray-800 font-medium">
@@ -222,7 +218,7 @@ export default function Categories() {
               setShowaddCategory={setShowaddCategory}
               categoryId={categoryId}
               setCategoryId={setCategoryId}
-              setCategories={setCategoryData}
+              setFilteredData={setFilteredData}
             />
           </div>
         )}
