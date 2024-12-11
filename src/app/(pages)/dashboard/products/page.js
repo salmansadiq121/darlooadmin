@@ -15,6 +15,8 @@ import axios from "axios";
 import { ImSpinner4 } from "react-icons/im";
 import toast from "react-hot-toast";
 import Swal from "sweetalert2";
+import CheckoutTest from "@/app/components/Products/CheckoutTest";
+import PaypalCheckout from "@/app/components/Checkout/PaypalCheckout";
 const MainLayout = dynamic(
   () => import("./../../../components/layout/MainLayout"),
   {
@@ -30,6 +32,36 @@ const ProductModal = dynamic(
     ssr: false,
   }
 );
+
+const carts = {
+  user: "6751997892669289c3e2f4ad",
+  products: [
+    {
+      product: "675321f898a3f20a1bca6f7b",
+      quantity: 2,
+      price: 5999,
+      colors: ["#000000", "#FFFFFF"],
+      sizes: ["M", "L"],
+    },
+    {
+      product: "675322b71a864f380512f283",
+      quantity: 2,
+      price: 140,
+      colors: ["#FFFFFF", "#0000FF"],
+      sizes: ["XL", "L"],
+    },
+  ],
+  totalAmount: "12278",
+  shippingFee: "500",
+  shippingAddress: {
+    address: "123 Street, ABC Avenue",
+    city: "New York",
+    state: "NY",
+    postalCode: "10001",
+    country: "USA",
+  },
+  paymentMethod: "Credit Card",
+};
 
 export default function Products() {
   const [currentUrl, setCurrentUrl] = useState("");
@@ -49,6 +81,10 @@ export default function Products() {
   const isInitialRender = useRef(true);
   const [isLoad, setIsLoad] = useState(false);
 
+  // <--------------Payment------------>
+  const [payment, setpayment] = useState(false);
+
+  // ------------------------------------------------------------------------------------------
   // <---------Fetch All Products-------->
   const fetchProducts = async () => {
     if (isInitialRender.current) {
@@ -210,7 +246,7 @@ export default function Products() {
   };
 
   // -------------Handle Update Status----------->
-  //
+
   const handleStatusConfirmation = (productId, status) => {
     Swal.fire({
       title: "Are you sure?",
@@ -287,7 +323,9 @@ export default function Products() {
                   <span>
                     <Ratings rating={rating} />
                   </span>
-                  <span className="text-[12px]">{rating}</span>
+                  <span className="text-[12px]">
+                    {rating ? rating.toFixed(1) : 0}
+                  </span>
                 </div>
               </div>
             </div>
@@ -474,6 +512,38 @@ export default function Products() {
                   Disabled
                 </button>
               )}
+            </div>
+          );
+        },
+        filterFn: (row, columnId, filterValue) => {
+          const cellValue =
+            row.original[columnId]?.toString().toLowerCase() || "";
+
+          return cellValue.includes(filterValue.toLowerCase());
+        },
+      },
+      {
+        accessorKey: "Checkout",
+        minSize: 100,
+        maxSize: 140,
+        size: 120,
+        grow: false,
+        Header: ({ column }) => {
+          return (
+            <div className=" flex flex-col gap-[2px]">
+              <span className="ml-1 cursor-pointer">Checkout</span>
+            </div>
+          );
+        },
+        Cell: ({ cell, row }) => {
+          return (
+            <div className="flex items-center justify-start cursor-pointer text-[12px] text-black w-full h-full">
+              <button
+                onClick={() => setpayment(true)}
+                className=" py-[.35rem] px-4 rounded-[2rem] border-2 border-green-600 bg-green-200 hover:bg-green-300 text-green-900 hover:shadow-md cursor-pointer transition-all duration-300 hover:scale-[1.03]"
+              >
+                Checkout
+              </button>
             </div>
           );
         },
@@ -729,6 +799,14 @@ export default function Products() {
               setProductId={setProductId}
               fetchProducts={fetchProducts}
             />
+          </div>
+        )}
+        {/* -----------------Handle Checkout----------- */}
+        {payment && (
+          <div className="fixed top-0 left-0 p-2 sm:p-4 w-full h-full flex items-center justify-center z-[9999999] bg-gray-300/80 overflow-y-auto shidden">
+            {/* <CheckoutTest setpayment={setpayment} carts={carts} /> */}
+            {/* paypal */}
+            <PaypalCheckout setpayment={setpayment} />
           </div>
         )}
       </div>

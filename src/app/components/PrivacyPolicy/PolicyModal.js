@@ -1,44 +1,60 @@
 "use client";
 
-import React, { useRef, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { CgClose } from "react-icons/cg";
 import "react-datepicker/dist/react-datepicker.css";
 import toast from "react-hot-toast";
 import axios from "axios";
 import JoditEditor from "jodit-react";
+import { FaSpinner } from "react-icons/fa";
 
 export default function PrivacyModal({
   setAddPrivacy,
   privacyId,
   setPrivacyId,
+  getPrivacy,
 }) {
   const [description, setDescription] = useState("");
   const editor = useRef(null);
 
   const [isloading, setIsloading] = useState(false);
 
+  // ------------Privacy Detail---------->
+  const fetchPrivacy = async () => {
+    setIsloading(true);
+    try {
+      const { data } = await axios.get(
+        `${process.env.NEXT_PUBLIC_SERVER_URI}/api/v1/privacy/fetch/privacy`
+      );
+      if (data) {
+        setDescription(data.privacy.description);
+      }
+    } catch (error) {
+      console.log(error);
+      toast.error(error?.response?.data?.message);
+    } finally {
+      setIsloading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchPrivacy();
+  }, []);
+
   //   -----------Handle Submit--------------
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!title || !thumnail) {
-      toast.error("Please fill out all required fields.");
-      return;
-    }
     setIsloading(true);
 
-    const productData = {
-      title,
-      file: thumnail,
-    };
-
     try {
-      const { data } = await axios.post(
-        `/api/v1/products/create/product`,
-        productData
+      const { data } = await axios.put(
+        `${process.env.NEXT_PUBLIC_SERVER_URI}/api/v1/privacy/update/privacy/${privacyId}`,
+        { description }
       );
       if (data) {
-        console.log("Blog Data Submitted: ", productData);
-        toast.success("Blog added successfully!");
+        toast.success("Privacy updated successfully!");
+        getPrivacy();
+        setAddPrivacy(false);
       }
     } catch (error) {
       console.log(error);
@@ -99,8 +115,17 @@ export default function PrivacyModal({
               >
                 CANCEL
               </button>
-              <button className="w-[6rem] py-[.4rem] text-[14px] rounded-sm bg-customRed hover:bg-red-700 hover:shadow-md hover:scale-[1.03] transition-all duration-300 text-white">
-                {privacyId ? "Save" : "SUBMIT"}
+              <button
+                disabled={isloading}
+                className=" flex items-center justify-center w-[6rem] py-[.4rem] text-[14px] rounded-sm bg-customRed hover:bg-red-700 hover:shadow-md hover:scale-[1.03] transition-all duration-300 text-white"
+              >
+                {isloading ? (
+                  <span>
+                    <FaSpinner className="h-5 w-5 text-white animate-spin" />
+                  </span>
+                ) : (
+                  <span>{"Save"}</span>
+                )}
               </button>
             </div>
           </div>
