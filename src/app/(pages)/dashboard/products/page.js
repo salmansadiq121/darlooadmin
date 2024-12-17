@@ -84,7 +84,6 @@ export default function Products() {
   // <--------------Payment------------>
   const [payment, setpayment] = useState(false);
 
-  // ------------------------------------------------------------------------------------------
   // <---------Fetch All Products-------->
   const fetchProducts = async () => {
     if (isInitialRender.current) {
@@ -804,9 +803,9 @@ export default function Products() {
         {/* -----------------Handle Checkout----------- */}
         {payment && (
           <div className="fixed top-0 left-0 p-2 sm:p-4 w-full h-full flex items-center justify-center z-[9999999] bg-gray-300/80 overflow-y-auto shidden">
-            {/* <CheckoutTest setpayment={setpayment} carts={carts} /> */}
+            <CheckoutTest setpayment={setpayment} carts={carts} />
             {/* paypal */}
-            <PaypalCheckout setpayment={setpayment} />
+            {/* <PaypalCheckout setpayment={setpayment} /> */}
           </div>
         )}
       </div>

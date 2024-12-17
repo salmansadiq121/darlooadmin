@@ -6,14 +6,17 @@ import {
   useMaterialReactTable,
 } from "material-react-table";
 import Image from "next/image";
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import { CiCircleChevLeft, CiCircleChevRight } from "react-icons/ci";
 import { IoSearch } from "react-icons/io5";
 import { MdDelete, MdModeEditOutline, MdNotInterested } from "react-icons/md";
 import { format } from "date-fns";
 import { TiEye } from "react-icons/ti";
 import { useRouter } from "next/navigation";
-import { orders } from "@/app/components/DummyData/DummyData";
+import Swal from "sweetalert2";
+import axios from "axios";
+import toast from "react-hot-toast";
+import { ImSpinner4 } from "react-icons/im";
 const MainLayout = dynamic(
   () => import("./../../../components/layout/MainLayout"),
   {
@@ -26,20 +29,26 @@ const Breadcrumb = dynamic(() => import("./../../../utils/Breadcrumb"), {
 
 export default function Orders() {
   const [currentUrl, setCurrentUrl] = useState("");
-  const [orderData, setOrderData] = useState(orders || []);
+  const [orderData, setOrderData] = useState([]);
   const [filterOrders, setFilterOrders] = useState([]);
   const [isLoading, setIsloading] = useState(false);
   const [rowSelection, setRowSelection] = useState({});
   const [activeTab, setActiveTab] = useState("All");
   const [searchQuery, setSearchQuery] = useState("");
-  const [shippedorder, setShippedorder] = useState(0);
-  const [completedOrder, setCompletedOrder] = useState(0);
   const [pendingOrder, setPendingOrder] = useState(0);
+  const [processingOrder, setProcessingOrder] = useState(0);
+  const [shippedorder, setShippedorder] = useState(0);
+  const [deliveredorder, setDeliveredorder] = useState(0);
   const [cancelledOrder, setCancelledOrder] = useState(0);
   const [refundOrder, setRefundOrder] = useState(0);
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 20;
   const router = useRouter();
+  const isInitialRender = useRef(true);
+  const [isLoad, setIsLoad] = useState(false);
+  const [orderId, setOrderId] = useState("");
+
+  console.log("Orders:", orderData);
 
   // Current URL
   useEffect(() => {
@@ -50,33 +59,64 @@ export default function Orders() {
     // exlint-disable-next-line
   }, []);
 
+  // <---------Fetch All Orders-------->
+  const fetchOrders = async () => {
+    if (isInitialRender.current) {
+      setIsloading(true);
+    }
+    try {
+      const { data } = await axios.get(
+        `${process.env.NEXT_PUBLIC_SERVER_URI}/api/v1/order/all/orders`
+      );
+      if (data) {
+        setOrderData(data.orders);
+      }
+    } catch (error) {
+      console.log(error);
+    } finally {
+      if (isInitialRender.current) {
+        setIsloading(false);
+        isInitialRender.current = false;
+      }
+    }
+  };
+
+  useEffect(() => {
+    fetchOrders();
+    // eslint-disable-next-line
+  }, []);
+
   useEffect(() => {
     setFilterOrders(orderData);
   }, [orderData]);
 
   // Get Product Length(Enable & Disable)
   useEffect(() => {
-    const shippedCount = orderData.filter(
-      (order) => order.status === "Shipped"
-    ).length;
-    const completedCount = orderData.filter(
-      (order) => order.status === "Completed"
-    ).length;
     const pendingCount = orderData.filter(
-      (order) => order.status === "Pending"
+      (order) => order.orderStatus === "Pending"
     ).length;
-    const cancelledCount = orderData.filter(
-      (order) => order.status === "Cancelled"
+    const processingCount = orderData.filter(
+      (order) => order.orderStatus === "Processing"
     ).length;
-    const refundCount = orderData.filter(
-      (order) => order.status === "Refund"
+    const shippedCount = orderData.filter(
+      (order) => order.orderStatus === "Shipped"
+    ).length;
+    const deliveredCount = orderData.filter(
+      (order) => order.orderStatus === "Delivered"
+    ).length;
+    const cancelCount = orderData.filter(
+      (order) => order.orderStatus === "Cancelled"
+    ).length;
+    const returnCount = orderData.filter(
+      (order) => order.orderStatus === "Returned"
     ).length;
 
-    setShippedorder(shippedCount);
-    setCompletedOrder(completedCount);
     setPendingOrder(pendingCount);
-    setCancelledOrder(cancelledCount);
-    setRefundOrder(refundCount);
+    setProcessingOrder(processingCount);
+    setShippedorder(shippedCount);
+    setDeliveredorder(deliveredCount);
+    setCancelledOrder(cancelCount);
+    setRefundOrder(returnCount);
   }, [orderData]);
 
   //----------- Handle search--------->
@@ -94,37 +134,46 @@ export default function Orders() {
       return;
     }
 
-    if (statusFilter === "Completed") {
-      filtered = filtered.filter((order) => order.status === "Completed");
+    if (statusFilter === "Pending") {
+      filtered = filtered.filter((order) => order.orderStatus === "Pending");
+    } else if (statusFilter === "Processing") {
+      filtered = filtered.filter((order) => order.orderStatus === "Processing");
     } else if (statusFilter === "Shipped") {
-      filtered = filtered.filter((order) => order.status === "Shipped");
-    } else if (statusFilter === "Pending") {
-      filtered = filtered.filter((order) => order.status === "Pending");
+      filtered = filtered.filter((order) => order.orderStatus === "Shipped");
+    } else if (statusFilter === "Delivered") {
+      filtered = filtered.filter((order) => order.orderStatus === "Delivered");
     } else if (statusFilter === "Cancelled") {
-      filtered = filtered.filter((order) => order.status === "Cancelled");
-    } else if (statusFilter === "Refund") {
-      filtered = filtered.filter((order) => order.status === "Refund");
+      filtered = filtered.filter((order) => order.orderStatus === "Cancelled");
+    } else if (statusFilter === "Returned") {
+      filtered = filtered.filter((order) => order.orderStatus === "Returned");
     }
 
     if (search) {
       const lowercasedSearch = search.toLowerCase();
       filtered = filtered.filter((order) => {
         const {
-          name = "",
-          price = "",
-          estimatedPrice = "",
-          quantity = "",
-          profit = 0,
-          status = "",
+          products = [],
+          shippingFee = "",
+          totalAmount = "",
+          orderStatus = "",
+          paymentMethod = "",
+          paymentStatus = "",
+          createdAt = "",
         } = order;
 
+        const productNames = products
+          .map((product) => product.product?.name || "")
+          .join(" ")
+          .toLowerCase();
+
         return (
-          name.toLowerCase().includes(lowercasedSearch) ||
-          status.toLowerCase().includes(lowercasedSearch) ||
-          price.toString().toLowerCase().includes(lowercasedSearch) ||
-          estimatedPrice.toString().toLowerCase().includes(lowercasedSearch) ||
-          quantity.toString().toLowerCase().includes(lowercasedSearch) ||
-          profit.toString().toLowerCase().includes(lowercasedSearch)
+          productNames.includes(lowercasedSearch) ||
+          shippingFee.toString().toLowerCase().includes(lowercasedSearch) ||
+          totalAmount.toString().toLowerCase().includes(lowercasedSearch) ||
+          orderStatus.toLowerCase().includes(lowercasedSearch) ||
+          paymentMethod.toLowerCase().includes(lowercasedSearch) ||
+          paymentStatus.toLowerCase().includes(lowercasedSearch) ||
+          createdAt.toLowerCase().includes(lowercasedSearch)
         );
       });
     }
@@ -136,7 +185,73 @@ export default function Orders() {
     setActiveTab(tab);
     filterData(searchQuery, tab);
   };
+  // -----------------handle Delete --------------->
+  const handleDeleteConfirmation = (orderId) => {
+    Swal.fire({
+      title: "Are you sure?",
+      text: "You won't be able to revert this user!",
+      icon: "warning",
+      showCancelButton: true,
+      confirmButtonColor: "#3085d6",
+      cancelButtonColor: "#d33",
+      confirmButtonText: "Yes, delete it!",
+    }).then((result) => {
+      if (result.isConfirmed) {
+        handleDelete(orderId);
+        Swal.fire("Deleted!", "Order has been deleted.", "success");
+      }
+    });
+  };
+  const handleDelete = async (orderId) => {
+    setIsLoad(true);
+    try {
+      const { data } = await axios.delete(
+        `${process.env.NEXT_PUBLIC_SERVER_URI}/api/v1/order/delete/order/${orderId}`
+      );
+      if (data) {
+        setFilterOrders((prev) =>
+          prev.filter((order) => order._id !== orderId)
+        );
+        toast.success("Order deleted successfully!");
+      }
+    } catch (error) {
+      console.log("Error deleting order:", error);
+      toast.error(error?.response?.data?.message || "An error occurred.");
+    } finally {
+      setIsLoad(false);
+    }
+  };
 
+  // <------------Handle Update Status (Payment/Order)--------------->
+  const handleUpdateStatus = async (orderId, paymentStatus, orderStatus) => {
+    console.log(orderId, paymentStatus, orderStatus);
+    try {
+      const { data } = await axios.put(
+        `${process.env.NEXT_PUBLIC_SERVER_URI}/api/v1/order/update/status/${orderId}`,
+        {
+          paymentStatus: paymentStatus,
+          orderStatus: orderStatus,
+        }
+      );
+      if (data) {
+        const updateOrder = data.orders;
+        setFilterOrders((prev) =>
+          prev.map((order) =>
+            order._id === orderId ? { ...order, ...updateOrder } : order
+          )
+        );
+        fetchOrders();
+        toast.success(
+          `${
+            paymentStatus ? "Payment status updated" : "Order status updated"
+          } successfully!`
+        );
+      }
+    } catch (error) {
+      console.log("Error deleting order:", error);
+      toast.error(error?.response?.data?.message || "An error occurred.");
+    }
+  };
   // ----------------Pegination----------->
   const totalPages = Math.ceil(filterOrders.length / itemsPerPage);
 
@@ -157,45 +272,96 @@ export default function Orders() {
   const columns = useMemo(
     () => [
       {
-        accessorKey: "name",
+        accessorKey: "products",
         minSize: 100,
         maxSize: 320,
         size: 240,
         grow: true,
         Header: ({ column }) => {
           return (
-            <div className=" flex flex-col w-full items-center justify-center gap-[2px]">
-              <span className="ml-1 cursor-pointer">PRODUCT</span>
+            <div className="flex flex-col w-full items-center justify-center gap-[2px]">
+              <span className="ml-1 cursor-pointer">PRODUCTS</span>
             </div>
           );
         },
         Cell: ({ cell, row }) => {
-          const name = row.original.name;
-          const avatar = row.original.thumbnails;
+          const products = row.original?.products || [];
+          const [isExpanded, setIsExpanded] = React.useState(false);
+
+          const firstProduct = products[0];
+          const remainingProducts = products.slice(1);
+
+          const toggleExpanded = () => setIsExpanded(!isExpanded);
 
           return (
             <div className="cursor-pointer text-[12px] text-black w-full h-full">
               <div className="flex flex-col gap-2">
-                <div className="flex items-center gap-1">
-                  <div className="w-[3.3rem] h-[2.1rem] relative rounded-md overflow-hidden flex items-center justify-center">
-                    <Image
-                      src={avatar}
-                      layout="fill"
-                      alt={"Avatar"}
-                      className="w-[3.5rem] h-[2.3rem] "
-                    />
+                {/* First Product */}
+                {firstProduct && (
+                  <div className="flex items-center gap-2">
+                    <div className="w-[3.3rem] h-[2.1rem] relative rounded-md overflow-hidden flex items-center justify-center">
+                      <Image
+                        src={
+                          firstProduct?.product?.thumbnails?.[0] ||
+                          "/default-thumbnail.jpg"
+                        }
+                        layout="fill"
+                        alt={"Product Thumbnail"}
+                        className="w-[3.5rem] h-[2.3rem]"
+                      />
+                    </div>
+                    <span className="text-[12px]">
+                      {firstProduct?.product?.name || "Unnamed Product"}
+                    </span>
                   </div>
-                  <span className="text-[12px]">{name}</span>
-                </div>
+                )}
+
+                {/* Dropdown for Remaining Products */}
+                {remainingProducts.length > 0 && (
+                  <div>
+                    <button
+                      onClick={toggleExpanded}
+                      className="text-blue-600 underline text-[12px] mt-1"
+                    >
+                      {isExpanded
+                        ? "View Less"
+                        : `View ${remainingProducts.length} More`}
+                    </button>
+
+                    {isExpanded && (
+                      <div className="mt-2 flex flex-col gap-2">
+                        {remainingProducts.map((product, index) => (
+                          <div key={index} className="flex items-center gap-2">
+                            <div className="w-[3.3rem] h-[2.1rem] relative rounded-md overflow-hidden flex items-center justify-center">
+                              <Image
+                                src={
+                                  product?.product?.thumbnails?.[0] ||
+                                  "/default-thumbnail.jpg"
+                                }
+                                layout="fill"
+                                alt={"Product Thumbnail"}
+                                className="w-[3.5rem] h-[2.3rem]"
+                              />
+                            </div>
+                            <span className="text-[12px]">
+                              {product?.product?.name || "Unnamed Product"}
+                            </span>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                )}
               </div>
             </div>
           );
         },
         filterFn: (row, columnId, filterValue) => {
-          const cellValue =
-            row.original[columnId]?.toString().toLowerCase() || "";
-
-          return cellValue.includes(filterValue.toLowerCase());
+          const products = row.original.products || [];
+          const productNames = products
+            .map((product) => product?.product?.name?.toLowerCase() || "")
+            .join(" ");
+          return productNames.includes(filterValue.toLowerCase());
         },
       },
       {
@@ -212,7 +378,7 @@ export default function Orders() {
           );
         },
         Cell: ({ cell, row }) => {
-          const quantity = row.original.quantity;
+          const quantity = row.original.products[0].quantity;
 
           return (
             <div className="cursor-pointer text-[12px] flex items-center justify-start pl-3 text-black w-full h-full">
@@ -245,7 +411,7 @@ export default function Orders() {
         },
       },
       {
-        accessorKey: "price",
+        accessorKey: "shippingFee",
         minSize: 70,
         maxSize: 140,
         size: 100,
@@ -253,12 +419,35 @@ export default function Orders() {
         Header: ({ column }) => {
           return (
             <div className=" flex flex-col gap-[2px]">
-              <span className="ml-1 cursor-pointer">REVENUE</span>
+              <span className="ml-1 cursor-pointer">SHIPPING FEE</span>
             </div>
           );
         },
         Cell: ({ cell, row }) => {
-          const price = row.original.price;
+          const shippingFee = row.original.shippingFee;
+
+          return (
+            <div className="cursor-pointer text-[12px] flex items-center justify-start text-black w-full h-full">
+              ${shippingFee}
+            </div>
+          );
+        },
+      },
+      {
+        accessorKey: "totalAmount",
+        minSize: 70,
+        maxSize: 140,
+        size: 100,
+        grow: false,
+        Header: ({ column }) => {
+          return (
+            <div className=" flex flex-col gap-[2px]">
+              <span className="ml-1 cursor-pointer">TOTAL AMOUNT</span>
+            </div>
+          );
+        },
+        Cell: ({ cell, row }) => {
+          const price = row.original.totalAmount;
 
           return (
             <div className="cursor-pointer text-[12px] flex items-center justify-start text-black w-full h-full">
@@ -274,66 +463,213 @@ export default function Orders() {
         },
       },
       {
-        accessorKey: "profit",
+        accessorKey: "paymentMethod",
         minSize: 70,
         maxSize: 140,
-        size: 100,
+        size: 120,
         grow: false,
         Header: ({ column }) => {
           return (
-            <div className=" flex flex-col gap-[2px]">
-              <span className="ml-1 cursor-pointer">PROFIT</span>
+            <div className="flex flex-col gap-[2px]">
+              <span className="ml-1 cursor-pointer">PAYMENT METHOD</span>
             </div>
           );
         },
         Cell: ({ cell, row }) => {
-          const profit = row.original.profit;
+          const paymentMethod = row.original.paymentMethod;
+
+          const getMethodStyles = (method) => {
+            const methodStyles = {
+              "Credit Card": " text-purple-600",
+              PayPal: "text-sky-600",
+              "Bank Transfer": "text-teal-600",
+            };
+
+            return (
+              methodStyles[method] ||
+              "border-gray-600 bg-gray-200 text-gray-900"
+            );
+          };
 
           return (
-            <div className="cursor-pointer text-[12px] flex items-center justify-start text-black w-full h-full">
-              ${profit}
+            <div className="flex items-center justify-start cursor-pointer text-[12px] text-black w-full h-full">
+              <button
+                className={`py-[.35rem] px-4 rounded-[2rem] cursor-pointer transition-all duration-300 hover:scale-[1.03] ${getMethodStyles(
+                  paymentMethod
+                )}`}
+              >
+                {paymentMethod}
+              </button>
             </div>
           );
         },
       },
       {
-        accessorKey: "status",
+        accessorKey: "orderStatus",
         minSize: 100,
         maxSize: 140,
         size: 130,
         grow: false,
         Header: ({ column }) => {
           return (
-            <div className=" flex flex-col gap-[2px]">
-              <span className="ml-1 cursor-pointer">STATUS</span>
+            <div className="flex flex-col gap-[2px]">
+              <span className="ml-1 cursor-pointer">ORDER STATUS</span>
             </div>
           );
         },
         Cell: ({ cell, row }) => {
-          const status = row.original.status;
+          const orderStatus = row.original.orderStatus;
+          const [orderStat, setOrderStat] = useState(orderStatus);
+          const [showUpdate, setShowUpdate] = useState(false);
+          const status = [
+            "Pending",
+            "Processing",
+            "Packing",
+            "Shipped",
+            "Delivered",
+            "Cancelled",
+            "Returned",
+          ];
+
+          const getStatusStyles = (status) => {
+            const statusStyles = {
+              Pending:
+                "border-orange-600 bg-orange-200 hover:bg-orange-300 text-orange-900",
+              Processing:
+                "border-blue-600 bg-blue-200 hover:bg-blue-300 text-blue-900",
+              Shipped:
+                "border-yellow-600 bg-yellow-200 hover:bg-yellow-300 text-yellow-900",
+              Delivered:
+                "border-green-600 bg-green-200 hover:bg-green-300 text-green-900",
+              Cancelled:
+                "border-pink-600 bg-pink-200 hover:bg-pink-300 text-pink-900",
+              Returned:
+                "border-red-600 bg-red-200 hover:bg-red-300 text-red-900",
+            };
+
+            return (
+              statusStyles[status] ||
+              "border-gray-600 bg-gray-200 text-gray-900"
+            );
+          };
+
+          const updateStatus = (id, status) => {
+            setOrderStat(status);
+            handleUpdateStatus(id, "", status);
+            setShowUpdate(false);
+          };
 
           return (
             <div className="flex items-center justify-start cursor-pointer text-[12px] text-black w-full h-full">
-              {status === "Completed" ? (
-                <button className=" py-[.35rem] px-4 rounded-[2rem] border-2 border-green-600 bg-green-200 hover:bg-green-300 text-green-900 hover:shadow-md cursor-pointer transition-all duration-300 hover:scale-[1.03]">
-                  Completed
-                </button>
-              ) : status === "Shipped" ? (
-                <button className=" py-[.35rem] px-4 rounded-[2rem] border-2 border-yellow-600 bg-yellow-200 hover:bg-yellow-300 text-yellow-900 hover:shadow-md cursor-pointer transition-all duration-300 hover:scale-[1.03]">
-                  Shipped
-                </button>
-              ) : status === "Pending" ? (
-                <button className=" py-[.35rem] px-4 rounded-[2rem] border-2 border-orange-600 bg-orange-200 hover:bg-orange-300 text-orange-900 hover:shadow-md cursor-pointer transition-all duration-300 hover:scale-[1.03]">
-                  Pending
-                </button>
-              ) : status === "Cancelled" ? (
-                <button className=" py-[.35rem] px-4 rounded-[2rem] border-2 border-pink-600 bg-pink-200 hover:bg-pink-300 text-pink-900 hover:shadow-md cursor-pointer transition-all duration-300 hover:scale-[1.03]">
-                  Cancelled
+              {!showUpdate ? (
+                <button
+                  className={`py-[.35rem] px-4 rounded-[2rem] border-2 hover:shadow-md cursor-pointer transition-all duration-300 hover:scale-[1.03] ${getStatusStyles(
+                    orderStatus
+                  )}`}
+                  onDoubleClick={() => setShowUpdate(true)}
+                >
+                  {orderStatus}
                 </button>
               ) : (
-                <button className=" py-[.35rem] px-4 rounded-[2rem] border-2 border-red-600 bg-red-200 hover:bg-red-300 text-red-900 hover:shadow-md cursor-pointer transition-all duration-300 hover:scale-[1.03]">
-                  Refund
-                </button>
+                <select
+                  value={orderStat}
+                  onChange={(e) =>
+                    updateStatus(row.original._id, e.target.value)
+                  }
+                  onBlur={() => setShowUpdate(false)}
+                  className="w-full h-[2.2rem] rounded-md border-2 border-gray-700 active:border-red-600 cursor-pointer p-1"
+                >
+                  <option value="">Select Status</option>
+                  {status?.map((stat) => (
+                    <option value={stat} key={stat}>
+                      {stat}
+                    </option>
+                  ))}
+                </select>
+              )}
+            </div>
+          );
+        },
+        filterFn: (row, columnId, filterValue) => {
+          const cellValue =
+            row.original[columnId]?.toString().toLowerCase() || "";
+
+          return cellValue.includes(filterValue.toLowerCase());
+        },
+      },
+      {
+        accessorKey: "paymentStatus",
+        minSize: 100,
+        maxSize: 140,
+        size: 130,
+        grow: false,
+        Header: ({ column }) => {
+          return (
+            <div className="flex flex-col gap-[2px]">
+              <span className="ml-1 cursor-pointer">PAYMENT STATUS</span>
+            </div>
+          );
+        },
+        Cell: ({ cell, row }) => {
+          const paymentStatus = row.original.paymentStatus;
+          const [paymentStat, setPaymentStat] = useState(paymentStatus);
+          const [showUpdate, setShowUpdate] = useState(false);
+          const status = ["Pending", "Completed", "Failed", "Refunded"];
+
+          const updateStatus = (id, status) => {
+            setPaymentStat(status);
+            handleUpdateStatus(id, status, "");
+            setShowUpdate(false);
+          };
+
+          const getStatusButton = (status) => {
+            const statusStyles = {
+              Pending:
+                "border-orange-600 bg-orange-200 hover:bg-orange-300 text-orange-900",
+              Completed:
+                "border-green-600 bg-green-200 hover:bg-green-300 text-green-900",
+              Failed: "border-red-600 bg-red-200 hover:bg-red-300 text-red-900",
+              Refunded:
+                "border-blue-600 bg-blue-200 hover:bg-blue-300 text-blue-900",
+            };
+
+            return (
+              <button
+                className={`py-[.35rem] px-4 rounded-[2rem] border-2 hover:shadow-md cursor-pointer transition-all duration-300 hover:scale-[1.03] ${
+                  statusStyles[status] ||
+                  "border-gray-600 bg-gray-200 text-gray-900"
+                }`}
+              >
+                {status}
+              </button>
+            );
+          };
+
+          return (
+            <div className="flex items-center justify-start cursor-pointer text-[12px] text-black w-full h-full">
+              {!showUpdate ? (
+                <div
+                  onDoubleClick={() => setShowUpdate(true)}
+                  className="w-full "
+                >
+                  {getStatusButton(paymentStatus)}
+                </div>
+              ) : (
+                <select
+                  value={paymentStat}
+                  onChange={(e) =>
+                    updateStatus(row.original._id, e.target.value)
+                  }
+                  onBlur={() => setShowUpdate(false)}
+                  className="w-full h-[2.2rem] rounded-md border-2 border-gray-700 active:border-red-600 cursor-pointer p-1"
+                >
+                  <option value="">Select Status</option>
+                  {status?.map((stat) => (
+                    <option value={stat} key={stat}>
+                      {stat}
+                    </option>
+                  ))}
+                </select>
               )}
             </div>
           );
@@ -362,7 +698,9 @@ export default function Orders() {
           return (
             <div className="flex items-center justify-center gap-2 cursor-pointer text-[12px] text-black w-full h-full">
               <span
-                onClick={() => router.push("/dashboard/orders/details")}
+                onClick={() =>
+                  router.push(`/dashboard/orders/details/${row.original._id}`)
+                }
                 className="p-1 bg-purple-200 hover:bg-purple-300 rounded-full transition-all duration-300 hover:scale-[1.03] cursor-pointer"
               >
                 <TiEye className="text-[16px] text-purple-500 hover:text-purple-600" />
@@ -370,11 +708,21 @@ export default function Orders() {
               <span className="p-1 bg-yellow-500 hover:bg-yellow-600 rounded-full transition-all duration-300 hover:scale-[1.03] cursor-pointer">
                 <MdModeEditOutline className="text-[16px] text-white" />
               </span>
-              <span className="p-1 bg-sky-200 hover:bg-sky-300 rounded-full transition-all duration-300 hover:scale-[1.03] cursor-pointer">
+              {/* <span className="p-1 bg-sky-200 hover:bg-sky-300 rounded-full transition-all duration-300 hover:scale-[1.03] cursor-pointer">
                 <MdNotInterested className="text-[16px] text-sky-500 hover:text-sky-600" />
-              </span>
-              <span className="p-1 bg-red-200 hover:bg-red-300   rounded-full transition-all duration-300 hover:scale-[1.03] cursor-pointer">
-                <MdDelete className="text-[16px] text-red-500 hover:text-red-600" />
+              </span> */}
+              <span
+                onClick={() => {
+                  setOrderId(row.original._id);
+                  handleDeleteConfirmation(row.original._id);
+                }}
+                className="p-1 bg-red-200 hover:bg-red-300   rounded-full transition-all duration-300 hover:scale-[1.03] cursor-pointer"
+              >
+                {isLoad && orderId === row.original._id ? (
+                  <ImSpinner4 className="text-[16px] text-white animate-spin" />
+                ) : (
+                  <MdDelete className="text-[16px] text-red-500 hover:text-red-600" />
+                )}
               </span>
             </div>
           );
@@ -462,28 +810,7 @@ export default function Orders() {
                 All <span>({orderData.length})</span>
               </button>
               <button
-                className={`border-b-[3px] flex items-center gap-1 py-3 text-[14px] px-2 font-medium cursor-pointer ${
-                  activeTab === "Completed"
-                    ? "border-b-[3px] border-red-600 text-red-600"
-                    : "text-gray-700 hover:text-gray-800 border-white"
-                }`}
-                onClick={() => handleTabClick("Completed")}
-              >
-                Completed <span>({completedOrder})</span>
-              </button>
-
-              <button
-                className={` border-b-[3px] flex items-center gap-1 py-3 text-[14px] px-2 font-medium cursor-pointer ${
-                  activeTab === "Shipped"
-                    ? "border-b-[3px] border-red-600 text-red-600"
-                    : "text-gray-700 hover:text-gray-800 border-white"
-                }`}
-                onClick={() => handleTabClick("Shipped")}
-              >
-                Shipped <span>({shippedorder})</span>
-              </button>
-              <button
-                className={` border-b-[3px] flex items-center gap-1 py-3 text-[14px] px-2 font-medium cursor-pointer ${
+                className={` border-b-[3px] flex items-center gap-1 py-3 text-[13px] px-2 font-medium cursor-pointer ${
                   activeTab === "Pending"
                     ? "border-b-[3px] border-red-600 text-red-600"
                     : "text-gray-700 hover:text-gray-800 border-white"
@@ -493,7 +820,38 @@ export default function Orders() {
                 Pending <span>({pendingOrder})</span>
               </button>
               <button
-                className={` border-b-[3px] flex items-center gap-1 py-3 text-[14px] px-2 font-medium cursor-pointer ${
+                className={` border-b-[3px] flex items-center gap-1 py-3 text-[13px] px-2 font-medium cursor-pointer ${
+                  activeTab === "Processing"
+                    ? "border-b-[3px] border-red-600 text-red-600"
+                    : "text-gray-700 hover:text-gray-800 border-white"
+                }`}
+                onClick={() => handleTabClick("Processing")}
+              >
+                Processing <span>({processingOrder})</span>
+              </button>
+              <button
+                className={` border-b-[3px] flex items-center gap-1 py-3 text-[13px] px-2 font-medium cursor-pointer ${
+                  activeTab === "Shipped"
+                    ? "border-b-[3px] border-red-600 text-red-600"
+                    : "text-gray-700 hover:text-gray-800 border-white"
+                }`}
+                onClick={() => handleTabClick("Shipped")}
+              >
+                Shipped <span>({shippedorder})</span>
+              </button>
+              <button
+                className={`border-b-[3px] flex items-center gap-1 py-3 text-[13px] px-2 font-medium cursor-pointer ${
+                  activeTab === "Delivered"
+                    ? "border-b-[3px] border-red-600 text-red-600"
+                    : "text-gray-700 hover:text-gray-800 border-white"
+                }`}
+                onClick={() => handleTabClick("Delivered")}
+              >
+                Delivered <span>({deliveredorder})</span>
+              </button>
+
+              <button
+                className={` border-b-[3px] flex items-center gap-1 py-3 text-[13px] px-2 font-medium cursor-pointer ${
                   activeTab === "Cancelled"
                     ? "border-b-[3px] border-red-600 text-red-600"
                     : "text-gray-700 hover:text-gray-800 border-white"
@@ -503,14 +861,14 @@ export default function Orders() {
                 Cancelled <span>({cancelledOrder})</span>
               </button>
               <button
-                className={` border-b-[3px] flex items-center gap-1 py-3 text-[14px] px-2 font-medium cursor-pointer ${
-                  activeTab === "Refund"
+                className={` border-b-[3px] flex items-center gap-1 py-3 text-[13px] px-2 font-medium cursor-pointer ${
+                  activeTab === "Returned"
                     ? "border-b-[3px] border-red-600 text-red-600"
                     : "text-gray-700 hover:text-gray-800 border-white"
                 }`}
-                onClick={() => handleTabClick("Refund")}
+                onClick={() => handleTabClick("Returned")}
               >
-                Refund <span>({refundOrder})</span>
+                Returned <span>({refundOrder})</span>
               </button>
             </div>
             {/* Actions */}
