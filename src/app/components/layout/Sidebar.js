@@ -12,6 +12,7 @@ import { HiOutlineNewspaper } from "react-icons/hi2";
 import { MdOutlineNotificationsActive } from "react-icons/md";
 import { MdOutlinePrivacyTip } from "react-icons/md";
 import { IoSettingsOutline } from "react-icons/io5";
+import { BsChatRightText } from "react-icons/bs";
 
 export default function Sidebar({ hide, setHide }) {
   const router = useRouter();
@@ -228,6 +229,41 @@ export default function Sidebar({ hide, setHide }) {
                     style={{ color: active === "orders" && "#fff" }}
                   >
                     Orders
+                  </span>
+                </div>
+              )}
+            </div>
+          </div>
+          {/* Orders */}
+          <div
+            className={` relative h-[2.4rem] rounded-md cursor-pointer hover:shadow-md   shadow-gray-300 ${
+              active === "orders" ? "bg-[#c6080a]" : "bg-white"
+            }  filter hover:drop-shadow-md  overflow-hidden transition-all duration-300`}
+            onClick={() => {
+              router.push("/dashboard/chat");
+            }}
+          >
+            <div
+              className={`relative w-full h-full flex items-center ${
+                active === "chat" ? "bg-[#c6080a]" : "bg-white"
+              } px-2 z-30 bg-transparent hover:bg-[#c6080a] hover:text-white transition-all duration-300 `}
+            >
+              {hide ? (
+                <BsChatRightText
+                  className="h-5 w-5 cursor-pointer ml-2"
+                  style={{ color: active === "chat" && "#fff" }}
+                />
+              ) : (
+                <div className="flex items-center gap-2">
+                  <BsChatRightText
+                    className="h-5 w-5 cursor-pointer ml-2"
+                    style={{ color: active === "chat" && "#fff" }}
+                  />
+                  <span
+                    className="text-[14px] font-[400]"
+                    style={{ color: active === "chat" && "#fff" }}
+                  >
+                    Chat
                   </span>
                 </div>
               )}
