@@ -1,10 +1,11 @@
-"use client"; // Ensure this is the first line in the file
+"use client";
 
 import { Inter } from "next/font/google";
 import "./globals.css";
 import { AuthProvider } from "./context/authContext";
 import { Toaster } from "react-hot-toast";
 import { Tooltip } from "react-tooltip";
+import SocketHandler from "./context/SocketHandler";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -17,6 +18,7 @@ export default function RootLayout({ children }) {
         <AuthProvider>
           <main className="overflow-x-hidden">{children}</main>
           <Toaster />
+          <SocketHandler />
           <Tooltip
             id="my-tooltip"
             place="bottom"

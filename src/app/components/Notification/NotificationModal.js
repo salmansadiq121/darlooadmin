@@ -11,6 +11,7 @@ import axios from "axios";
 import JoditEditor from "jodit-react";
 import Select from "react-select";
 import { users } from "../DummyData/DummyData";
+import { FaSpinner } from "react-icons/fa";
 const Style = dynamic(() => import("./../../utils/CommonStyle"), {
   ssr: false,
 });
@@ -21,7 +22,7 @@ export default function NotificationModal({
   notificationId,
   setNotificationId,
 }) {
-  const [usersData, setUsersData] = useState(users || []);
+  const [usersData, setUsersData] = useState([]);
   const [subject, setSubject] = useState("");
   const [content, setContent] = useState("");
   const [emails, setEmails] = useState([]);
@@ -41,14 +42,58 @@ export default function NotificationModal({
     }
   }, [usersData]);
 
+  const fetchUsers = async () => {
+    try {
+      const { data } = await axios.get(
+        `${process.env.NEXT_PUBLIC_SERVER_URI}/api/v1/auth/allUsers`
+      );
+      if (data) {
+        setUsersData(data.users);
+      }
+    } catch (error) {
+      console.log(error);
+    }
+  };
+
+  useEffect(() => {
+    fetchUsers();
+    // eslint-disable-next-line
+  }, []);
+
   //   -----------Handle Submit--------------
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!title || !thumnail) {
-      toast.error("Please fill out all required fields.");
-      return;
+    if (!subject || !content) {
+      return toast.error("Please fill all the fields");
     }
     setIsloading(true);
+    const data = {
+      subject,
+      context: content,
+      emails: emails.map((email) => email.value),
+    };
+    try {
+      const res = await axios.post(
+        `${process.env.NEXT_PUBLIC_SERVER_URI}/api/v1/notification/send`,
+        data
+      );
+      if (res?.data?.success) {
+        toast.success(res?.data?.message);
+        setSubject("");
+        setContent("");
+        setEmails([]);
+        setIsloading(false);
+        setNotificationId("");
+        setAddNotification(false);
+      } else {
+        toast.error(res?.data?.message);
+        setIsloading(false);
+      }
+    } catch (error) {
+      console.log("Error sending notification:", error);
+      toast.error("Error sending notification. Please try again!");
+      setIsloading(false);
+    }
   };
 
   // Editor configuration
@@ -93,7 +138,7 @@ export default function NotificationModal({
                 type="text"
                 value={subject}
                 onChange={(e) => setSubject(e.target.value)}
-                className={`${Style.input} w-full`}
+                className={`${Style.input} outline-none rounded-sm border border-gray-300 py-[5px] px-2 w-full`}
                 placeholder="Enter Subject"
                 required
               />
@@ -101,7 +146,7 @@ export default function NotificationModal({
             {/* Users */}
             <div className="">
               <label className="block text-sm font-medium text-gray-700">
-                Emails
+                Emails <span className="text-red-700">*</span>
               </label>
               <Select
                 options={usersOptions}
@@ -109,6 +154,7 @@ export default function NotificationModal({
                 onChange={setEmails}
                 isMulti
                 placeholder="Select Users"
+                required
               />
             </div>
 
@@ -122,6 +168,7 @@ export default function NotificationModal({
             color="#fff"
             tabIndex={1}
             onBlur={(newContent) => setContent(newContent)}
+            required
           />
 
           <div className="flex items-center justify-end w-full pb-3">
@@ -135,8 +182,14 @@ export default function NotificationModal({
               >
                 CANCEL
               </button>
-              <button className="w-[6rem] py-[.4rem] text-[14px] rounded-sm bg-customRed hover:bg-red-700 hover:shadow-md hover:scale-[1.03] transition-all duration-300 text-white">
-                {notificationId ? "Save" : "SUBMIT"}
+              <button className="w-[6rem] py-[.4rem] text-[14px] flex items-center justify-center rounded-sm bg-customRed hover:bg-red-700 hover:shadow-md hover:scale-[1.03] transition-all duration-300 text-white">
+                {isloading ? (
+                  <span>
+                    <FaSpinner className="h-5 w-5 text-white animate-spin" />
+                  </span>
+                ) : (
+                  <span>{notificationId ? "Save" : "SUBMIT"}</span>
+                )}
               </button>
             </div>
           </div>
