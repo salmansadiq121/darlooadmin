@@ -1,19 +1,28 @@
 import { redirect } from "next/navigation";
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { useAuth } from "../context/authContext";
 
 export default function AdminProtected({ children }) {
   const { auth } = useAuth();
-  const user = auth.user;
+  const [shouldRedirect, setShouldRedirect] = useState(false);
+  const user = auth?.user;
 
-  if (!user) {
+  useEffect(() => {
+    if (!user || user?.role !== "admin") {
+      const timer = setTimeout(() => {
+        setShouldRedirect(true);
+      }, 300);
+
+      return () => clearTimeout(timer);
+    }
+  }, [user]);
+
+  if (shouldRedirect) {
     redirect("/");
     return null;
   }
 
-  const isAdmin = user?.role === "admin";
-  if (!isAdmin) {
-    redirect("/");
+  if (!user || user?.role !== "admin") {
     return null;
   }
 

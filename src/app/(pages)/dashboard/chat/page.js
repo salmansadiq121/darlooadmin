@@ -32,6 +32,10 @@ import { format } from "date-fns";
 import { RiDoorClosedLine } from "react-icons/ri";
 import Swal from "sweetalert2";
 
+import socketIO from "socket.io-client";
+const ENDPOINT = process.env.NEXT_PUBLIC_SOCKET_SERVER_URI || "";
+const socket = socketIO(ENDPOINT, { transports: ["websocket"] });
+
 export default function Chat() {
   const { auth } = useAuth();
   const [show, setShow] = useState(false);
@@ -61,8 +65,21 @@ export default function Chat() {
 
     setMessage((prevContent) => prevContent + event.emoji);
   };
+  // -------------------------Setup Socket----------
+  // Socket.io
+  useEffect(() => {
+    socket = io(ENDPOINT);
+    socket.emit("setup", auth?.user);
+    socket.on("connection", () => {
+      console.log("User is online!");
+    });
 
-  // All Chats
+    socket.on("typing", (data) => setIsTyping(true));
+    socket.on("stop typing", (data) => setIsTyping(false));
+    // eslint-disable-next-line
+  }, []);
+
+  //---------- Fetch Chat Users--------->
   const fetchChats = async () => {
     if (initialChatLoad.current) {
       setChatLoad(true);
@@ -124,7 +141,7 @@ export default function Chat() {
         `${process.env.NEXT_PUBLIC_SERVER_URI}/api/v1/messages/all/${selectedChat._id}`
       );
       if (data) {
-        // socketId.emit("join chat", selectedChat._id);
+        socket.emit("join chat", selectedChat._id);
         setChatMessages(data.messages);
       }
     } catch (error) {

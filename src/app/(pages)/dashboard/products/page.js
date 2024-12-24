@@ -10,6 +10,7 @@ import React, { useEffect, useMemo, useRef, useState } from "react";
 import { CiCircleChevLeft, CiCircleChevRight } from "react-icons/ci";
 import { IoSearch } from "react-icons/io5";
 import { MdDelete, MdModeEditOutline, MdNotInterested } from "react-icons/md";
+import { FaCheckDouble } from "react-icons/fa6";
 import Ratings from "@/app/utils/Rating";
 import axios from "axios";
 import { ImSpinner4 } from "react-icons/im";
@@ -37,16 +38,16 @@ const carts = {
   user: "6751997892669289c3e2f4ad",
   products: [
     {
-      product: "675321f898a3f20a1bca6f7b",
+      product: "67691d4dcb6794c5d843c33a",
       quantity: 2,
-      price: 5999,
+      price: 1300,
       colors: ["#000000", "#FFFFFF"],
       sizes: ["M", "L"],
     },
     {
-      product: "675322b71a864f380512f283",
-      quantity: 2,
-      price: 140,
+      product: "675321f898a3f20a1bca6f7b",
+      quantity: 1,
+      price: 5999,
       colors: ["#FFFFFF", "#0000FF"],
       sizes: ["XL", "L"],
     },
@@ -84,6 +85,8 @@ export default function Products() {
   // <--------------Payment------------>
   const [payment, setpayment] = useState(false);
 
+  console.log("rowSelection:", rowSelection);
+
   // <---------Fetch All Products-------->
   const fetchProducts = async () => {
     if (isInitialRender.current) {
@@ -91,7 +94,7 @@ export default function Products() {
     }
     try {
       const { data } = await axios.get(
-        `${process.env.NEXT_PUBLIC_SERVER_URI}/api/v1/products/all/products`
+        `${process.env.NEXT_PUBLIC_SERVER_URI}/api/v1/products/all/admin/products`
       );
       if (data) {
         setProductData(data.products);
@@ -281,6 +284,48 @@ export default function Products() {
     }
   };
 
+  // -----------Delete All Products------------
+  const handleDeleteConfirmationProducts = () => {
+    Swal.fire({
+      title: "Are you sure?",
+      text: "You won't be able to revert this user!",
+      icon: "warning",
+      showCancelButton: true,
+      confirmButtonColor: "#3085d6",
+      cancelButtonColor: "#d33",
+      confirmButtonText: "Yes, delete it!",
+    }).then((result) => {
+      if (result.isConfirmed) {
+        deleteAllProducts();
+        Swal.fire("Deleted!", "Products has been deleted.", "success");
+      }
+    });
+  };
+
+  const deleteAllProducts = async () => {
+    if (!rowSelection) {
+      return toast.error("Please select at least one product to delete.");
+    }
+
+    const productIdsArray = Object.keys(rowSelection);
+
+    try {
+      const { data } = await axios.put(
+        `${process.env.NEXT_PUBLIC_SERVER_URI}/api/v1/products/delete/multiple`,
+        { productIds: productIdsArray }
+      );
+
+      if (data) {
+        fetchProducts();
+        toast.success("All selected products deleted successfully.");
+        setRowSelection({});
+      }
+    } catch (error) {
+      console.error(error);
+      toast.error("Failed to delete products. Please try again later.");
+    }
+  };
+
   const columns = useMemo(
     () => [
       {
@@ -451,6 +496,29 @@ export default function Products() {
         },
       },
       {
+        accessorKey: "shipping",
+        minSize: 70,
+        maxSize: 140,
+        size: 100,
+        grow: false,
+        Header: ({ column }) => {
+          return (
+            <div className=" flex flex-col gap-[2px]">
+              <span className="ml-1 cursor-pointer">Shipping</span>
+            </div>
+          );
+        },
+        Cell: ({ cell, row }) => {
+          const shipping = row.original.shipping;
+
+          return (
+            <div className="cursor-pointer text-[12px] flex items-center justify-start text-black w-full h-full">
+              {shipping ? "$" + shipping : "Fee"}
+            </div>
+          );
+        },
+      },
+      {
         accessorKey: "orders",
         minSize: 70,
         maxSize: 140,
@@ -468,12 +536,72 @@ export default function Products() {
 
           return (
             <div className="cursor-pointer text-[12px] flex items-center justify-start text-black w-full h-full">
-              {orders}
+              {orders ? orders : 0}
             </div>
           );
         },
       },
+      // Trending
+      {
+        accessorKey: "tranding",
+        minSize: 70,
+        maxSize: 140,
+        size: 130,
+        grow: false,
+        Header: ({ column }) => {
+          return (
+            <div className=" flex flex-col gap-[2px]">
+              <span className="ml-1 cursor-pointer">🔥 TRENDING</span>
+            </div>
+          );
+        },
+        Cell: ({ cell, row }) => {
+          const trending = row.original.trending;
 
+          return (
+            <div
+              className={`cursor-pointer text-[12px] flex items-center justify-center  px-4 py-2 rounded-[2rem] ${
+                trending
+                  ? "bg-green-100 text-green-700"
+                  : "bg-gray-100 text-gray-500"
+              }`}
+            >
+              {trending ? "Trending Now" : "Not Trending"}
+            </div>
+          );
+        },
+      },
+      // Sale
+      {
+        accessorKey: "sale.isActive",
+        minSize: 70,
+        maxSize: 140,
+        size: 130,
+        grow: false,
+        Header: ({ column }) => {
+          return (
+            <div className=" flex flex-col gap-[2px]">
+              <span className="ml-1 cursor-pointer"> 🛍️ SALE</span>
+            </div>
+          );
+        },
+        Cell: ({ cell, row }) => {
+          const sale = row.original.sale.isActive;
+
+          return (
+            <div
+              className={`cursor-pointer text-[12px] flex items-center justify-center  px-4 py-2 rounded-[2rem] ${
+                sale
+                  ? "bg-blue-100 text-blue-700"
+                  : "bg-yellow-100 text-yellow-700"
+              }`}
+            >
+              {sale ? "On Sale" : "No Sale"}
+            </div>
+          );
+        },
+      },
+      //
       {
         accessorKey: "status",
         minSize: 100,
@@ -521,38 +649,38 @@ export default function Products() {
           return cellValue.includes(filterValue.toLowerCase());
         },
       },
-      {
-        accessorKey: "Checkout",
-        minSize: 100,
-        maxSize: 140,
-        size: 120,
-        grow: false,
-        Header: ({ column }) => {
-          return (
-            <div className=" flex flex-col gap-[2px]">
-              <span className="ml-1 cursor-pointer">Checkout</span>
-            </div>
-          );
-        },
-        Cell: ({ cell, row }) => {
-          return (
-            <div className="flex items-center justify-start cursor-pointer text-[12px] text-black w-full h-full">
-              <button
-                onClick={() => setpayment(true)}
-                className=" py-[.35rem] px-4 rounded-[2rem] border-2 border-green-600 bg-green-200 hover:bg-green-300 text-green-900 hover:shadow-md cursor-pointer transition-all duration-300 hover:scale-[1.03]"
-              >
-                Checkout
-              </button>
-            </div>
-          );
-        },
-        filterFn: (row, columnId, filterValue) => {
-          const cellValue =
-            row.original[columnId]?.toString().toLowerCase() || "";
+      // {
+      //   accessorKey: "Checkout",
+      //   minSize: 100,
+      //   maxSize: 140,
+      //   size: 120,
+      //   grow: false,
+      //   Header: ({ column }) => {
+      //     return (
+      //       <div className=" flex flex-col gap-[2px]">
+      //         <span className="ml-1 cursor-pointer">Checkout</span>
+      //       </div>
+      //     );
+      //   },
+      //   Cell: ({ cell, row }) => {
+      //     return (
+      //       <div className="flex items-center justify-start cursor-pointer text-[12px] text-black w-full h-full">
+      //         <button
+      //           onClick={() => setpayment(true)}
+      //           className=" py-[.35rem] px-4 rounded-[2rem] border-2 border-green-600 bg-green-200 hover:bg-green-300 text-green-900 hover:shadow-md cursor-pointer transition-all duration-300 hover:scale-[1.03]"
+      //         >
+      //           Checkout
+      //         </button>
+      //       </div>
+      //     );
+      //   },
+      //   filterFn: (row, columnId, filterValue) => {
+      //     const cellValue =
+      //       row.original[columnId]?.toString().toLowerCase() || "";
 
-          return cellValue.includes(filterValue.toLowerCase());
-        },
-      },
+      //     return cellValue.includes(filterValue.toLowerCase());
+      //   },
+      // },
       {
         accessorKey: "Actions",
         minSize: 100,
@@ -567,6 +695,7 @@ export default function Products() {
           );
         },
         Cell: ({ cell, row }) => {
+          const status = row.original.status;
           return (
             <div className="flex items-center justify-center gap-2 cursor-pointer text-[12px] text-black w-full h-full">
               <span
@@ -578,8 +707,21 @@ export default function Products() {
               >
                 <MdModeEditOutline className="text-[16px] text-white" />
               </span>
-              <span className="p-1 bg-sky-200 hover:bg-sky-300 rounded-full transition-all duration-300 hover:scale-[1.03]">
-                <MdNotInterested className="text-[16px] text-sky-500 hover:text-sky-600" />
+              <span
+                onClick={() =>
+                  handleStatusConfirmation(row.original._id, !status)
+                }
+                className={`p-1  ${
+                  status
+                    ? "bg-sky-200 hover:bg-sky-300"
+                    : "bg-green-200 hover:bg-green-300"
+                }  rounded-full transition-all duration-300 hover:scale-[1.03] cursor-pointer`}
+              >
+                {status ? (
+                  <MdNotInterested className="text-[16px] text-sky-500 hover:text-sky-600" />
+                ) : (
+                  <FaCheckDouble className="text-[16px] text-green-700 hover:text-green-800" />
+                )}
               </span>
               <span
                 onClick={() => {
@@ -628,7 +770,6 @@ export default function Products() {
         },
       }),
     },
-
     enableColumnActions: false,
     enableColumnFilters: false,
     enableSorting: false,
@@ -641,7 +782,7 @@ export default function Products() {
     onRowSelectionChange: setRowSelection,
     state: { rowSelection },
     // enableEditing: true,
-    state: { isLoading: isLoading },
+    // state: { isLoading: isLoading },
 
     enablePagination: false,
     initialState: {
@@ -718,7 +859,10 @@ export default function Products() {
                 Products
               </h1>
               <div className="flex items-center gap-4">
-                <button className="text-[14px] py-2 px-4 hover:border-2 hover:rounded-md hover:shadow-md hover:scale-[1.03] text-gray-600 hover:text-gray-800 border-b-2 border-gray-600 transition-all duration-300 ">
+                <button
+                  onClick={() => handleDeleteConfirmationProducts()}
+                  className="text-[14px] py-2 px-4 hover:border-2 hover:rounded-md hover:shadow-md hover:scale-[1.03] text-gray-600 hover:text-gray-800 border-b-2 border-gray-600 transition-all duration-300 "
+                >
                   Delete All
                 </button>
                 <button

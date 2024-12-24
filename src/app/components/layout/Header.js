@@ -1,12 +1,15 @@
 "use client";
 import React, { useEffect, useRef, useState } from "react";
 import { FaRegBell } from "react-icons/fa";
-import Link from "next/link";
 import Image from "next/image";
 import { FaAngleDown } from "react-icons/fa6";
 import { FaAngleUp } from "react-icons/fa6";
 import { useAuth } from "@/app/context/authContext";
 import { redirect } from "next/navigation";
+import axios from "axios";
+import toast from "react-hot-toast";
+import { format } from "date-fns";
+import Link from "next/link";
 
 export default function Header() {
   const { auth, setAuth, refreshToken, getUserInfo } = useAuth();
@@ -45,6 +48,57 @@ export default function Header() {
     redirect("/");
   };
 
+  // Get all notifications
+
+  const fetchNotifications = async () => {
+    try {
+      const { data } = await axios.get(
+        `${process.env.NEXT_PUBLIC_SERVER_URI}/api/v1/notification/header/admin`
+      );
+      setNotificationData(data.notifications);
+    } catch (error) {
+      console.log(error);
+    }
+  };
+
+  useEffect(() => {
+    fetchNotifications();
+    // eslint-disable-next-line
+  }, []);
+
+  // -----------Mark All as Read----------------
+  const markAllAsRead = async () => {
+    if (!selectedNotificationId.length) {
+      return toast.error("Please select a notification to mark as read");
+    }
+    try {
+      const { data } = await axios.put(
+        `${process.env.NEXT_PUBLIC_SERVER_URI}/api/v1/notification/mark/all/read`,
+        { nitificationIds: selectedNotificationId }
+      );
+      if (data) {
+        fetchNotifications();
+        setSelectedNotificationId([]);
+      }
+    } catch (error) {
+      console.log(error);
+      toast.error("Failed to mark all as read");
+    }
+  };
+
+  // ----------Mark Single Notification as Read----
+  const markSingleNotificationAsRead = async (id) => {
+    try {
+      await axios.put(
+        `${process.env.NEXT_PUBLIC_SERVER_URI}/api/v1/notification/read/${id}`
+      );
+      fetchNotifications();
+    } catch (error) {
+      console.log(error);
+      toast.error("Failed to mark as read");
+    }
+  };
+
   return (
     <div className="w-full h-[3.8rem] bg-white border-b text-black">
       <div className="w-full h-full flex items-center justify-between px-2 sm:px-6 py-2">
@@ -81,35 +135,36 @@ export default function Header() {
                   <h5 className="text-[20px] text-center font-medium text-white bg-red-600  p-3 font-Poppins">
                     Notifications
                   </h5>
-                  <div className="w-[350px] min-h-[40vh] max-h-[60vh]  overflow-y-auto   ">
+                  <div className="w-[350px] min-h-[40vh] max-h-[60vh] flex flex-col gap-1   overflow-y-auto   ">
                     {notificationData &&
                       notificationData?.map((item, index) => (
                         <div
                           key={index}
-                          className="dark:bg-[#2d3a4ea1] bg-[#00000013] hover:bg-gray-300 transition-all duration-200 font-Poppins border-b dark:border-b-[#ffffff47] border-b-[#fff]"
+                          className=" bg-[#00000013] hover:bg-gray-300 transition-all duration-200 font-Poppins border-b dark:border-b-[#ffffff47] border-b-[#fff]"
                         >
                           <div className="w-full flex items-center justify-between p-2">
-                            <p className="text-black ">{item?.title}</p>
+                            <p className="text-black ">{item?.subject}</p>
                             <p
                               className="text-sky-500 hover:text-sky-600 text-[14px] transition-all duration-200  cursor-pointer"
-                              onClick={() => updateNotification(item?._id)}
+                              onClick={() =>
+                                markSingleNotificationAsRead(item?._id)
+                              }
                             >
                               Mark as read
                             </p>
                           </div>
-                          <Link
-                            to={item?.redirectLink}
+                          <div
+                            onClick={() => redirect(item?.redirectLink)}
                             key={item?._id}
-                            onClick={() => setFilterId(item?.taskId)}
                             className="cursor-pointer"
                           >
                             <p className="p-2 text-gray-700  text-[14px]">
-                              {item?.description}
+                              {item?.context}
                             </p>
-                            <p className="p-2 text-black  text-[14px] ">
-                              {format(item?.createdAt)}
-                            </p>
-                          </Link>
+                            <span className="p-2 text-black  text-[14px] ">
+                              {format(new Date(item?.createdAt), "dd-MMM-yyyy")}
+                            </span>
+                          </div>
                         </div>
                       ))}
 

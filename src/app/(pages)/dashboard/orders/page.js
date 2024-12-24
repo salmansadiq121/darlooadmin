@@ -269,6 +269,48 @@ export default function Orders() {
     currentPage * itemsPerPage
   );
 
+  // -----------Delete All Order------------
+  const handleDeleteConfirmationOrder = () => {
+    Swal.fire({
+      title: "Are you sure?",
+      text: "You won't be able to revert this user!",
+      icon: "warning",
+      showCancelButton: true,
+      confirmButtonColor: "#3085d6",
+      cancelButtonColor: "#d33",
+      confirmButtonText: "Yes, delete it!",
+    }).then((result) => {
+      if (result.isConfirmed) {
+        deleteAllOrders();
+        Swal.fire("Deleted!", "Orders has been deleted.", "success");
+      }
+    });
+  };
+
+  const deleteAllOrders = async () => {
+    if (!rowSelection) {
+      return toast.error("Please select at least one order to delete.");
+    }
+
+    const productIdsArray = Object.keys(rowSelection);
+
+    try {
+      const { data } = await axios.put(
+        `${process.env.NEXT_PUBLIC_SERVER_URI}/api/v1/order/delete/multiple`,
+        { orderIds: productIdsArray }
+      );
+
+      if (data) {
+        fetchOrders();
+        toast.success("All selected orders deleted successfully.");
+        setRowSelection({});
+      }
+    } catch (error) {
+      console.error(error);
+      toast.error("Failed to delete orders. Please try again later.");
+    }
+  };
+
   const columns = useMemo(
     () => [
       {
@@ -771,7 +813,6 @@ export default function Orders() {
     onRowSelectionChange: setRowSelection,
     state: { rowSelection },
     // enableEditing: true,
-    state: { isLoading: isLoading },
 
     enablePagination: false,
     initialState: {
@@ -877,14 +918,17 @@ export default function Orders() {
                 Latest Orders
               </h1>
               <div className="flex items-center gap-4">
-                <button className="text-[14px] py-2 px-4 hover:border-2 hover:rounded-md hover:shadow-md hover:scale-[1.03] text-gray-600 hover:text-gray-800 border-b-2 border-gray-600 transition-all duration-300 ">
+                <button
+                  onClick={() => handleDeleteConfirmationOrder()}
+                  className="text-[14px] py-2 px-4 hover:border-2 hover:rounded-md hover:shadow-md hover:scale-[1.03] text-gray-600 hover:text-gray-800 border-b-2 border-gray-600 transition-all duration-300 "
+                >
                   Delete All
                 </button>
-                <button
+                {/* <button
                   className={`flex text-[14px] items-center justify-center text-white bg-[#c6080a] hover:bg-red-800   py-2 rounded-md shadow-md hover:shadow-xl transition-all duration-300 cursor-pointer hover:scale-[1.03] px-4`}
                 >
                   ADD NEW ORDER
-                </button>
+                </button> */}
               </div>
             </div>
           </div>

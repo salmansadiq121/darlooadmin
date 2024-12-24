@@ -30,7 +30,7 @@ export default function MainLayout({ children }) {
             <Sidebar hide={hide} setHide={setHide} />
           </div>
           {show && (
-            <div className=" absolute top-0 left-0 flex  bg-white sm:hidden z-20 w-[13rem] pt-[0rem]">
+            <div className=" absolute top-0 left-0 flex  bg-white sm:hidden z-[999] w-[13rem] pt-[0rem]">
               <div className="absolute top-2 right-2 z-[999] transition-all duration-300 hover:text-red-600">
                 <IoClose
                   onClick={() => setShow(false)}

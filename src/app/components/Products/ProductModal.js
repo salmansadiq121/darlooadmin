@@ -34,11 +34,12 @@ export default function ProductModal({
   const [trending, setTrending] = useState(false);
   const [sale, setSale] = useState({
     isActive: false,
-    discountPercentage: 0,
+    discountPercentage: "",
     saleExpiry: null,
   });
   const [deletedImages, setDeletedImages] = useState([]);
   const [isloading, setIsloading] = useState(false);
+  const [shipping, setShipping] = useState("");
 
   // Get Product Detail
   const getProductInfo = async () => {
@@ -51,6 +52,7 @@ export default function ProductModal({
         setName(product.name || "");
         setDescription(product.description || "");
         setCategory(product.category || []);
+        setShipping(product.shipping || 0);
         setCategory({
           value: product.category._id,
           label: (
@@ -196,6 +198,7 @@ export default function ProductModal({
     const productData = new FormData();
     productData.append("name", name);
     productData.append("description", description);
+    productData.append("shipping", shipping);
     productData.append("category", category.value);
     productData.append("price", price);
     productData.append("estimatedPrice", estimatedPrice);
@@ -368,6 +371,19 @@ export default function ProductModal({
                   placeholder="Enter estimate price"
                 />
               </div>
+              {/* Shipping Price */}
+              <div className="">
+                <label className="block text-sm font-medium text-gray-700">
+                  Shipping Price
+                </label>
+                <input
+                  type="number"
+                  value={shipping}
+                  onChange={(e) => setShipping(e.target.value)}
+                  className={`${Style.input} w-full`}
+                  placeholder="Enter shipping price"
+                />
+              </div>
 
               {/*  */}
             </div>
@@ -381,7 +397,7 @@ export default function ProductModal({
                 <textarea
                   value={description}
                   onChange={(e) => setDescription(e.target.value)}
-                  className={`${Style.input} w-full h-[5rem]`}
+                  className={`${Style.input} w-full h-[6.8rem]`}
                   placeholder="Enter product description "
                   required
                 ></textarea>

@@ -41,6 +41,14 @@ export default function Settings() {
   const isInitialRender = useRef(true);
   const [showBanner, setShowBanner] = useState(false);
   const [bannerId, setBannerId] = useState("");
+  const [accountDetail, setAccountDetail] = useState({});
+  const [showFullAccount, setShowFullAccount] = useState(false);
+
+  const toggleAccountVisibility = () => {
+    setShowFullAccount((prev) => !prev);
+  };
+
+  console.log("accountDetail:", accountDetail);
 
   // Page URL
   useEffect(() => {
@@ -49,6 +57,32 @@ export default function Settings() {
       setCurrentUrl(pathArray);
     }
     // exlint-disable-next-line
+  }, []);
+
+  const fetchAccountDetail = async () => {
+    if (isInitialRender.current) {
+      setIsLoading(true);
+    }
+    try {
+      const { data } = await axios.get(
+        `${process.env.NEXT_PUBLIC_SERVER_URI}/api/v1/account/account-setting`
+      );
+      if (data) {
+        setAccountDetail(data?.account[0]);
+      }
+    } catch (error) {
+      console.log(error);
+      toast.error(error?.response?.data?.message);
+    } finally {
+      if (isInitialRender.current) {
+        setIsLoading(false);
+        isInitialRender.current = false;
+      }
+    }
+  };
+
+  useEffect(() => {
+    fetchAccountDetail();
   }, []);
 
   // ------------All Banners---------->
@@ -125,14 +159,23 @@ export default function Settings() {
                           Setup / Edit Bank Account{" "}
                           <AiOutlineExclamationCircle className="text-gray-500 hover:text-gray-700 cursor-pointer text-[17px]" />
                         </span>
-                        <span className="text-[14px] text-gray-600">
-                          **** **** **** 7685
+                        <span
+                          className="text-[14px] text-gray-600 cursor-pointer"
+                          onClick={toggleAccountVisibility}
+                        >
+                          {accountDetail?.accountNumber
+                            ? showFullAccount
+                              ? accountDetail.accountNumber
+                              : "**** **** **** " +
+                                accountDetail.accountNumber.slice(-4)
+                            : "Not Set"}
                         </span>
                       </div>
                       <button
                         onClick={() => {
                           setType("account");
                           setAddSetting("true");
+                          setSettingId(accountDetail._id);
                         }}
                         className={`flex text-[15px] w-[9rem] items-center justify-center text-white bg-[#c6080a] hover:bg-red-800  py-2 rounded-md shadow-md hover:shadow-xl transition-all duration-300 cursor-pointer hover:scale-[1.03]`}
                       >
@@ -153,13 +196,16 @@ export default function Settings() {
                           <AiOutlineExclamationCircle className="text-gray-500 hover:text-gray-700 cursor-pointer text-[17px]" />
                         </span>
                         <span className="text-[14px] text-gray-600">
-                          29 Street, NY 21342
+                          {accountDetail?.pickUpLocation
+                            ? accountDetail?.pickUpLocation
+                            : "Not Set"}
                         </span>
                       </div>
                       <button
                         onClick={() => {
                           setType("address");
                           setAddSetting("true");
+                          setSettingId(accountDetail._id);
                         }}
                         className={`flex text-[15px] w-[9rem] items-center justify-center text-white bg-[#c6080a] hover:bg-red-800  py-2 rounded-md shadow-md hover:shadow-xl transition-all duration-300 cursor-pointer hover:scale-[1.03]`}
                       >
@@ -204,6 +250,8 @@ export default function Settings() {
               settingId={settingId}
               setSettingId={setSettingId}
               type={type}
+              accountDetail={accountDetail}
+              fetchAccountDetail={fetchAccountDetail}
             />
           </div>
         )}

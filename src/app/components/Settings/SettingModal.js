@@ -6,43 +6,45 @@ import "react-datepicker/dist/react-datepicker.css";
 import toast from "react-hot-toast";
 import axios from "axios";
 import { Style } from "@/app/utils/CommonStyle";
+import { FaSpinner } from "react-icons/fa";
 
 export default function SettingModal({
   setAddSetting,
   settingId,
   setSettingId,
   type,
+  accountDetail,
+  fetchAccountDetail,
 }) {
-  const [bankAccount, setBankAccount] = useState("");
-  const [pickupLocation, setPickupLocation] = useState("");
-
+  const [accountNumber, setAccountNumber] = useState(
+    accountDetail.accountNumber
+  );
+  const [pickUpLocation, setPickUpLocation] = useState(
+    accountDetail.pickUpLocation
+  );
   const [isloading, setIsloading] = useState(false);
 
   //   -----------Handle Submit--------------
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!title || !thumnail) {
-      toast.error("Please fill out all required fields.");
-      return;
-    }
     setIsloading(true);
 
-    const productData = {
-      title,
-      file: thumnail,
-    };
-
     try {
-      const { data } = await axios.put(`/api/v1/setting`, productData);
+      const { data } = await axios.put(
+        `${process.env.NEXT_PUBLIC_SERVER_URI}/api/v1/account/account-setting/${settingId}`,
+        { accountNumber, pickUpLocation }
+      );
       if (data) {
-        console.log("Setting Data Submitted: ", productData);
-        toast.success("Setting added successfully!");
+        fetchAccountDetail();
+        toast.success("Account setting updated successfully!");
+        setSettingId("");
       }
     } catch (error) {
       console.log(error);
       toast.error(error?.response?.data?.message);
     } finally {
       setIsloading(false);
+      setAddSetting(false);
     }
   };
 
@@ -75,8 +77,8 @@ export default function SettingModal({
               </label>
               <input
                 type="text"
-                value={bankAccount}
-                onChange={(e) => setBankAccount(e.target.value)}
+                value={accountNumber}
+                onChange={(e) => setAccountNumber(e.target.value)}
                 className={`${Style.input} w-full`}
                 placeholder="Enter back account"
               />
@@ -88,8 +90,8 @@ export default function SettingModal({
               </label>
               <input
                 type="text"
-                value={pickupLocation}
-                onChange={(e) => setPickupLocation(e.target.value)}
+                value={pickUpLocation}
+                onChange={(e) => setPickUpLocation(e.target.value)}
                 className={`${Style.input} w-full`}
                 placeholder="Enter pickup location"
               />
@@ -106,8 +108,14 @@ export default function SettingModal({
               >
                 CANCEL
               </button>
-              <button className="w-[6rem] py-[.4rem] text-[14px] rounded-sm bg-customRed hover:bg-red-700 hover:shadow-md hover:scale-[1.03] transition-all duration-300 text-white">
-                {settingId ? "Save" : "SUBMIT"}
+              <button className="w-[6rem] py-[.4rem] text-[14px] flex items-center justify-center rounded-sm bg-customRed hover:bg-red-700 hover:shadow-md hover:scale-[1.03] transition-all duration-300 text-white">
+                {isloading ? (
+                  <span>
+                    <FaSpinner className="h-5 w-5 text-white animate-spin" />
+                  </span>
+                ) : (
+                  <span>{settingId ? "Save" : "SUBMIT"}</span>
+                )}
               </button>
             </div>
           </div>

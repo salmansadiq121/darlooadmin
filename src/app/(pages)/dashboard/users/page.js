@@ -18,6 +18,7 @@ import { MdNotInterested } from "react-icons/md";
 import { Style } from "@/app/utils/CommonStyle";
 import toast from "react-hot-toast";
 import Swal from "sweetalert2";
+import { FaCheckDouble } from "react-icons/fa";
 const MainLayout = dynamic(
   () => import("./../../../components/layout/MainLayout"),
   {
@@ -201,7 +202,47 @@ export default function Users() {
     }
   };
 
-  // Update User Role
+  // -----------Delete All Notifications------------
+  const handleDeleteConfirmationUsers = () => {
+    Swal.fire({
+      title: "Are you sure?",
+      text: "You won't be able to revert this user!",
+      icon: "warning",
+      showCancelButton: true,
+      confirmButtonColor: "#3085d6",
+      cancelButtonColor: "#d33",
+      confirmButtonText: "Yes, delete it!",
+    }).then((result) => {
+      if (result.isConfirmed) {
+        deleteAllUsers();
+        Swal.fire("Deleted!", "Users has been deleted.", "success");
+      }
+    });
+  };
+
+  const deleteAllUsers = async () => {
+    if (!rowSelection) {
+      return toast.error("Please select at least one user to delete.");
+    }
+
+    const productIdsArray = Object.keys(rowSelection);
+
+    try {
+      const { data } = await axios.put(
+        `${process.env.NEXT_PUBLIC_SERVER_URI}/api/v1/auth/delete/multiple`,
+        { userIds: productIdsArray }
+      );
+
+      if (data) {
+        fetchUsers();
+        toast.success("All selected users deleted successfully.");
+        setRowSelection({});
+      }
+    } catch (error) {
+      console.error(error);
+      toast.error("Failed to delete users. Please try again later.");
+    }
+  };
 
   const columns = useMemo(
     () => [
@@ -726,6 +767,25 @@ export default function Users() {
           );
         },
         Cell: ({ cell, row }) => {
+          const status = row.original.status;
+          const [userStatus, setUserStatus] = useState(status);
+
+          const handleUpdate = async (value) => {
+            setUserStatus(value);
+            alert(value);
+            try {
+              const { data } = await axios.put(
+                `${process.env.NEXT_PUBLIC_SERVER_URI}/api/v1/auth/update/role/${row.original._id}`,
+                { status: value }
+              );
+              if (data) {
+                fetchUsers();
+              }
+            } catch (error) {
+              console.log(error);
+              toast.error(error.response?.data?.message);
+            }
+          };
           return (
             <div className="flex items-center justify-center gap-2 cursor-pointer text-[12px] text-black w-full h-full">
               <span
@@ -737,8 +797,19 @@ export default function Users() {
               >
                 <MdModeEditOutline className="text-[16px] text-white" />
               </span>
-              <span className="p-1 bg-sky-200 hover:bg-sky-300 rounded-full transition-all duration-300 hover:scale-[1.03]">
-                <MdNotInterested className="text-[16px] text-sky-500 hover:text-sky-600" />
+              <span
+                onClick={() => handleUpdate(!status)}
+                className={`p-1  ${
+                  userStatus
+                    ? "bg-sky-200 hover:bg-sky-300"
+                    : "bg-green-200 hover:bg-green-300"
+                }  rounded-full transition-all duration-300 hover:scale-[1.03] cursor-pointer`}
+              >
+                {userStatus ? (
+                  <MdNotInterested className="text-[16px] text-sky-500 hover:text-sky-600" />
+                ) : (
+                  <FaCheckDouble className="text-[14px] text-green-600 hover:text-green-700" />
+                )}
               </span>
               <span
                 onClick={() => handleDeleteConfirmation(row.original._id)}
@@ -793,7 +864,7 @@ export default function Users() {
     onRowSelectionChange: setRowSelection,
     state: { rowSelection },
     // enableEditing: true,
-    state: { isLoading: isLoading },
+    // state: { isLoading: isLoading },
 
     enablePagination: false,
     initialState: {
@@ -871,7 +942,10 @@ export default function Users() {
                 Users
               </h1>
               <div className="flex items-center gap-4">
-                <button className="text-[14px] py-2 px-4 hover:border-2 hover:rounded-md hover:shadow-md hover:scale-[1.03] text-gray-600 hover:text-gray-800 border-b-2 border-gray-600 transition-all duration-300 ">
+                <button
+                  onClick={() => handleDeleteConfirmationUsers()}
+                  className="text-[14px] py-2 px-4 hover:border-2 hover:rounded-md hover:shadow-md hover:scale-[1.03] text-gray-600 hover:text-gray-800 border-b-2 border-gray-600 transition-all duration-300 "
+                >
                   Delete All
                 </button>
                 <button

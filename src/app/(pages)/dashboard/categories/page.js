@@ -9,6 +9,7 @@ import { ImSpinner4 } from "react-icons/im";
 
 import { IoSearch } from "react-icons/io5";
 import { MdDelete, MdModeEditOutline, MdNotInterested } from "react-icons/md";
+import Swal from "sweetalert2";
 const MainLayout = dynamic(
   () => import("./../../../components/layout/MainLayout"),
   {
@@ -37,6 +38,7 @@ export default function Categories() {
   const closeModal = useRef(null);
   const isInitialRender = useRef(true);
   const [isLoad, setIsLoad] = useState(false);
+  const [selectedCategoryId, setSelectedCategoryId] = useState([]);
 
   // Fetch Page Link
   useEffect(() => {
@@ -80,6 +82,17 @@ export default function Categories() {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
+  // Handle selecting a single Category
+  const handleSelectSingle = (id, checked) => {
+    if (checked) {
+      setSelectedCategoryId((prev) => [...prev, id]);
+    } else {
+      setSelectedCategoryId((prev) =>
+        prev.filter((notifyId) => notifyId !== id)
+      );
+    }
+  };
+
   // -------------Fetch all categories function--------->
   const fetchAllCategories = async () => {
     if (isInitialRender.current) {
@@ -109,6 +122,22 @@ export default function Categories() {
   }, []);
 
   // Function to delete category
+  const handleDeleteConfirmation = (categoryId) => {
+    Swal.fire({
+      title: "Are you sure?",
+      text: "You won't be able to revert this user!",
+      icon: "warning",
+      showCancelButton: true,
+      confirmButtonColor: "#3085d6",
+      cancelButtonColor: "#d33",
+      confirmButtonText: "Yes, delete it!",
+    }).then((result) => {
+      if (result.isConfirmed) {
+        deleteCategory(categoryId);
+        Swal.fire("Deleted!", "Category has been deleted.", "success");
+      }
+    });
+  };
   const deleteCategory = async (categoryId) => {
     setIsLoad(true);
     try {
@@ -129,6 +158,41 @@ export default function Categories() {
     }
   };
 
+  // -----------Delete All Notifications------------
+  const handleDeleteConfirmationCategories = () => {
+    Swal.fire({
+      title: "Are you sure?",
+      text: "You won't be able to revert this user!",
+      icon: "warning",
+      showCancelButton: true,
+      confirmButtonColor: "#3085d6",
+      cancelButtonColor: "#d33",
+      confirmButtonText: "Yes, delete it!",
+    }).then((result) => {
+      if (result.isConfirmed) {
+        deleteAllOrders();
+        Swal.fire("Deleted!", "Categories has been deleted.", "success");
+      }
+    });
+  };
+
+  const deleteAllOrders = async () => {
+    try {
+      const { data } = await axios.put(
+        `${process.env.NEXT_PUBLIC_SERVER_URI}/api/v1/categories/delete/multiple`,
+        { categoryIds: selectedCategoryId }
+      );
+
+      if (data) {
+        fetchAllCategories();
+        toast.success("All selected categories deleted successfully.");
+        setSelectedCategoryId([]);
+      }
+    } catch (error) {
+      console.error(error);
+      toast.error("Failed to delete categories. Please try again later.");
+    }
+  };
   return (
     <MainLayout>
       <div className="relative p-1 sm:p-2 px-1 sm:px-6 h-[100%] w-full pb-4 scroll-smooth">
@@ -140,7 +204,10 @@ export default function Categories() {
                 Categories
               </h1>
               <div className="flex items-center gap-4 sm:w-fit w-full justify-end">
-                <button className="text-[14px] py-2 px-4 hover:border-2 hover:rounded-md hover:shadow-md hover:scale-[1.03] text-gray-600 hover:text-gray-800 border-b-2 border-gray-600 transition-all duration-300 ">
+                <button
+                  onClick={handleDeleteConfirmationCategories}
+                  className="text-[14px] py-2 px-4 hover:border-2 hover:rounded-md hover:shadow-md hover:scale-[1.03] text-gray-600 hover:text-gray-800 border-b-2 border-gray-600 transition-all duration-300 "
+                >
                   Delete All
                 </button>
                 <button
@@ -178,7 +245,20 @@ export default function Categories() {
                       key={category?._id}
                       className=" relative  flex flex-col items-center justify-center p-4 rounded-md bg-gradient-to-tr from-red-50 to-grey-500 shadow hover:bg-red-100 hover:shadow-md transition-all duration-300 cursor-pointer"
                     >
-                      <div className="absolute top-2 right-1 z-20 flex flex-col gap-2">
+                      <div className="absolute top-2 left-2 z-20">
+                        <input
+                          type="checkbox"
+                          className="h-4 w-4 accent-red-600 cursor-pointer "
+                          onChange={(e) =>
+                            handleSelectSingle(category._id, e.target.checked)
+                          }
+                          checked={Boolean(
+                            selectedCategoryId?.includes(category._id)
+                          )}
+                        />
+                      </div>
+
+                      <div className="absolute top-2 right-1 z-10 flex flex-col gap-2">
                         <span
                           onClick={() => {
                             setCategoryId(category?._id);
@@ -193,7 +273,7 @@ export default function Categories() {
                         </span>
                         <span
                           onClick={() => {
-                            deleteCategory(category?._id);
+                            handleDeleteConfirmation(category?._id);
                             setCategoryId(category?._id);
                           }}
                           className={`p-1 bg-red-200 hover:bg-red-300   rounded-full transition-all duration-300 hover:scale-[1.03]  ${
