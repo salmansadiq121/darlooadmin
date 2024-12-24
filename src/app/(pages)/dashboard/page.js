@@ -14,6 +14,7 @@ import RevenueCharts from "@/app/components/dashboard/RevenueChart";
 import RevenueByDevice from "@/app/components/dashboard/RevenueByDevice";
 import TrafficChart from "@/app/components/dashboard/TrafficChart";
 import dynamic from "next/dynamic";
+import axios from "axios";
 const MainLayout = dynamic(
   () => import("./../../components/layout/MainLayout"),
   {
@@ -36,26 +37,60 @@ ChartJS.register(
 
 export default function Dashboard() {
   const [currentUrl, setCurrentUrl] = useState("");
+  const [revenue, setRevenue] = useState("0");
+  const [orders, setOrders] = useState(0);
+  const [revenuePercentage, setRevenuePercentage] = useState("");
+  const [ordersPercentage, setOrderPercentage] = useState("");
+
+  // Current Path
   useEffect(() => {
-    const pathArray = window.location.pathname;
-    setCurrentUrl(pathArray);
+    if (typeof window !== "undefined") {
+      const pathArray = window.location.pathname;
+      setCurrentUrl(pathArray);
+    }
+    // exlint-disable-next-line
+  }, []);
+
+  // -----------------Order Data----------->
+  const orderData = async () => {
+    try {
+      const { data } = await axios.get(
+        `${process.env.NEXT_PUBLIC_SERVER_URI}/api/v1/order/total/revenue`
+      );
+      if (data) {
+        setRevenue(data.currentMonth.totalRevenue);
+        setOrders(data.currentMonth.totalOrders);
+        setRevenuePercentage(data.percentageChange.revenue);
+        setOrderPercentage(data.percentageChange.orders);
+      }
+    } catch (error) {
+      console.log(error?.response?.data?.message);
+    }
+  };
+
+  useEffect(() => {
+    orderData();
   }, []);
 
   const data = [
     {
       title: "Revenue",
-      value: "$7,825",
-      percentage: "+22%",
-      color: "text-green-500", // Use green for positive values
-      chartColor: "#22c55e",
+      value: `$${revenue.toLocaleString()}`,
+      percentage: revenuePercentage,
+      color: revenuePercentage?.startsWith("+")
+        ? "text-green-500"
+        : "text-red-500",
+      chartColor: revenuePercentage?.startsWith("+") ? "#22c55e" : "#ef4444",
       chartData: [10, 30, 20, 50, 40, 60, 50],
     },
     {
       title: "Orders",
-      value: "920",
-      percentage: "-25%",
-      color: "text-red-500", // Use red for negative values
-      chartColor: "#ef4444",
+      value: orders,
+      percentage: ordersPercentage,
+      color: ordersPercentage?.startsWith("+")
+        ? "text-green-500"
+        : "text-red-500",
+      chartColor: ordersPercentage?.startsWith("+") ? "#22c55e" : "#ef4444",
       chartData: [50, 40, 30, 20, 40, 30, 10],
     },
     {

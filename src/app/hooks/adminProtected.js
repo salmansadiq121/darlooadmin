@@ -11,7 +11,7 @@ export default function AdminProtected({ children }) {
     if (!user || user?.role !== "admin") {
       const timer = setTimeout(() => {
         setShouldRedirect(true);
-      }, 300);
+      }, 500);
 
       return () => clearTimeout(timer);
     }
@@ -19,11 +19,10 @@ export default function AdminProtected({ children }) {
 
   if (shouldRedirect) {
     redirect("/");
-    return null;
   }
 
   if (!user || user?.role !== "admin") {
-    return null;
+    redirect("/");
   }
 
   return <>{children}</>;

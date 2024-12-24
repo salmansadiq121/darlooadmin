@@ -34,7 +34,7 @@ import Swal from "sweetalert2";
 
 import socketIO from "socket.io-client";
 const ENDPOINT = process.env.NEXT_PUBLIC_SOCKET_SERVER_URI || "";
-const socket = socketIO(ENDPOINT, { transports: ["websocket"] });
+const socketId = socketIO(ENDPOINT, { transports: ["websocket"] });
 
 export default function Chat() {
   const { auth } = useAuth();
@@ -65,19 +65,23 @@ export default function Chat() {
 
     setMessage((prevContent) => prevContent + event.emoji);
   };
-  // -------------------------Setup Socket----------
+
   // Socket.io
   useEffect(() => {
-    socket = io(ENDPOINT);
-    socket.emit("setup", auth?.user);
-    socket.on("connection", () => {
-      console.log("User is online!");
+    socketId.on("typing", (data) => {
+      setIsTyping(true);
     });
 
-    socket.on("typing", (data) => setIsTyping(true));
-    socket.on("stop typing", (data) => setIsTyping(false));
-    // eslint-disable-next-line
-  }, []);
+    socketId.on("stopTyping", (data) => {
+      setIsTyping(false);
+    });
+
+    // Cleanup on component unmount
+    return () => {
+      socketId.off("typing");
+      socketId.off("stopTyping");
+    };
+  }, [socketId]);
 
   //---------- Fetch Chat Users--------->
   const fetchChats = async () => {
@@ -140,10 +144,8 @@ export default function Chat() {
       const { data } = await axios.get(
         `${process.env.NEXT_PUBLIC_SERVER_URI}/api/v1/messages/all/${selectedChat._id}`
       );
-      if (data) {
-        socket.emit("join chat", selectedChat._id);
-        setChatMessages(data.messages);
-      }
+      setChatMessages(data.messages);
+      socketId.emit("join chat", selectedChat._id);
     } catch (error) {
       console.log(error);
       toast.error(error?.response?.data?.message);
@@ -158,6 +160,19 @@ export default function Chat() {
   useEffect(() => {
     fetchMessages();
 
+    // eslint-disable-next-line
+  }, [selectedChat]);
+
+  useEffect(() => {
+    const handleFetchMessages = (data) => {
+      fetchMessages();
+    };
+
+    socketId.on("fetchMessages", handleFetchMessages);
+
+    return () => {
+      socketId.off("fetchMessages", handleFetchMessages);
+    };
     // eslint-disable-next-line
   }, [selectedChat]);
 
@@ -234,12 +249,12 @@ export default function Chat() {
 
       if (data) {
         fetchMessages();
-        // socketId.emit("NewMessageAdded", {
-        //   content: message || "👍",
-        //   contentType: type,
-        //   chatId: selectedChat._id,
-        //   messageId: data._id,
-        // });
+        socketId.emit("NewMessageAdded", {
+          content: message || "👍",
+          contentType: type,
+          chatId: selectedChat._id,
+          messageId: data._id,
+        });
         setMessage("");
       }
     } catch (error) {
@@ -261,12 +276,12 @@ export default function Chat() {
 
       if (data) {
         fetchMessages();
-        // socketId.emit("NewMessageAdded", {
-        //   content: "👍",
-        //   contentType: "like",
-        //   chatId: selectedChat._id,
-        //   messageId: data._id,
-        // });
+        socketId.emit("NewMessageAdded", {
+          content: "👍",
+          contentType: "like",
+          chatId: selectedChat._id,
+          messageId: data._id,
+        });
         setMessage("");
       }
     } catch (error) {
@@ -290,12 +305,12 @@ export default function Chat() {
 
       if (data) {
         fetchMessages();
-        // socketId.emit("NewMessageAdded", {
-        //   content: content,
-        //   contentType: mediaType,
-        //   chatId: selectedChat._id,
-        //   messageId: data._id,
-        // });
+        socketId.emit("NewMessageAdded", {
+          content: content,
+          contentType: mediaType,
+          chatId: selectedChat._id,
+          messageId: data._id,
+        });
         setMessage("");
         setLoading(false);
       }
@@ -314,7 +329,7 @@ export default function Chat() {
     // Typing Indicator login
     if (!typing) {
       setTyping(true);
-      // socketId.emit("typing", selectedChat._id);
+      socketId.emit("typing", selectedChat._id);
     }
     let lastTypingTime = new Date().getTime();
     var timerLenght = 1500;
@@ -322,7 +337,7 @@ export default function Chat() {
       var timeNow = new Date().getTime();
       var timeDiff = timeNow - lastTypingTime;
       if (timeDiff >= timerLenght && typing) {
-        // socketId.emit("stop typing", selectedChat._id);
+        socketId.emit("stopTyping", selectedChat._id);
         setTyping(false);
       }
     }, timerLenght);
@@ -553,7 +568,7 @@ export default function Chat() {
                         : `${selectedChat?.users[1]?.name}`}
                     </span>
                     {isTyping && (
-                      <span className="text-sky-600 text-[13px]">
+                      <span className="text-white text-[13px]">
                         Typing
                         <span className="dot-1 font-bold text-[18px]">.</span>
                         <span className="dot-2 font-bold text-[18px]">.</span>
