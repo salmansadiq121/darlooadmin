@@ -270,7 +270,7 @@ export default function Sidebar({ hide, setHide }) {
             </div>
           </div>
           {/* Blogs */}
-          <div
+          {/* <div
             className={` relative h-[2.4rem] rounded-md cursor-pointer hover:shadow-md   shadow-gray-300 ${
               active === "blogs" ? "bg-[#c6080a]" : "bg-white"
             }  filter hover:drop-shadow-md  overflow-hidden transition-all duration-300`}
@@ -303,7 +303,7 @@ export default function Sidebar({ hide, setHide }) {
                 </div>
               )}
             </div>
-          </div>
+          </div> */}
           {/* Notifications */}
           <div
             className={` relative h-[2.4rem] rounded-md cursor-pointer hover:shadow-md   shadow-gray-300 ${

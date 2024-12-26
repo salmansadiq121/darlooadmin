@@ -9,10 +9,10 @@ import { redirect } from "next/navigation";
 import axios from "axios";
 import toast from "react-hot-toast";
 import { format } from "date-fns";
-import Link from "next/link";
+import { MdArrowRightAlt } from "react-icons/md";
 
 export default function Header() {
-  const { auth, setAuth, refreshToken, getUserInfo } = useAuth();
+  const { auth, setAuth } = useAuth();
   const user = auth.user;
   const [open, setOpen] = useState(false);
   const [notificationData, setNotificationData] = useState(false);
@@ -35,12 +35,6 @@ export default function Header() {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  // useEffect(() => {
-  //   refreshToken();
-  //   getUserInfo();
-  //   // eslint-disable-next-line
-  // }, [auth.token]);
-
   // handle Logout
   const handleLogout = () => {
     setAuth({ ...auth, user: null, token: "" });
@@ -51,9 +45,12 @@ export default function Header() {
   // Get all notifications
 
   const fetchNotifications = async () => {
+    if (!auth.user) {
+      return;
+    }
     try {
       const { data } = await axios.get(
-        `${process.env.NEXT_PUBLIC_SERVER_URI}/api/v1/notification/header/admin`
+        `${process.env.NEXT_PUBLIC_SERVER_URI}/api/v1/notification/header/admin/${auth.user._id}`
       );
       setNotificationData(data.notifications);
     } catch (error) {
@@ -63,28 +60,9 @@ export default function Header() {
 
   useEffect(() => {
     fetchNotifications();
-    // eslint-disable-next-line
-  }, []);
 
-  // -----------Mark All as Read----------------
-  const markAllAsRead = async () => {
-    if (!selectedNotificationId.length) {
-      return toast.error("Please select a notification to mark as read");
-    }
-    try {
-      const { data } = await axios.put(
-        `${process.env.NEXT_PUBLIC_SERVER_URI}/api/v1/notification/mark/all/read`,
-        { nitificationIds: selectedNotificationId }
-      );
-      if (data) {
-        fetchNotifications();
-        setSelectedNotificationId([]);
-      }
-    } catch (error) {
-      console.log(error);
-      toast.error("Failed to mark all as read");
-    }
-  };
+    // eslint-disable-next-line
+  }, [auth]);
 
   // ----------Mark Single Notification as Read----
   const markSingleNotificationAsRead = async (id) => {
@@ -130,12 +108,12 @@ export default function Header() {
               {open && (
                 <div
                   ref={headerNotification}
-                  className="shadow-xl  bg-gray-100 absolute z-[999] top-[2rem] right-[1.6rem] rounded-md overflow-hidden"
+                  className="shadow-xl  bg-gray-100 absolute z-[999] top-[2.5rem] sm:top-[2rem] right-[-15rem] sm:right-[1.6rem] rounded-md overflow-hidden"
                 >
                   <h5 className="text-[20px] text-center font-medium text-white bg-red-600  p-3 font-Poppins">
                     Notifications
                   </h5>
-                  <div className="w-[350px] min-h-[40vh] max-h-[60vh] flex flex-col gap-1   overflow-y-auto   ">
+                  <div className=" w-[300px] sm:w-[350px] min-h-[40vh] max-h-[60vh] flex flex-col gap-1   overflow-y-auto   ">
                     {notificationData &&
                       notificationData?.map((item, index) => (
                         <div
@@ -175,17 +153,14 @@ export default function Header() {
                       </div>
                     )}
                   </div>
-                  <div
-                    className="w-full  cursor-pointer bg-gray-200    px-2 flex  items-center justify-end"
-                    onClick={() => updateAllNotification(auth.user._id)}
-                  >
+                  <div className="w-full  cursor-pointer bg-white    px-2 flex  items-center justify-end">
                     <button
-                      disabled={notificationData.length === 0}
-                      className={`text-[14px] py-2 cursor-pointer text-red-500 hover:text-red-600 disabled:cursor-not-allowed  ${
+                      className={`text-[14px] flex items-center gap-1 py-2 cursor-pointer text-red-500 hover:text-red-600 disabled:cursor-not-allowed  ${
                         notificationData.length === 0 && "cursor-not-allowed"
                       }`}
+                      onClick={() => redirect("/dashboard/notifications")}
                     >
-                      Mark all as read
+                      See All <MdArrowRightAlt className="h-5 w-5" />
                     </button>
                   </div>
                 </div>

@@ -85,7 +85,7 @@ export default function Products() {
   // <--------------Payment------------>
   const [payment, setpayment] = useState(false);
 
-  console.log("rowSelection:", rowSelection);
+  console.log("productData:", productData);
 
   // <---------Fetch All Products-------->
   const fetchProducts = async () => {
@@ -326,6 +326,43 @@ export default function Products() {
     }
   };
 
+  const colorNames = {
+    "#FFFFFF": "White",
+    "#000000": "Black",
+    "#808080": "Gray",
+    "#C0C0C0": "Silver",
+    "#FF0000": "Red",
+    "#0000FF": "Blue",
+    "#FFFF00": "Yellow",
+    "#FFA500": "Orange",
+    "#800080": "Purple",
+    "#008000": "Green",
+    "#FFB6C1": "Light Pink",
+    "#ADD8E6": "Light Blue",
+    "#FFFFE0": "Light Yellow",
+    "#E6E6FA": "Lavender",
+    "#FFD700": "Gold",
+    "#CD7F32": "Bronze",
+    "#F5F5DC": "Beige",
+    "#D2B48C": "Tan",
+    "#8B4513": "Brown",
+    "#FFF8DC": "Cornsilk",
+    "#50C878": "Emerald",
+    "#8A2BE2": "Amethyst",
+    "#FF6347": "Ruby",
+    "#FF69B4": "Hot Pink",
+    "#00FFFF": "Cyan",
+    "#7FFF00": "Chartreuse",
+    "#2F4F4F": "Dark Slate Gray",
+    "#556B2F": "Dark Olive Green",
+    "#8B0000": "Dark Red",
+    "#191970": "Midnight Blue",
+    "#FF4500": "Coral",
+    "#B0E0E6": "Powder Blue",
+    "#FFE4C4": "Bisque",
+    "#FAEBD7": "Antique White",
+  };
+
   const columns = useMemo(
     () => [
       {
@@ -537,6 +574,85 @@ export default function Products() {
           return (
             <div className="cursor-pointer text-[12px] flex items-center justify-start text-black w-full h-full">
               {orders ? orders : 0}
+            </div>
+          );
+        },
+      },
+      // Sizes
+      {
+        accessorKey: "sizes",
+        minSize: 70,
+        maxSize: 140,
+        size: 90,
+        grow: false,
+        Header: ({ column }) => {
+          return (
+            <div className=" flex flex-col gap-[2px]">
+              <span className="ml-1 cursor-pointer">SIZES</span>
+            </div>
+          );
+        },
+        Cell: ({ cell, row }) => {
+          const sizes = row.original.sizes;
+          const size = sizes[0];
+
+          return (
+            <div className="cursor-pointer text-[12px] flex items-center justify-start text-black w-full h-full">
+              <select
+                value={size}
+                className="w-full h-[2rem] rounded-md outline-none border border-gray-700 cursor-pointer p-1"
+              >
+                <option value="">Colors</option>
+                {sizes.map((size, i) => (
+                  <option value={size} key={i}>
+                    {size}
+                  </option>
+                ))}
+              </select>
+            </div>
+          );
+        },
+      },
+      // Colors
+      {
+        accessorKey: "colors",
+        minSize: 70,
+        maxSize: 140,
+        size: 90,
+        grow: false,
+        Header: ({ column }) => {
+          return (
+            <div className=" flex flex-col gap-[2px]">
+              <span className="ml-1 cursor-pointer">COLORS</span>
+            </div>
+          );
+        },
+        Cell: ({ cell, row }) => {
+          const colors = row.original.colors;
+          const color = colors[0];
+
+          return (
+            <div className="cursor-pointer text-[12px] flex items-center justify-start text-black w-full h-full">
+              <select
+                value={color}
+                className="w-full h-[2rem] rounded-md outline-none border border-gray-700 cursor-pointer p-1"
+              >
+                <option value="">Colors</option>
+                {colors.map((color, i) => (
+                  <option
+                    value={color}
+                    key={i}
+                    className="flex items-center gap-1"
+                    // style={{ backgroundColor: color }}
+                  >
+                    <div
+                      style={{ backgroundColor: color }}
+                      className="w-3 h-3 rounded-full"
+                    ></div>
+                    {colorNames[color] || "Unknown"}
+                  </option>
+                ))}
+              </select>
             </div>
           );
         },

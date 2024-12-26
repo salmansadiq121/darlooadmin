@@ -1,160 +1,195 @@
-"use client";
-import React from "react";
+import React, { useState, useEffect } from "react";
+import axios from "axios";
+import { FaAngleLeft, FaAngleRight } from "react-icons/fa";
+import { Bar } from "react-chartjs-2";
+import RevenueDetailModal from "./RevenueDetailModal";
+import { IoClose } from "react-icons/io5";
+import RevenueLoader from "../Loaders/Dashboard/RevenueLoader";
 import {
   Chart as ChartJS,
   CategoryScale,
   LinearScale,
   BarElement,
-  ArcElement,
   Tooltip,
   Legend,
 } from "chart.js";
-import { Bar, Doughnut } from "react-chartjs-2";
 
-ChartJS.register(
-  CategoryScale,
-  LinearScale,
-  BarElement,
-  ArcElement,
-  Tooltip,
-  Legend
-);
+ChartJS.register(CategoryScale, LinearScale, BarElement, Tooltip, Legend);
 
 export default function RevenueCharts() {
+  const [revenueData, setRevenueData] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [startDate, setStartDate] = useState("");
+  const [endDate, setEndDate] = useState("");
+  const [showDetail, setShowDetail] = useState(false);
+  const [month, setMonth] = useState(new Date());
+
+  // Function to format date as YYYY-MM-DD
+  const formatDate = (date) => {
+    return date.toISOString().split("T")[0];
+  };
+
+  // Update start and end date based on month
+  useEffect(() => {
+    const fdom = new Date(month.getFullYear(), month.getMonth(), 1);
+    const ldom = new Date(month.getFullYear(), month.getMonth() + 1, 0);
+    setStartDate(formatDate(fdom));
+    setEndDate(formatDate(ldom));
+  }, [month]);
+
+  // Fetch revenue data based on start and end date
+  useEffect(() => {
+    const fetchRevenueData = async () => {
+      if (!startDate || !endDate) return;
+
+      setLoading(true);
+      try {
+        const { data } = await axios.get(
+          `${process.env.NEXT_PUBLIC_SERVER_URI}/api/v1/order/analytics/revenue/${startDate}/${endDate}`
+        );
+        setRevenueData(data.data);
+        setLoading(false);
+      } catch (error) {
+        console.error("Error fetching revenue data:", error);
+        setLoading(false);
+      }
+    };
+
+    fetchRevenueData();
+  }, [startDate, endDate]);
+
+  // Navigate to previous month
+  const goToPrevMonth = () => {
+    setMonth((prev) => new Date(prev.getFullYear(), prev.getMonth() - 1, 1));
+  };
+
+  // Navigate to next month
+  const goToNextMonth = () => {
+    setMonth((prev) => new Date(prev.getFullYear(), prev.getMonth() + 1, 1));
+  };
+
   // Data for bar chart
   const barChartData = {
-    labels: [
-      "20",
-      "22",
-      "24",
-      "26",
-      "28",
-      "30",
-      "02",
-      "06",
-      "10",
-      "12",
-      "14",
-      "16",
-    ],
+    labels: revenueData.map((entry) => `Day ${entry.day}`),
     datasets: [
       {
         label: "Revenue",
-        data: [350, 850, 750, 600, 900, 700, 400, 600, 850, 500, 700, 750],
-        backgroundColor: "#ef4444", // Smooth red color
-        borderRadius: 10, // Rounded bar edges
-        barThickness: 8, // Bar width
+        data: revenueData.map((entry) => entry.totalRevenue),
+        backgroundColor: "#ef4444",
+        borderRadius: 10,
+        barThickness: 8,
       },
     ],
   };
 
-  // Bar chart options
+  // Options for bar chart
   const barChartOptions = {
     responsive: true,
     maintainAspectRatio: false,
     plugins: {
-      legend: {
-        display: false, // Hide legend
-      },
+      legend: { display: false },
     },
     scales: {
       x: {
-        grid: { display: false }, // Hide grid lines
-        ticks: { font: { size: 12 }, color: "#6b7280" }, // Light gray labels
+        grid: { display: false },
+        ticks: { font: { size: 12 }, color: "#6b7280" },
       },
       y: {
-        grid: { drawBorder: false, color: "#f3f4f6" }, // Light gray grid lines
+        grid: { drawBorder: false, color: "#f3f4f6" },
         ticks: {
           font: { size: 12 },
-          color: "#6b7280", // Light gray labels
-          callback: function (value) {
-            return `$${value}`; // Prepend $ symbol
-          },
+          color: "#6b7280",
+          callback: (value) => `$${value}`,
         },
       },
     },
-  };
-
-  // Data for doughnut chart
-  const doughnutData = {
-    labels: ["Abandoned", "Completed"],
-    datasets: [
-      {
-        data: [38, 62], // Percentage data
-        backgroundColor: ["#623cea", "#e5e7eb"], // Purple gradient and light gray
-        hoverOffset: 5,
-        borderWidth: 0, // No border
-      },
-    ],
-  };
-
-  // Doughnut chart options
-  const doughnutOptions = {
-    responsive: true,
-    maintainAspectRatio: false,
-    plugins: {
-      legend: {
-        display: false, // Hide legend
-      },
-      tooltip: {
-        callbacks: {
-          label: function (tooltipItem) {
-            return `${tooltipItem.raw}%`; // Show percentage in tooltip
-          },
-        },
-      },
-    },
-    cutout: "75%", // Inner radius
   };
 
   return (
-    <div className="w-full">
-      <div className="grid grid-cols-3 gap-4">
-        {/* Bar Chart */}
-        <div className="col-span-3 sm:col-span-2 bg-white shadow-md rounded-lg p-4 ">
-          <div className="flex justify-between items-center mb-4">
-            <h2 className="text-lg font-medium text-gray-700 mb-4">
-              Dashboard
-            </h2>
-            <a
-              href="#"
-              className="text-sm text-gray-600 hover:text-red-600 hover:underline"
-            >
-              Advanced Report →
-            </a>
-          </div>
-          <div className="h-60">
-            <Bar data={barChartData} options={barChartOptions} />
-          </div>
-        </div>
+    <div className="w-full relative">
+      {!loading ? (
+        <div className="grid grid-cols-3 gap-4">
+          {/* Bar Chart */}
+          <div className="col-span-3 sm:col-span-2 bg-white shadow-md rounded-lg p-4">
+            <div className="flex justify-between items-center mb-4">
+              <h2 className="text-lg font-medium text-gray-700">Dashboard</h2>
+              <span
+                onClick={() => setShowDetail(true)}
+                className="text-sm text-gray-600 hover:text-red-600 hover:underline cursor-pointer"
+              >
+                Advanced Report →
+              </span>
+            </div>
 
-        {/* Doughnut Chart */}
-        <div className="col-span-3  sm:col-span-1 bg-white shadow-md rounded-lg p-4 flex flex-col items-center">
-          <h2 className="text-lg font-medium text-gray-700 mb-4 text-start w-full">
-            Cart
-          </h2>
-          <div className="relative w-36 h-36">
-            <Doughnut data={doughnutData} options={doughnutOptions} />
-            <div className="absolute inset-0 flex flex-col items-center justify-center">
-              <span className="text-2xl font-semibold text-gray-700">38%</span>
+            {/* Monthly Navigation */}
+            <div className="flex items-center justify-center mb-4">
+              <button
+                onClick={goToPrevMonth}
+                className="border-none rounded-full p-1 shadow bg-red-500 hover:bg-red-600 transition-all duration-200 cursor-pointer flex items-center justify-center"
+              >
+                <FaAngleLeft className="h-5 w-5 text-white" />
+              </button>
+
+              <div className="mx-2 text-sm text-gray-700">
+                {startDate} - {endDate}
+              </div>
+
+              <button
+                onClick={goToNextMonth}
+                className="border-none rounded-full p-1 shadow bg-red-500 hover:bg-red-600 transition-all duration-200 cursor-pointer flex items-center justify-center"
+              >
+                <FaAngleRight className="h-5 w-5 text-white" />
+              </button>
+            </div>
+
+            <div className="h-60">
+              <Bar data={barChartData} options={barChartOptions} />
             </div>
           </div>
-          <div className="mt-4 text-sm text-gray-600 w-full flex items-start flex-col gap-3">
-            <div className="flex items-center gap-4 text-gray-800">
-              <p className="text-[14px] font-medium w-[10rem]">
-                Abandoned Cart:
-              </p>
-              <strong className="text-[14px]">720</strong>
-            </div>
-            <div className="flex items-center gap-4 text-gray-800">
-              <p className="text-[14px] font-medium w-[10rem]">
-                Abandoned Revenue:
-              </p>
-              <strong className="text-[14px]">$5,900</strong>
-            </div>
+
+          {/* Data Table */}
+          <div className="col-span-3 sm:col-span-1 bg-white shadow-md rounded-lg p-4 max-h-[25rem] overflow-y-auto">
+            <h3 className="text-lg font-medium text-gray-700 mb-4">
+              Revenue Data
+            </h3>
+            <table className="min-w-full table-auto border-collapse">
+              <thead>
+                <tr>
+                  <th className="border-b p-2 text-left">Day</th>
+                  <th className="border-b p-2 text-left">Revenue</th>
+                </tr>
+              </thead>
+              <tbody>
+                {revenueData.map((entry, index) => (
+                  <tr key={index}>
+                    <td className="border-b p-2">Day {entry.day}</td>
+                    <td className="border-b p-2">${entry.totalRevenue}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           </div>
         </div>
-      </div>
+      ) : (
+        <RevenueLoader />
+      )}
+
+      {/* Revenue Detail Modal */}
+      {showDetail && (
+        <div className="fixed top-0 left-0 z-[99999999] w-full h-full flex items-center justify-center bg-black/60 p-0 sm:p-4">
+          <div className="w-full p-2 sm:p-3 bg-gray-200 rounded-none sm:rounded-lg shadow-md max-h-[100%] overflow-y-auto">
+            <div className="flex items-center justify-end w-full pb-4">
+              <span
+                className="p-1 bg-gray-300/80 hover:bg-gray-400/70 rounded-full"
+                onClick={() => setShowDetail(false)}
+              >
+                <IoClose className="h-5 w-5 text-black cursor-pointer" />
+              </span>
+            </div>
+            <RevenueDetailModal />
+          </div>
+        </div>
+      )}
     </div>
   );
 }

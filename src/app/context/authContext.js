@@ -15,14 +15,6 @@ const AuthProvider = ({ children }) => {
   // check token
   axios.defaults.headers.common["Authorization"] = auth?.token;
 
-  // useEffect(() => {
-  //   axios.defaults.withCredentials = true;
-  //   if (auth?.token) {
-  //     axios.defaults.headers.common["Authorization"] = auth?.token;
-  //   }
-  // }, [auth]);
-
-  //
   useEffect(() => {
     const data = localStorage.getItem("auth");
 
@@ -47,10 +39,16 @@ const AuthProvider = ({ children }) => {
       );
       console.log("data.accessToken:", data.accessToken);
       if (data.accessToken) {
-        setAuth((prevAuth) => ({
-          ...prevAuth,
-          token: data.accessToken,
-        }));
+        setAuth((prevAuth) => {
+          const updatedAuth = {
+            ...prevAuth,
+            token: data.accessToken,
+          };
+
+          localStorage.setItem("auth", JSON.stringify(updatedAuth));
+
+          return updatedAuth;
+        });
       }
     } catch (error) {
       console.log("Error refreshing token:", error);
