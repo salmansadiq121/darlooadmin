@@ -6,13 +6,15 @@ import { useAuth } from "../context/authContext";
 export default function Spinner() {
   const { auth, setAuth } = useAuth();
   const router = useRouter();
-  const [count, setCount] = useState(3);
+  const [count, setCount] = useState(5);
 
   useEffect(() => {
     const counter = setInterval(() => {
       setCount((prevVal) => {
         if (prevVal === 0) {
           router.push("/");
+          setAuth({ ...auth, user: null, token: "" });
+          localStorage.removeItem("auth");
           clearInterval(counter);
         }
         return prevVal - 1;
@@ -20,10 +22,10 @@ export default function Spinner() {
     }, 1000);
 
     return () => {
-      setAuth({ ...auth, user: null, token: "" });
-      localStorage.removeItem("auth");
       clearInterval(counter);
     };
+
+    // eslint-disable-next-line
   }, [count, router]);
   return (
     <div className="w-full min-h-screen flex items-center justify-center ">
