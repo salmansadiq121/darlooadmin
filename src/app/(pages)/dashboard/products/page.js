@@ -765,38 +765,38 @@ export default function Products() {
           return cellValue.includes(filterValue.toLowerCase());
         },
       },
-      // {
-      //   accessorKey: "Checkout",
-      //   minSize: 100,
-      //   maxSize: 140,
-      //   size: 120,
-      //   grow: false,
-      //   Header: ({ column }) => {
-      //     return (
-      //       <div className=" flex flex-col gap-[2px]">
-      //         <span className="ml-1 cursor-pointer">Checkout</span>
-      //       </div>
-      //     );
-      //   },
-      //   Cell: ({ cell, row }) => {
-      //     return (
-      //       <div className="flex items-center justify-start cursor-pointer text-[12px] text-black w-full h-full">
-      //         <button
-      //           onClick={() => setpayment(true)}
-      //           className=" py-[.35rem] px-4 rounded-[2rem] border-2 border-green-600 bg-green-200 hover:bg-green-300 text-green-900 hover:shadow-md cursor-pointer transition-all duration-300 hover:scale-[1.03]"
-      //         >
-      //           Checkout
-      //         </button>
-      //       </div>
-      //     );
-      //   },
-      //   filterFn: (row, columnId, filterValue) => {
-      //     const cellValue =
-      //       row.original[columnId]?.toString().toLowerCase() || "";
+      {
+        accessorKey: "Checkout",
+        minSize: 100,
+        maxSize: 140,
+        size: 120,
+        grow: false,
+        Header: ({ column }) => {
+          return (
+            <div className=" flex flex-col gap-[2px]">
+              <span className="ml-1 cursor-pointer">Checkout</span>
+            </div>
+          );
+        },
+        Cell: ({ cell, row }) => {
+          return (
+            <div className="flex items-center justify-start cursor-pointer text-[12px] text-black w-full h-full">
+              <button
+                onClick={() => setpayment(true)}
+                className=" py-[.35rem] px-4 rounded-[2rem] border-2 border-green-600 bg-green-200 hover:bg-green-300 text-green-900 hover:shadow-md cursor-pointer transition-all duration-300 hover:scale-[1.03]"
+              >
+                Checkout
+              </button>
+            </div>
+          );
+        },
+        filterFn: (row, columnId, filterValue) => {
+          const cellValue =
+            row.original[columnId]?.toString().toLowerCase() || "";
 
-      //     return cellValue.includes(filterValue.toLowerCase());
-      //   },
-      // },
+          return cellValue.includes(filterValue.toLowerCase());
+        },
+      },
       {
         accessorKey: "Actions",
         minSize: 100,

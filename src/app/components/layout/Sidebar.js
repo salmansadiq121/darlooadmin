@@ -56,7 +56,7 @@ export default function Sidebar({ hide, setHide }) {
         </div>
       </div>
       {/* border-2 border-red-600  */}
-      <div className="relative w-full h-[calc(100vh-10.5vh)] sm:h-[calc(100vh-7.5vh)] overflow-y-auto scroll-smooth py-3 pb-[2rem]">
+      <div className="relative w-full h-[calc(100vh-10.5vh)] sm:h-[calc(100vh-7.5vh)] overflow-y-auto scroll-smooth py-3 pb-[2rem] shidden">
         <div className="flex flex-col gap-3 px-3 ">
           {/* 1 */}
 
