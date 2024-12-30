@@ -204,7 +204,11 @@ export default function Dashboard() {
   });
 
   return (
-    <MainLayout>
+    <MainLayout
+      title="Admin Dashboard - Manage Your E-commerce Store"
+      description="The Admin Dashboard provides an overview of your e-commerce store. Easily manage products, track orders, and monitor sales with our intuitive interface."
+      keywords="admin dashboard, eCommerce dashboard, manage products, track orders, sales management, admin interface, eCommerce analytics, product inventory, order tracking, store management"
+    >
       <div className="p-4 sm:p-4 h-[100%] w-full pb-4">
         <div className="flex flex-col gap-4 w-full h-full">
           <Breadcrumb path={currentUrl} />

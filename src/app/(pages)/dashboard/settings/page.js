@@ -113,7 +113,11 @@ export default function Settings() {
   }, []);
 
   return (
-    <MainLayout>
+    <MainLayout
+      title="Setting - Manage Your Account and Banners"
+      description="View and update your account , address & banner information, track orders, and manage account settings from your user profile page."
+      keywords="add setting, banner setting, order history, update profile, track orders, e-commerce user page, account settings, user dashboard"
+    >
       <div className="p-1 sm:p-2 px-1 sm:px-6 h-[100%] w-full pb-4 scroll-smooth">
         <div className="flex flex-col pb-2 h-full">
           <Breadcrumb path={currentUrl} />

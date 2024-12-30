@@ -898,7 +898,11 @@ export default function Users() {
   }, []);
 
   return (
-    <MainLayout>
+    <MainLayout
+      title="User Profile - Manage Your Account and Orders"
+      description="View and update your personal information, track orders, and manage account settings from your user profile page."
+      keywords="user profile, manage account, order history, update profile, track orders, e-commerce user page, account settings, user dashboard"
+    >
       <div className="relative p-1 sm:p-2 h-[100%] w-full pb-4 flex flex-col ">
         <div className="flex flex-col pb-2 ">
           <Breadcrumb path={currentUrl} />

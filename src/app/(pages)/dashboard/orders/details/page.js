@@ -41,7 +41,7 @@ export default function OrderDetail() {
     // exlint-disable-next-line
   }, []);
   return (
-    <MainLayout>
+    <MainLayout title="Orders Detail - Ayoob Admin">
       <div className="p-1 sm:p-2 px-1 sm:px-6 h-[100%] w-full pb-4 scroll-smooth">
         <div className="flex flex-col pb-2 gap-4 h-full">
           <Breadcrumb path={currentUrl} />

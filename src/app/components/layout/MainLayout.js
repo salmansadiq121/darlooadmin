@@ -1,16 +1,30 @@
 "use client";
-import React, { useEffect, useState } from "react";
+import React, { useState } from "react";
 import { IoMenu, IoClose } from "react-icons/io5";
 import Header from "./Header";
 import Sidebar from "./Sidebar";
 import AdminProtected from "@/app/hooks/adminProtected";
+import { Helmet } from "react-helmet";
 
-export default function MainLayout({ children }) {
+export default function MainLayout({
+  children,
+  title,
+  description,
+  keywords,
+  author,
+}) {
   const [show, setShow] = useState(false);
   const [hide, setHide] = useState(false);
 
   return (
     <AdminProtected>
+      <Helmet>
+        <meta charSet="utf-8" />
+        <meta name="description" content={description} />
+        <meta name="keywords" content={keywords} />
+        <meta name="author" content={author} />
+        <title>{title}</title>
+      </Helmet>
       <div className="relative w-full h-screen overflow-hidden flex flex-col text-black ">
         <div className=" w-full flex-1 gap-0 flex h-screen  fixed top-0 left-0 z-[999] overflow-hidden">
           {!show && (
@@ -52,3 +66,12 @@ export default function MainLayout({ children }) {
     </AdminProtected>
   );
 }
+
+MainLayout.defaultProps = {
+  title: "Ayoob Admin - E-commerce Admin Panel | Manage Products & Orders",
+  description:
+    "Ayoob Admin Panel is an intuitive and powerful admin interface for managing your e-commerce store. Track orders, manage products, and oversee inventory with ease. Built with MERN stack.",
+  keywords:
+    "E-commerce admin panel, MERN stack, Ayoob Admin, product management, order management, inventory control, online store dashboard, eCommerce backend, admin dashboard, e-commerce store management, admin interface",
+  author: "Salman Sadiq",
+};

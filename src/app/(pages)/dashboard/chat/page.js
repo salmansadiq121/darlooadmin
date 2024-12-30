@@ -391,7 +391,10 @@ export default function Chat() {
   }, [chatMessages]);
 
   return (
-    <div className="relative w-full h-[100vh] overflow-x-hidden bg-white text-black ">
+    <div
+      title="Chats - Ayoob Admin"
+      className="relative w-full h-[100vh] overflow-x-hidden bg-white text-black "
+    >
       <div className="relative w-full h-[100%] grid grid-cols-11">
         {/* ---------Sidebar----- */}
         <div

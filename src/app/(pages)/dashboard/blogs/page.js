@@ -135,7 +135,7 @@ export default function Blogs() {
   }, []);
 
   return (
-    <MainLayout>
+    <MainLayout title="Blogs - Ayoob Admin">
       <div className="relative p-1 sm:p-2 h-[100%] w-full pb-4 ">
         <div className="flex flex-col pb-2 ">
           <Breadcrumb path={currentUrl} />
