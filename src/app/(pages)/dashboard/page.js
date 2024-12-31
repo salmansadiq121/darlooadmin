@@ -18,6 +18,13 @@ import axios from "axios";
 import OrderUserAnalytics from "@/app/components/dashboard/OrderUserAnalytics";
 import TopCards from "@/app/components/Loaders/Dashboard/TopCards";
 import OrderUserLoader from "@/app/components/Loaders/Dashboard/OrderUserLoader";
+import {
+  MdTrendingUp,
+  MdShoppingCart,
+  MdPerson,
+  MdBarChart,
+} from "react-icons/md";
+import { useRouter } from "next/navigation";
 const MainLayout = dynamic(
   () => import("./../../components/layout/MainLayout"),
   {
@@ -50,6 +57,8 @@ export default function Dashboard() {
   const [userDifference, setUserDifference] = useState(0);
   const [cardLoading, setCardLoading] = useState(false);
   const [isloading, setIsLoading] = useState(false);
+  const [conversionRate, setConversionRate] = useState(0);
+  const router = useRouter();
 
   // Current Path
   useEffect(() => {
@@ -112,6 +121,23 @@ export default function Dashboard() {
     }
   };
 
+  // -----------Conversion Rate----------
+  const conversionRateData = async () => {
+    setIsLoading(true);
+    try {
+      const { data } = await axios.get(
+        `${process.env.NEXT_PUBLIC_SERVER_URI}/api/v1/order/conversion/rate`
+      );
+      if (data) {
+        setConversionRate(data.conversionRate);
+      }
+    } catch (error) {
+      console.log(error?.response?.data?.message);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   // User Count
   const fetchUserCount = async () => {
     try {
@@ -133,6 +159,7 @@ export default function Dashboard() {
     orderAnalytics();
     userAnalytics();
     fetchUserCount();
+    conversionRateData();
   }, []);
 
   const formatCount = (count) => {
@@ -154,6 +181,10 @@ export default function Dashboard() {
         : "text-red-500",
       chartColor: revenuePercentage?.startsWith("+") ? "#22c55e" : "#ef4444",
       chartData: [10, 30, 20, 50, 40, 60, 50],
+      bgColor: "from-green-100 to-green-200",
+      icon: MdTrendingUp,
+      iconColor: "text-green-500",
+      link: "/dashboard/orders",
     },
     {
       title: "Orders",
@@ -164,6 +195,10 @@ export default function Dashboard() {
         : "text-red-500",
       chartColor: ordersPercentage?.startsWith("+") ? "#22c55e" : "#ef4444",
       chartData: [50, 40, 30, 20, 40, 30, 10],
+      bgColor: "from-blue-100 to-blue-200",
+      icon: MdShoppingCart,
+      iconColor: "text-blue-500",
+      link: "/dashboard/orders",
     },
     {
       title: "Users",
@@ -178,14 +213,22 @@ export default function Dashboard() {
           ? "#22c55e"
           : "#ef4444",
       chartData: [20, 40, 30, 50, 70, 60, 80],
+      bgColor: "from-purple-100 to-purple-200",
+      icon: MdPerson,
+      iconColor: "text-purple-500",
+      link: "/dashboard/users",
     },
     {
       title: "Conversion",
-      value: "28%",
+      value: conversionRate,
       percentage: "+1.9%",
+      chartData: [30, 20, 40, 60, 50, 70, 60],
       color: "text-orange-500",
       chartColor: "#f97316",
-      chartData: [30, 20, 40, 60, 50, 70, 60],
+      bgColor: "from-orange-100 to-orange-200",
+      icon: MdBarChart,
+      iconColor: "text-orange-500",
+      link: "#",
     },
   ];
 
@@ -214,31 +257,44 @@ export default function Dashboard() {
           <Breadcrumb path={currentUrl} />
           {/* -----------1st------- */}
           {!cardLoading ? (
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
               {data?.map((item, index) => (
                 <div
                   key={index}
-                  className="w-full bg-white flex overflow-hidden items-center justify-between gap-4 p-3 sm:p-4 border rounded-lg shadow-sm hover:shadow-md shadow-gray-200 hover:drop-shadow-md cursor-pointer transition-all duration-300 ease-in-out"
+                  className={`w-full bg-gradient-to-r ${
+                    item.bgColor || "from-indigo-100 to-indigo-200"
+                  } 
+                  flex flex-col items-start gap-4 p-4 border border-gray-200 rounded-lg shadow-lg 
+                  hover:shadow-xl hover:-translate-y-1 transform transition-transform duration-300 
+                  cursor-pointer`}
+                  onClick={() => item.link && router.push(item.link)}
                 >
-                  <div className="flex flex-col gap-1">
-                    <div className="flex items-center justify-between">
-                      <label className="text-[14px] font-medium text-gray-600">
+                  <div className="flex items-center gap-3">
+                    <div className="flex items-center justify-center w-12 h-12 bg-white rounded-full shadow-md">
+                      <item.icon
+                        className={`${
+                          item.iconColor || "text-indigo-500"
+                        } w-6 h-6`}
+                      />
+                    </div>
+                    <div>
+                      <label className="text-[17px]  sm:text-lg font-semibold text-gray-700">
                         {item?.title}
                       </label>
-                    </div>
-                    <span className="text-[22px] font-medium text-black">
-                      {item?.value}
-                    </span>
-                  </div>
-                  <div className=" flex flex-col gap-2 mr-2">
-                    <div className="w-full flex items-center justify-end">
-                      <span
-                        className={`text-[12px] font-medium ${item?.color}`}
-                      >
-                        {item?.percentage}
+                      <span className="block text-lg sm:text-2xl font-bold text-black">
+                        {item?.value}
                       </span>
                     </div>
-                    <div className="w-[6rem] sm:w-[8rem] h-[3rem] sm:h-[4rem]">
+                  </div>
+                  <div className="w-full flex justify-between items-center">
+                    <span
+                      className={`text-sm font-medium ${
+                        item?.color || "text-gray-600"
+                      }`}
+                    >
+                      {item?.percentage}
+                    </span>
+                    <div className="w-24 sm:w-32 h-16">
                       <Line
                         data={renderChart(item.chartColor, item.chartData)}
                         options={{

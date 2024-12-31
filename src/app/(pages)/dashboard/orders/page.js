@@ -336,7 +336,12 @@ export default function Orders() {
           const toggleExpanded = () => setIsExpanded(!isExpanded);
 
           return (
-            <div className="cursor-pointer text-[12px] text-black w-full h-full">
+            <div
+              onClick={() =>
+                router.push(`/dashboard/orders/details/${row.original._id}`)
+              }
+              className="cursor-pointer text-[12px] text-black w-full h-full"
+            >
               <div className="flex flex-col gap-2">
                 {/* First Product */}
                 {firstProduct && (
@@ -738,7 +743,7 @@ export default function Orders() {
         },
         Cell: ({ cell, row }) => {
           return (
-            <div className="flex items-center justify-center gap-2 cursor-pointer text-[12px] text-black w-full h-full">
+            <div className="flex items-center gap-2 cursor-pointer text-[12px] text-black w-full h-full">
               <span
                 onClick={() =>
                   router.push(`/dashboard/orders/details/${row.original._id}`)
@@ -747,9 +752,9 @@ export default function Orders() {
               >
                 <TiEye className="text-[16px] text-purple-500 hover:text-purple-600" />
               </span>
-              <span className="p-1 bg-yellow-500 hover:bg-yellow-600 rounded-full transition-all duration-300 hover:scale-[1.03] cursor-pointer">
+              {/* <span className="p-1 bg-yellow-500 hover:bg-yellow-600 rounded-full transition-all duration-300 hover:scale-[1.03] cursor-pointer">
                 <MdModeEditOutline className="text-[16px] text-white" />
-              </span>
+              </span> */}
               {/* <span className="p-1 bg-sky-200 hover:bg-sky-300 rounded-full transition-all duration-300 hover:scale-[1.03] cursor-pointer">
                 <MdNotInterested className="text-[16px] text-sky-500 hover:text-sky-600" />
               </span> */}

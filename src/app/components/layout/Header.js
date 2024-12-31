@@ -139,7 +139,7 @@ export default function Header() {
                             <p className="p-2 text-gray-700  text-[14px]">
                               {item?.context}
                             </p>
-                            <span className="p-2 text-black  text-[14px] ">
+                            <span className="p-2 text-gray-700  text-[12px] ">
                               {format(new Date(item?.createdAt), "dd-MMM-yyyy")}
                             </span>
                           </div>
