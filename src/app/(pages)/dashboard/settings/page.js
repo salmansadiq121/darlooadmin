@@ -7,6 +7,9 @@ import Loader from "@/app/utils/Loader";
 import Image from "next/image";
 import toast from "react-hot-toast";
 import HandleBannerModal from "@/app/components/Settings/HandleBannerModal";
+import Shipping from "@/app/components/Settings/Shipping";
+import HandleShippingModal from "@/app/components/Settings/HandleShippingModal";
+import Swal from "sweetalert2";
 
 const MainLayout = dynamic(
   () => import("./../../../components/layout/MainLayout"),
@@ -43,6 +46,10 @@ export default function Settings() {
   const [bannerId, setBannerId] = useState("");
   const [accountDetail, setAccountDetail] = useState({});
   const [showFullAccount, setShowFullAccount] = useState(false);
+  const [show, setShow] = useState(false);
+  const [shippingId, setShippingId] = useState("");
+  const [shippingData, setShippingData] = useState([]);
+  const [selectedShipping, setSelectedShipping] = useState({});
 
   const toggleAccountVisibility = () => {
     setShowFullAccount((prev) => !prev);
@@ -112,6 +119,58 @@ export default function Settings() {
     fetchBanners();
   }, []);
 
+  // ------------All Shipping---------->
+  const fetchShipping = async () => {
+    try {
+      const { data } = await axios.get(
+        `${process.env.NEXT_PUBLIC_SERVER_URI}/api/v1/shipping/getAll`
+      );
+      console.log("Shipping Data:", data);
+      if (data) {
+        setShippingData(data?.shippings);
+      }
+    } catch (error) {
+      console.log(error);
+      toast.error(error?.response?.data?.message);
+    }
+  };
+
+  useEffect(() => {
+    fetchShipping();
+  }, []);
+
+  // Handle Delete Shipping
+  const handleDeleteConfirmation = (shippingId) => {
+    Swal.fire({
+      title: "Are you sure?",
+      text: "You won't be able to revert this user!",
+      icon: "warning",
+      showCancelButton: true,
+      confirmButtonColor: "#3085d6",
+      cancelButtonColor: "#d33",
+      confirmButtonText: "Yes, delete it!",
+    }).then((result) => {
+      if (result.isConfirmed) {
+        handleDeleteShipping(shippingId);
+        Swal.fire("Deleted!", "Shipping has been deleted.", "success");
+      }
+    });
+  };
+
+  const handleDeleteShipping = async (id) => {
+    try {
+      const { data } = await axios.delete(
+        `${process.env.NEXT_PUBLIC_SERVER_URI}/api/v1/shipping/delete/${id}`
+      );
+      if (data) {
+        fetchShipping();
+      }
+    } catch (error) {
+      console.log(error);
+      toast.error(error?.response?.data?.message);
+    }
+  };
+
   return (
     <MainLayout
       title="Setting - Manage Your Account and Banners"
@@ -133,7 +192,7 @@ export default function Settings() {
               Account
             </button>
             <button
-              className={`w-[6.5rem] h-full py-[.3rem] text-[14px] font-normal  ${
+              className={`w-[6.5rem] h-full py-[.3rem] text-[14px] font-normal border-l-2 border-red-600 ${
                 selectedTab === "Banner"
                   ? "bg-red-600 text-white"
                   : "text-red-600 bg-white"
@@ -141,6 +200,16 @@ export default function Settings() {
               onClick={() => setSelectedtab("Banner")}
             >
               Banner
+            </button>
+            <button
+              className={`w-[6.5rem] h-full py-[.3rem] text-[14px] font-normal border-l-2 border-red-600 ${
+                selectedTab === "Shipping"
+                  ? "bg-red-600 text-white"
+                  : "text-red-600 bg-white"
+              }`}
+              onClick={() => setSelectedtab("Shipping")}
+            >
+              Shipping
             </button>
           </div>
           <div className="flex flex-col gap-4 mt-4  w-full h-full">
@@ -219,7 +288,7 @@ export default function Settings() {
                   </div>
                 </div>
               </div>
-            ) : (
+            ) : selectedTab === "Banner" ? (
               <div className="flex flex-col gap-4">
                 <div className="flex items-center justify-between flex-wrap gap-4">
                   <h1 className="text-2xl font-sans font-semibold text-black">
@@ -241,6 +310,31 @@ export default function Settings() {
                       fetchBanners={fetchBanners}
                     />
                   </div>
+                </div>
+              </div>
+            ) : (
+              <div className="flex flex-col gap-4">
+                <div className="flex items-center justify-between flex-wrap gap-4">
+                  <h1 className="text-2xl font-sans font-semibold text-black">
+                    Shipping Fee Settings
+                  </h1>
+                  <div className="flex items-center gap-4 w-full sm:w-fit justify-end">
+                    <button
+                      onClick={() => setShow(true)}
+                      className={`flex text-[14px] items-center justify-center text-white bg-[#c6080a] hover:bg-red-800  py-2 rounded-md shadow-md hover:shadow-xl transition-all duration-300 cursor-pointer hover:scale-[1.03] px-4`}
+                    >
+                      ADD SHIPPING
+                    </button>
+                  </div>
+                </div>
+                <div className="w-full h-full">
+                  <Shipping
+                    shippingData={shippingData}
+                    setSelectedShipping={setSelectedShipping}
+                    setShippingId={setShippingId}
+                    setShow={setShow}
+                    handleDeleteConfirmation={handleDeleteConfirmation}
+                  />
                 </div>
               </div>
             )}
@@ -267,6 +361,19 @@ export default function Settings() {
               bannerId={bannerId}
               setBannerId={setBannerId}
               setBannerData={setBannerData}
+            />
+          </div>
+        )}
+        {/* -------------Handle Shipping Modal------------ */}
+        {show && (
+          <div className="fixed top-0 left-0 p-2 sm:p-4 w-full h-full flex items-center justify-center z-[9999999] bg-gray-300/80 overflow-y-auto shidden">
+            <HandleShippingModal
+              setShow={setShow}
+              shippingId={shippingId}
+              setShippingId={setShippingId}
+              fetchShipping={fetchShipping}
+              selectedShipping={selectedShipping}
+              setSelectedShipping={setSelectedShipping}
             />
           </div>
         )}

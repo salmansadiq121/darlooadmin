@@ -243,7 +243,7 @@ export default function Categories() {
                   {filteredData?.map((category) => (
                     <div
                       key={category?._id}
-                      className=" relative  flex flex-col items-center justify-center p-4 rounded-md bg-gradient-to-tr from-red-50 to-grey-500 shadow hover:bg-red-100 hover:shadow-md transition-all duration-300 cursor-pointer"
+                      className=" relative  flex flex-col items-center justify-center p-4 rounded-md bg-gradient-to-tr from-red-50 to-grey-500 shadow hover:bg-red-100 hover:shadow-md transition-all duration-300 cursor-pointer group"
                     >
                       <div className="absolute top-2 left-2 z-20">
                         <input
@@ -258,7 +258,23 @@ export default function Categories() {
                         />
                       </div>
 
-                      <div className="absolute top-2 right-1 z-10 flex flex-col gap-2">
+                      {/* <div className="absolute top-2 right-1 z-10 flex flex-col gap-2">
+                       
+                      </div> */}
+                      <div className="w-[5.4rem] h-[5.4rem] relative rounded-full overflow-hidden flex items-center justify-center">
+                        <Image
+                          src={category?.image}
+                          layout="fill"
+                          alt={"Avatar"}
+                          className="w-full h-full"
+                        />
+                      </div>
+                      <h3 className="text-[16px] text-gray-800 font-medium">
+                        {category?.name}
+                      </h3>
+
+                      {/* Hover Actions (Edit & Delete) */}
+                      <div className="absolute inset-0 flex items-center justify-center gap-3 opacity-0 group-hover:opacity-100 bg-black/50 rounded-lg transition-opacity duration-300">
                         <span
                           onClick={() => {
                             setCategoryId(category?._id);
@@ -268,9 +284,9 @@ export default function Categories() {
                         >
                           <MdModeEditOutline className="text-[14px] text-white" />
                         </span>
-                        <span className="p-1 bg-sky-200 hover:bg-sky-300 rounded-full transition-all duration-300 hover:scale-[1.03]">
+                        {/* <span className="p-1 bg-sky-200 hover:bg-sky-300 rounded-full transition-all duration-300 hover:scale-[1.03]">
                           <MdNotInterested className="text-[14px] text-sky-500 hover:text-sky-600" />
-                        </span>
+                        </span> */}
                         <span
                           onClick={() => {
                             handleDeleteConfirmation(category?._id);
@@ -287,17 +303,6 @@ export default function Categories() {
                           )}
                         </span>
                       </div>
-                      <div className="w-[5.4rem] h-[5.4rem] relative rounded-full overflow-hidden flex items-center justify-center">
-                        <Image
-                          src={category?.image}
-                          layout="fill"
-                          alt={"Avatar"}
-                          className="w-full h-full"
-                        />
-                      </div>
-                      <h3 className="text-[16px] text-gray-800 font-medium">
-                        {category?.name}
-                      </h3>
                     </div>
                   ))}
                 </div>
