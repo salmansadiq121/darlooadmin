@@ -39,6 +39,8 @@ export default function ProductModal({
   const [isloading, setIsloading] = useState(false);
   const [shipping, setShipping] = useState("");
 
+  console.log("colors1", colors);
+
   // Get Product Detail
   const getProductInfo = async () => {
     try {
@@ -73,7 +75,9 @@ export default function ProductModal({
         setQuantity(product.quantity || "");
         setColors(
           product.colors?.map((color) => {
-            const matchedColor = colorOptions.find((c) => c.value === color);
+            const matchedColor = colorOptions.find(
+              (c) => c.value === color.code
+            );
             return matchedColor
               ? matchedColor
               : {
@@ -202,9 +206,12 @@ export default function ProductModal({
     productData.append("estimatedPrice", estimatedPrice);
     thumbnails.forEach((file) => productData.append("file", file));
     productData.append("quantity", quantity);
-    const colorIds = colors.map((color) => color.value);
+    const colorIds = colors.map((color) => ({
+      name: color.name,
+      code: color.value,
+    }));
+    productData.append("colors", JSON.stringify(colorIds));
     const sizeIds = sizes.map((size) => size.value);
-    productData.append("colors", colorIds);
     productData.append("sizes", sizeIds);
     productData.append("trending", trending);
     productData.append("sale", JSON.stringify(sale));
@@ -234,7 +241,7 @@ export default function ProductModal({
       toast.error(error?.response?.data?.message);
     } finally {
       fetchProducts();
-      setShowaddProduct(false);
+      // setShowaddProduct(false);
       setIsloading(false);
       setProductId("");
       setDeletedImages([]);

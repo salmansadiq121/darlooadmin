@@ -112,6 +112,7 @@ export const colorData = [
 
 export const colorOptions = colorData.map((color) => ({
   value: color.value,
+  name: color.label,
   label: (
     <div className="flex items-center gap-1">
       <div

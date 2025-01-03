@@ -640,16 +640,16 @@ export default function Products() {
                 <option value="">Colors</option>
                 {colors.map((color, i) => (
                   <option
-                    value={color}
+                    value={color.name}
                     key={i}
                     className="flex items-center gap-1"
                     // style={{ backgroundColor: color }}
                   >
                     <div
-                      style={{ backgroundColor: color }}
+                      style={{ backgroundColor: color.code }}
                       className="w-3 h-3 rounded-full"
                     ></div>
-                    {colorNames[color] || "Unknown"}
+                    {color.name || "Unknown"}
                   </option>
                 ))}
               </select>

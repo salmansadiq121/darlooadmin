@@ -18,6 +18,11 @@ const nextConfig = {
         hostname: "s3.eu-north-1.amazonaws.com",
         pathname: "**",
       },
+      {
+        protocol: "https",
+        hostname: "cdn.shopify.com",
+        pathname: "**",
+      },
     ],
   },
 };
