@@ -145,6 +145,7 @@ export default function Chat() {
         `${process.env.NEXT_PUBLIC_SERVER_URI}/api/v1/messages/all/${selectedChat._id}`
       );
       setChatMessages(data.messages);
+
       socketId.emit("join chat", selectedChat._id);
     } catch (error) {
       console.log(error);

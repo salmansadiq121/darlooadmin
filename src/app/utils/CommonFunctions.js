@@ -8,6 +8,22 @@ export const sizeOptions = [
   { value: "XXL", label: "2X Large" },
   { value: "XXXL", label: "3X Large" },
 
+  // Men's Clothing Sizes
+  { value: "28", label: "28 Waist" },
+  { value: "30", label: "30 Waist" },
+  { value: "32", label: "32 Waist" },
+  { value: "34", label: "34 Waist" },
+  { value: "36", label: "36 Waist" },
+  { value: "38", label: "38 Waist" },
+
+  // Women's Clothing Sizes
+  { value: "0", label: "0" },
+  { value: "2", label: "2" },
+  { value: "4", label: "4" },
+  { value: "6", label: "6" },
+  { value: "8", label: "8" },
+  { value: "10", label: "10" },
+
   // Shoes Sizes (US)
   { value: "6", label: "US 6" },
   { value: "7", label: "US 7" },
@@ -17,31 +33,26 @@ export const sizeOptions = [
   { value: "11", label: "US 11" },
   { value: "12", label: "US 12" },
 
+  // Shoes Sizes (EU)
+  { value: "36", label: "EU 36" },
+  { value: "37", label: "EU 37" },
+  { value: "38", label: "EU 38" },
+  { value: "39", label: "EU 39" },
+  { value: "40", label: "EU 40" },
+  { value: "41", label: "EU 41" },
+  { value: "42", label: "EU 42" },
+
   // Kids Clothing Sizes
   { value: "2T", label: "Toddler 2T" },
   { value: "3T", label: "Toddler 3T" },
   { value: "4T", label: "Toddler 4T" },
-  { value: "5", label: "Child 5" },
-  { value: "6", label: "Child 6" },
-  { value: "7", label: "Child 7" },
 
-  // General Product Sizes
-  { value: "Small", label: "Small" },
-  { value: "Medium", label: "Medium" },
-  { value: "Large", label: "Large" },
-  { value: "XLarge", label: "Extra Large" },
-
-  // Volume (e.g., Liquids)
-  { value: "250ml", label: "250 ml" },
-  { value: "500ml", label: "500 ml" },
-  { value: "1L", label: "1 Liter" },
-  { value: "2L", label: "2 Liters" },
-
-  // Weight (e.g., Grocery Items)
-  { value: "250g", label: "250 grams" },
-  { value: "500g", label: "500 grams" },
-  { value: "1kg", label: "1 kilogram" },
-  { value: "2kg", label: "2 kilograms" },
+  // Baby Sizes
+  { value: "NB", label: "Newborn" },
+  { value: "3M", label: "3 Months" },
+  { value: "6M", label: "6 Months" },
+  { value: "9M", label: "9 Months" },
+  { value: "12M", label: "12 Months" },
 
   // Bedding Sizes
   { value: "Twin", label: "Twin" },
@@ -50,8 +61,27 @@ export const sizeOptions = [
   { value: "King", label: "King" },
   { value: "California King", label: "California King" },
 
+  // General Product Sizes
+  { value: "Small", label: "Small" },
+  { value: "Medium", label: "Medium" },
+  { value: "Large", label: "Large" },
+  { value: "XLarge", label: "Extra Large" },
+
+  // Volume Sizes (Liquids)
+  { value: "250ml", label: "250 ml" },
+  { value: "500ml", label: "500 ml" },
+  { value: "1L", label: "1 Liter" },
+  { value: "2L", label: "2 Liters" },
+
+  // Weight Sizes (Grocery)
+  { value: "250g", label: "250 grams" },
+  { value: "500g", label: "500 grams" },
+  { value: "1kg", label: "1 kilogram" },
+  { value: "2kg", label: "2 kilograms" },
+
   // Miscellaneous Sizes
   { value: "OneSize", label: "One Size Fits All" },
+  { value: "adjustable", label: "Adjustable" },
 ];
 
 export const colorData = [

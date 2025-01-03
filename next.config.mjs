@@ -7,6 +7,7 @@ const nextConfig = {
       "s3.eu-north-1.amazonaws.com",
       "ayoob.ecom.s3.eu-north-1.amazonaws.com",
     ],
+    domains: ["cdn.shopify.com"],
     remotePatterns: [
       {
         protocol: "https",

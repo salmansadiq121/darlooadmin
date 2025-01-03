@@ -18,6 +18,8 @@ import toast from "react-hot-toast";
 import Swal from "sweetalert2";
 import CheckoutTest from "@/app/components/Products/CheckoutTest";
 import PaypalCheckout from "@/app/components/Checkout/PaypalCheckout";
+import { FcImport } from "react-icons/fc";
+import { TbLoader } from "react-icons/tb";
 const MainLayout = dynamic(
   () => import("./../../../components/layout/MainLayout"),
   {
@@ -81,6 +83,7 @@ export default function Products() {
   const closeModal = useRef(null);
   const isInitialRender = useRef(true);
   const [isLoad, setIsLoad] = useState(false);
+  const [fLoading, setFLoading] = useState(false);
 
   // <--------------Payment------------>
   const [payment, setpayment] = useState(false);
@@ -391,11 +394,16 @@ export default function Products() {
                     <Image
                       src={avatar}
                       layout="fill"
-                      alt={"Avatar"}
+                      alt="Thumbnail"
+                      // width={70}
+                      // height={40}
+                      // sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 3.4rem"
                       className="w-full h-full"
                     />
                   </div>
-                  <span className="text-[12px]">{name}</span>
+                  <span className="text-[12px] capitalize truncate block ">
+                    {name}
+                  </span>
                 </div>
                 <div className="flex items-center gap-2">
                   <span className="font-semibold text-gray-800 text-[12px]">
@@ -569,7 +577,7 @@ export default function Products() {
           );
         },
         Cell: ({ cell, row }) => {
-          const orders = row.original.orders;
+          const orders = row.original.purchased;
 
           return (
             <div className="cursor-pointer text-[12px] flex items-center justify-start text-black w-full h-full">
@@ -602,7 +610,7 @@ export default function Products() {
                 value={size}
                 className="w-full h-[2rem] rounded-md outline-none border border-gray-700 cursor-pointer p-1"
               >
-                <option value="">Colors</option>
+                <option value="">Sizes</option>
                 {sizes.map((size, i) => (
                   <option value={size} key={i}>
                     {size}
@@ -930,6 +938,42 @@ export default function Products() {
   //   document.addEventListener("mousedown", handleClickOutside);
   //   return () => document.removeEventListener("mousedown", handleClickOutside);
   // }, []);
+
+  // Import Data
+  const importProductData = async (file) => {
+    setFLoading(true);
+    if (!file) {
+      toast.error("File is required!");
+      setFLoading(false);
+      return;
+    }
+
+    const formData = new FormData();
+    formData.append("file", file);
+
+    try {
+      const { data } = await axios.post(
+        `${process.env.NEXT_PUBLIC_SERVER_URI}/api/v1/products/import`,
+        formData,
+        {
+          headers: {
+            "Content-Type": "multipart/form-data",
+          },
+        }
+      );
+      if (data) {
+        fetchProducts();
+        toast.success("Product data imported successfully");
+      }
+    } catch (error) {
+      console.error("Error importing data:", error);
+      toast.error(
+        error?.response?.data?.message || "Failed to import product data"
+      );
+    } finally {
+      setFLoading(false);
+    }
+  };
   return (
     <MainLayout
       title="Products - Manage  products"
@@ -985,6 +1029,31 @@ export default function Products() {
                 >
                   Delete All
                 </button>
+
+                <form>
+                  <input
+                    type="file"
+                    name="file"
+                    onChange={(e) => importProductData(e.target.files[0])}
+                    accept=".csv, .xlsx"
+                    id="importProducts"
+                    className="hidden"
+                  />
+                  <label
+                    htmlFor="importProducts"
+                    disabled={fLoading}
+                    className={`flex text-[14px] items-center justify-center text-white bg-[#c6080a] hover:bg-red-800  py-2 rounded-md shadow-md hover:shadow-xl transition-all duration-300 cursor-pointer hover:scale-[1.03] px-4`}
+                    title={"Import csv or excel file!"}
+                    onClick={(e) => fLoading && e.preventDefault()}
+                  >
+                    {fLoading ? (
+                      <TbLoader className="h-6 w-6 animate-spin text-white" />
+                    ) : (
+                      "Import"
+                    )}
+                  </label>
+                </form>
+
                 <button
                   onClick={() => setShowaddProduct(true)}
                   className={`flex text-[14px] items-center justify-center text-white bg-[#c6080a] hover:bg-red-800  py-2 rounded-md shadow-md hover:shadow-xl transition-all duration-300 cursor-pointer hover:scale-[1.03] px-4`}

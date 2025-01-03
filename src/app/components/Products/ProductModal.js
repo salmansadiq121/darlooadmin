@@ -39,7 +39,7 @@ export default function ProductModal({
   const [isloading, setIsloading] = useState(false);
   const [shipping, setShipping] = useState("");
 
-  console.log("colors1", colors);
+  console.log("thumbnails", thumbnails);
 
   // Get Product Detail
   const getProductInfo = async () => {
@@ -48,30 +48,36 @@ export default function ProductModal({
         `${process.env.NEXT_PUBLIC_SERVER_URI}/api/v1/products/product/detail/${productId}`
       );
       if (data) {
+        console.log("Product Data", data.product);
         const product = data.product;
         setName(product.name || "");
         setDescription(product.description || "");
-        setCategory(product.category || []);
         setShipping(product.shipping || 0);
-        setCategory({
-          value: product.category._id,
-          label: (
-            <div className="flex items-center gap-1">
-              <div className="w-6 h-6 rounded-full relative overflow-hidden flex items-center justify-center">
-                <Image
-                  src={product.category.image}
-                  layout="fill"
-                  alt={product.category.name}
-                  className="w-full h-full"
-                />
+        if (product.category && product.category._id) {
+          setCategory({
+            value: product.category._id,
+            label: (
+              <div className="flex items-center gap-1">
+                <div className="w-6 h-6 rounded-full relative overflow-hidden flex items-center justify-center">
+                  <Image
+                    src={product.category.image}
+                    layout="fill"
+                    alt={product.category.name}
+                    className="w-full h-full"
+                  />
+                </div>
+                {product.category.name}
               </div>
-              {product.category.name}
-            </div>
-          ),
-        });
+            ),
+          });
+        }
         setPrice(product.price || "");
         setEstimatedPrice(product.estimatedPrice || "");
-        setThumbnails(product.thumbnails || []);
+        setThumbnails(
+          product.thumbnails && Array.isArray(product.thumbnails)
+            ? product.thumbnails
+            : ["No Thumbnails"]
+        );
         setQuantity(product.quantity || "");
         setColors(
           product.colors?.map((color) => {
@@ -241,7 +247,7 @@ export default function ProductModal({
       toast.error(error?.response?.data?.message);
     } finally {
       fetchProducts();
-      // setShowaddProduct(false);
+      setShowaddProduct(false);
       setIsloading(false);
       setProductId("");
       setDeletedImages([]);
