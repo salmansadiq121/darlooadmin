@@ -8,7 +8,7 @@ import { useRouter } from "next/navigation";
 import { LuWarehouse } from "react-icons/lu";
 import { AiOutlineProduct } from "react-icons/ai";
 import { BsBoxSeam } from "react-icons/bs";
-import { HiOutlineNewspaper } from "react-icons/hi2";
+import { FaRegCreditCard } from "react-icons/fa6";
 import { MdOutlineNotificationsActive } from "react-icons/md";
 import { MdOutlinePrivacyTip } from "react-icons/md";
 import { IoSettingsOutline } from "react-icons/io5";
@@ -195,6 +195,41 @@ export default function Sidebar({ hide, setHide }) {
                     style={{ color: active === "coupon" && "#fff" }}
                   >
                     Coupon
+                  </span>
+                </div>
+              )}
+            </div>
+          </div>
+          {/* Card */}
+          <div
+            className={` relative h-[2.4rem] rounded-md cursor-pointer hover:shadow-md   shadow-gray-300 ${
+              active === "cards" ? "bg-[#c6080a]" : "bg-white"
+            }  filter hover:drop-shadow-md  overflow-hidden transition-all duration-300`}
+            onClick={() => {
+              router.push("/dashboard/cards");
+            }}
+          >
+            <div
+              className={`relative w-full h-full flex items-center ${
+                active === "cards" ? "bg-[#c6080a]" : "bg-white"
+              } px-2 z-30 bg-transparent hover:bg-[#c6080a] hover:text-white transition-all duration-300 `}
+            >
+              {hide ? (
+                <FaRegCreditCard
+                  className="h-5 w-5 cursor-pointer ml-2"
+                  style={{ color: active === "cards" && "#fff" }}
+                />
+              ) : (
+                <div className="flex items-center gap-2">
+                  <FaRegCreditCard
+                    className="h-5 w-5 cursor-pointer ml-2"
+                    style={{ color: active === "cards" && "#fff" }}
+                  />
+                  <span
+                    className="text-[14px] font-[400]"
+                    style={{ color: active === "cards" && "#fff" }}
+                  >
+                    Card
                   </span>
                 </div>
               )}

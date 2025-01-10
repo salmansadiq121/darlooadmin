@@ -173,7 +173,7 @@ export default function Header() {
               <div className=" w-[2.2rem] sm:w-[2.6rem] h-[2.2rem] sm:h-[2.6rem] cursor-pointer relative rounded-full bg-sky-600 overflow-hidden flex items-center justify-center text-white border-2 border-orange-600">
                 {user?.avatar ? (
                   <Image
-                    src={"/profile.png"}
+                    src={user?.avatar ? user?.avatar : "/profile.png"}
                     layout="fill"
                     alt={"Avatar"}
                     className="w-full h-full"

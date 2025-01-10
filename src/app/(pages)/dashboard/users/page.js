@@ -247,7 +247,7 @@ export default function Users() {
   const columns = useMemo(
     () => [
       {
-        accessorKey: "avater",
+        accessorKey: "avatar",
         minSize: 50,
         maxSize: 120,
         size: 60,
@@ -267,7 +267,7 @@ export default function Users() {
               <div className=" w-[2rem] h-[2rem] relative rounded-full bg-sky-600 overflow-hidden flex items-center justify-center">
                 {avatar ? (
                   <Image
-                    src={"/profile.png"}
+                    src={avatar ? avatar : "/profile.png"}
                     layout="fill"
                     alt={"Avatar"}
                     className="w-full h-full"

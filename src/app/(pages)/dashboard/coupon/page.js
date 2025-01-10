@@ -266,8 +266,8 @@ export default function Coupon() {
           );
         },
         Cell: ({ cell, row }) => {
-          const products = row.original.productIds;
-          const product = products[0].name;
+          const products = row.original?.productIds;
+          const product = products[0]?.name;
 
           return (
             <div className="cursor-pointer text-[12px] flex items-center justify-start text-black w-full h-full">
@@ -276,9 +276,9 @@ export default function Coupon() {
                 className="w-full h-[2rem] rounded-md outline-none border border-gray-700 cursor-pointer p-1"
               >
                 <option value="">Products</option>
-                {products.map((product, i) => (
-                  <option value={product.name} key={i}>
-                    {product.name}
+                {products?.map((product, i) => (
+                  <option value={product?.name} key={i}>
+                    {product?.name}
                   </option>
                 ))}
               </select>

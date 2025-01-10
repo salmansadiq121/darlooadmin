@@ -3,12 +3,6 @@ const nextConfig = {
   reactStrictMode: false,
   images: {
     remotePatterns: [
-      "socialface.s3.eu-north-1.amazonaws.com",
-      "s3.eu-north-1.amazonaws.com",
-      "ayoob.ecom.s3.eu-north-1.amazonaws.com",
-    ],
-    domains: ["cdn.shopify.com"],
-    remotePatterns: [
       {
         protocol: "https",
         hostname: "socialface.s3.eu-north-1.amazonaws.com",
@@ -21,10 +15,21 @@ const nextConfig = {
       },
       {
         protocol: "https",
+        hostname: "ayoob.ecom.s3.eu-north-1.amazonaws.com",
+        pathname: "**",
+      },
+      {
+        protocol: "https",
         hostname: "cdn.shopify.com",
         pathname: "**",
       },
+      {
+        protocol: "https",
+        hostname: "lh3.googleusercontent.com",
+        pathname: "**",
+      },
     ],
+    domains: ["cdn.shopify.com", "lh3.googleusercontent.com"],
   },
 };
 

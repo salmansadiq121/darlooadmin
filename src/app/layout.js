@@ -13,7 +13,7 @@ export default function RootLayout({ children }) {
   return (
     <html lang="en" suppressHydrationWarning>
       <body
-        className={`${inter.className} w-full min-h-screen dark:bg-gray-950 dark:text-white text-black`}
+        className={`${inter.className} w-full min-h-screen bg-white  text-black`}
       >
         <AuthProvider>
           <main className="overflow-x-hidden">{children}</main>

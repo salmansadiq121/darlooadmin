@@ -64,7 +64,8 @@ export default function Login({ setActive }) {
       <div className="w-[30rem] py-4 px-2 sm:px-4 bg-gray-100 shadow-md  rounded-md">
         <form onSubmit={handleLogin} className="">
           <div className="flex items-center justify-center text-black flex-col gap-2 w-full">
-            <Image src="/Sociallogo3.png" alt="Logo" width={60} height={60} />
+            {/* <Image src="/Ayboo.png" alt="Ayoob" width={70} height={70} /> */}
+
             <h2 className=" text-2xl sm:text-3xl font-semibold text-center text-black">
               Welcome to <span className="tgradient">Ayoob</span>
             </h2>
@@ -116,12 +117,12 @@ export default function Login({ setActive }) {
                   Remember me
                 </span>
 
-                <span
+                {/* <span
                   onClick={() => setActive("resetPassword")}
                   className="text-[14px] text-red-600 hover:text-red-700 cursor-pointer"
                 >
                   Forgot Password
-                </span>
+                </span> */}
               </div>
               {/* Button */}
               <div className="flex items-center justify-center w-full py-4 px-2 sm:px-[2rem]">

@@ -91,6 +91,23 @@ const AuthProvider = ({ children }) => {
     // eslint-disable-next-line
   }, []);
 
+  // Check token expiry
+  useEffect(() => {
+    const checkTokenExpiry = () => {
+      const data = localStorage.getItem("auth");
+      if (data) {
+        const { token } = JSON.parse(data);
+        const decodedToken = JSON.parse(atob(token.split(".")[1]));
+        const isExpired = decodedToken.exp * 1000 < Date.now();
+        if (isExpired) {
+          setAuth({ user: null, token: "" });
+          localStorage.removeItem("auth");
+        }
+      }
+    };
+    checkTokenExpiry();
+  }, []);
+
   return (
     <AuthContext.Provider
       value={{

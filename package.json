@@ -52,6 +52,7 @@
     "recharts": "^2.15.0",
     "socket.io-client": "^4.8.1",
     "sweetalert2": "^11.14.5",
+    "update": "^0.7.4",
     "webpack": "^5.96.1",
     "world-countries": "^5.0.0"
   },
