@@ -91,7 +91,7 @@ export default function Cards() {
       });
     }
 
-    setFilterCoupon(filtered);
+    setFilterCards(filtered);
   };
 
   const handleSearch = (value) => {
