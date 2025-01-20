@@ -20,16 +20,15 @@ const SocketHandler = () => {
 
       socketId.on("connection", () => {
         console.log("Socket connected!");
-        // getAllUsers();
       });
 
       socketId.on("disconnect", () => {
         console.log("Socket disconnected!");
-        // getAllUsers();
       });
 
       return () => {
         socketId.disconnect();
+        console.log("Socket disconnected!");
       };
     }
   }, [auth?.user]);

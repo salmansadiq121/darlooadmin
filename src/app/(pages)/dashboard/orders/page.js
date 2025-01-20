@@ -17,6 +17,7 @@ import Swal from "sweetalert2";
 import axios from "axios";
 import toast from "react-hot-toast";
 import { ImSpinner4 } from "react-icons/im";
+import { useAuth } from "@/app/context/authContext";
 const MainLayout = dynamic(
   () => import("./../../../components/layout/MainLayout"),
   {
@@ -28,6 +29,7 @@ const Breadcrumb = dynamic(() => import("./../../../utils/Breadcrumb"), {
 });
 
 export default function Orders() {
+  const { auth } = useAuth();
   const [currentUrl, setCurrentUrl] = useState("");
   const [orderData, setOrderData] = useState([]);
   const [filterOrders, setFilterOrders] = useState([]);
@@ -357,7 +359,7 @@ export default function Orders() {
                         className="w-[3.5rem] h-[2.3rem]"
                       />
                     </div>
-                    <span className="text-[12px]">
+                    <span className="text-[12px] hover:text-sky-600 truncate">
                       {firstProduct?.product?.name || "Unnamed Product"}
                     </span>
                   </div>
@@ -390,7 +392,7 @@ export default function Orders() {
                                 className="w-[3.5rem] h-[2.3rem]"
                               />
                             </div>
-                            <span className="text-[12px]">
+                            <span className="text-[12px] truncate">
                               {product?.product?.name || "Unnamed Product"}
                             </span>
                           </div>
@@ -728,53 +730,59 @@ export default function Orders() {
           return cellValue.includes(filterValue.toLowerCase());
         },
       },
-      {
-        accessorKey: "Actions",
-        minSize: 100,
-        maxSize: 140,
-        size: 140,
-        grow: false,
-        Header: ({ column }) => {
-          return (
-            <div className=" flex flex-col gap-[2px]">
-              <span className="ml-1 cursor-pointer">ACTIONS</span>
-            </div>
-          );
-        },
-        Cell: ({ cell, row }) => {
-          return (
-            <div className="flex items-center gap-2 cursor-pointer text-[12px] text-black w-full h-full">
-              <span
-                onClick={() =>
-                  router.push(`/dashboard/orders/details/${row.original._id}`)
-                }
-                className="p-1 bg-purple-200 hover:bg-purple-300 rounded-full transition-all duration-300 hover:scale-[1.03] cursor-pointer"
-              >
-                <TiEye className="text-[16px] text-purple-500 hover:text-purple-600" />
-              </span>
-              {/* <span className="p-1 bg-yellow-500 hover:bg-yellow-600 rounded-full transition-all duration-300 hover:scale-[1.03] cursor-pointer">
+      ...(auth?.user?.role === "admin" || auth?.user?.role === "superadmin"
+        ? [
+            {
+              accessorKey: "Actions",
+              minSize: 100,
+              maxSize: 140,
+              size: 140,
+              grow: false,
+              Header: ({ column }) => {
+                return (
+                  <div className=" flex flex-col gap-[2px]">
+                    <span className="ml-1 cursor-pointer">ACTIONS</span>
+                  </div>
+                );
+              },
+              Cell: ({ cell, row }) => {
+                return (
+                  <div className="flex items-center gap-2 cursor-pointer text-[12px] text-black w-full h-full">
+                    <span
+                      onClick={() =>
+                        router.push(
+                          `/dashboard/orders/details/${row.original._id}`
+                        )
+                      }
+                      className="p-1 bg-purple-200 hover:bg-purple-300 rounded-full transition-all duration-300 hover:scale-[1.03] cursor-pointer"
+                    >
+                      <TiEye className="text-[16px] text-purple-500 hover:text-purple-600" />
+                    </span>
+                    {/* <span className="p-1 bg-yellow-500 hover:bg-yellow-600 rounded-full transition-all duration-300 hover:scale-[1.03] cursor-pointer">
                 <MdModeEditOutline className="text-[16px] text-white" />
               </span> */}
-              {/* <span className="p-1 bg-sky-200 hover:bg-sky-300 rounded-full transition-all duration-300 hover:scale-[1.03] cursor-pointer">
+                    {/* <span className="p-1 bg-sky-200 hover:bg-sky-300 rounded-full transition-all duration-300 hover:scale-[1.03] cursor-pointer">
                 <MdNotInterested className="text-[16px] text-sky-500 hover:text-sky-600" />
               </span> */}
-              <span
-                onClick={() => {
-                  setOrderId(row.original._id);
-                  handleDeleteConfirmation(row.original._id);
-                }}
-                className="p-1 bg-red-200 hover:bg-red-300   rounded-full transition-all duration-300 hover:scale-[1.03] cursor-pointer"
-              >
-                {isLoad && orderId === row.original._id ? (
-                  <ImSpinner4 className="text-[16px] text-white animate-spin" />
-                ) : (
-                  <MdDelete className="text-[16px] text-red-500 hover:text-red-600" />
-                )}
-              </span>
-            </div>
-          );
-        },
-      },
+                    <span
+                      onClick={() => {
+                        setOrderId(row.original._id);
+                        handleDeleteConfirmation(row.original._id);
+                      }}
+                      className="p-1 bg-red-200 hover:bg-red-300   rounded-full transition-all duration-300 hover:scale-[1.03] cursor-pointer"
+                    >
+                      {isLoad && orderId === row.original._id ? (
+                        <ImSpinner4 className="text-[16px] text-white animate-spin" />
+                      ) : (
+                        <MdDelete className="text-[16px] text-red-500 hover:text-red-600" />
+                      )}
+                    </span>
+                  </div>
+                );
+              },
+            },
+          ]
+        : []),
     ],
     // eslint-disable-next-line
     [orderData, currentUrl, filterOrders, activeTab, paginatedData]
@@ -922,19 +930,22 @@ export default function Orders() {
               <h1 className="text-2xl font-sans font-semibold text-black">
                 Latest Orders
               </h1>
-              <div className="flex items-center gap-4">
-                <button
-                  onClick={() => handleDeleteConfirmationOrder()}
-                  className="text-[14px] py-2 px-4 hover:border-2 hover:rounded-md hover:shadow-md hover:scale-[1.03] text-gray-600 hover:text-gray-800 border-b-2 border-gray-600 transition-all duration-300 "
-                >
-                  Delete All
-                </button>
-                {/* <button
+              {auth?.user?.role === "admin" ||
+                (auth?.user?.role === "superadmin" && (
+                  <div className="flex items-center gap-4">
+                    <button
+                      onClick={() => handleDeleteConfirmationOrder()}
+                      className="text-[14px] py-2 px-4 hover:border-2 hover:rounded-md hover:shadow-md hover:scale-[1.03] text-gray-600 hover:text-gray-800 border-b-2 border-gray-600 transition-all duration-300 "
+                    >
+                      Delete All
+                    </button>
+                    {/* <button
                   className={`flex text-[14px] items-center justify-center text-white bg-[#c6080a] hover:bg-red-800   py-2 rounded-md shadow-md hover:shadow-xl transition-all duration-300 cursor-pointer hover:scale-[1.03] px-4`}
                 >
                   ADD NEW ORDER
                 </button> */}
-              </div>
+                  </div>
+                ))}
             </div>
           </div>
           {/*  */}

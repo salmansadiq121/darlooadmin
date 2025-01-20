@@ -14,8 +14,40 @@ import { MdOutlinePrivacyTip } from "react-icons/md";
 import { IoSettingsOutline } from "react-icons/io5";
 import { BsChatRightText } from "react-icons/bs";
 import { RiCoupon4Line } from "react-icons/ri";
+import { useAuth } from "@/app/context/authContext";
+
+const rolePermissions = {
+  admin: [
+    "dashboard",
+    "users",
+    "products",
+    "coupon",
+    "card",
+    "categories",
+    "orders",
+    "chat",
+    "notifications",
+    "privacy",
+    "settings",
+  ],
+  superadmin: [
+    "dashboard",
+    "users",
+    "products",
+    "coupon",
+    "card",
+    "categories",
+    "orders",
+    "chat",
+    "notifications",
+    "privacy",
+    "settings",
+  ],
+  agent: ["orders"],
+};
 
 export default function Sidebar({ hide, setHide }) {
+  const { auth } = useAuth();
   const router = useRouter();
   const [active, setActive] = useState("");
 
@@ -26,6 +58,72 @@ export default function Sidebar({ hide, setHide }) {
 
     // exlint-disable-next-line
   }, [setActive]);
+
+  const allowedRoutes = rolePermissions[auth?.user.role] || [];
+
+  const menuItems = [
+    {
+      id: "dashboard",
+      label: "Dashboard",
+      icon: LuLayoutDashboard,
+      path: "/dashboard",
+    },
+    { id: "users", label: "Users", icon: FiUsers, path: "/dashboard/users" },
+    {
+      id: "products",
+      label: "Products",
+      icon: LuWarehouse,
+      path: "/dashboard/products",
+    },
+    {
+      id: "coupon",
+      label: "Coupon",
+      icon: RiCoupon4Line,
+      path: "/dashboard/coupon",
+    },
+    {
+      id: "card",
+      label: "Card",
+      icon: FaRegCreditCard,
+      path: "/dashboard/cards",
+    },
+    {
+      id: "categories",
+      label: "Categories",
+      icon: AiOutlineProduct,
+      path: "/dashboard/categories",
+    },
+    {
+      id: "orders",
+      label: "Orders",
+      icon: BsBoxSeam,
+      path: "/dashboard/orders",
+    },
+    {
+      id: "chat",
+      label: "Chat",
+      icon: BsChatRightText,
+      path: "/dashboard/chat",
+    },
+    {
+      id: "notifications",
+      label: "Notifications",
+      icon: MdOutlineNotificationsActive,
+      path: "/dashboard/notifications",
+    },
+    {
+      id: "privacy",
+      label: "Term & Privacy",
+      icon: MdOutlinePrivacyTip,
+      path: "/dashboard/privacy",
+    },
+    {
+      id: "settings",
+      label: "Settings",
+      icon: IoSettingsOutline,
+      path: "/dashboard/settings",
+    },
+  ];
 
   return (
     <div className="w-full h-screen py-2 border-r border-gray-200 bg-white text-black">
@@ -57,432 +155,48 @@ export default function Sidebar({ hide, setHide }) {
       </div>
       {/* border-2 border-red-600  */}
       <div className="relative w-full h-[calc(100vh-10.5vh)] sm:h-[calc(100vh-7.5vh)] overflow-y-auto scroll-smooth py-3 pb-[2rem] shidden">
-        <div className="flex flex-col gap-3 px-3 ">
-          {/* 1 */}
-
-          <div
-            className={` relative h-[2.4rem] rounded-md cursor-pointer hover:shadow-md   shadow-gray-300 ${
-              active === "dashboard" ? "bg-[#c6080a]" : "bg-white"
-            }  filter hover:drop-shadow-md  overflow-hidden transition-all duration-300`}
-            onClick={() => {
-              router.push("/dashboard");
-            }}
-          >
-            <div
-              className={`relative w-full h-full flex items-center ${
-                active === "dashboard" ? "bg-[#c6080a]" : "bg-white"
-              } px-2 z-30 bg-transparent hover:bg-[#c6080a] hover:text-white transition-all duration-300`}
-            >
-              {hide ? (
-                <LuLayoutDashboard
-                  className="h-5 w-5 cursor-pointer ml-2"
-                  style={{ color: active === "dashboard" && "#fff" }}
-                />
-              ) : (
-                <div className="flex items-center gap-2">
-                  <LuLayoutDashboard
-                    className="h-5 w-5 cursor-pointer ml-2"
-                    style={{ color: active === "dashboard" && "#fff" }}
-                  />
-                  <span
-                    className="text-[14px] font-[400]"
-                    style={{ color: active === "dashboard" && "#fff" }}
+        <div className="flex flex-col gap-3 px-3">
+          {menuItems
+            .filter((item) => allowedRoutes.includes(item.id))
+            .map((item) => (
+              <React.Fragment key={item.id}>
+                <div
+                  className={` relative h-[2.4rem] rounded-md cursor-pointer hover:shadow-md   shadow-gray-300 ${
+                    active === item.id ? "bg-[#c6080a]" : "bg-white"
+                  }  filter hover:drop-shadow-md  overflow-hidden transition-all duration-300`}
+                  onClick={() => router.push(item.path)}
+                >
+                  <div
+                    className={`relative w-full h-full flex items-center ${
+                      active === item.id ? "bg-[#c6080a]" : "bg-white"
+                    } px-2 z-30 bg-transparent hover:bg-[#c6080a] hover:text-white transition-all duration-300`}
                   >
-                    Dashboard
-                  </span>
+                    {hide ? (
+                      <item.icon
+                        className="h-5 w-5 cursor-pointer ml-2"
+                        style={{ color: active === item.id ? "#fff" : "" }}
+                      />
+                    ) : (
+                      <div className="flex items-center gap-2">
+                        <item.icon
+                          className="h-5 w-5 cursor-pointer ml-2"
+                          style={{ color: active === item.id ? "#fff" : "" }}
+                        />
+                        <span
+                          className="text-[14px] font-[400]"
+                          style={{ color: active === item.id ? "#fff" : "" }}
+                        >
+                          {item.label}
+                        </span>
+                      </div>
+                    )}
+                  </div>
                 </div>
-              )}
-            </div>
-          </div>
-          <hr className="w-full h-[1px] bg-gray-400" />
-          {/* user */}
-          <div
-            className={` relative h-[2.4rem] rounded-md cursor-pointer hover:shadow-md   shadow-gray-300 ${
-              active === "users" ? "bg-[#c6080a]" : "bg-white"
-            }  filter hover:drop-shadow-md  overflow-hidden transition-all duration-300`}
-            onClick={() => {
-              router.push("/dashboard/users");
-            }}
-          >
-            <div
-              className={`relative w-full h-full flex items-center ${
-                active === "users" ? "bg-[#c6080a]" : "bg-white"
-              } px-2 z-30 bg-transparent hover:bg-[#c6080a] hover:text-white transition-all duration-300`}
-            >
-              {hide ? (
-                <FiUsers
-                  className="h-5 w-5 cursor-pointer ml-2"
-                  style={{ color: active === "users" && "#fff" }}
-                />
-              ) : (
-                <div className="flex items-center gap-2">
-                  <FiUsers
-                    className="h-5 w-5 cursor-pointer ml-2"
-                    style={{ color: active === "users" && "#fff" }}
-                  />
-                  <span
-                    className="text-[14px] font-[400]"
-                    style={{ color: active === "users" && "#fff" }}
-                  >
-                    Users
-                  </span>
-                </div>
-              )}
-            </div>
-          </div>
-          {/* Product */}
-          <div
-            className={` relative h-[2.4rem] rounded-md cursor-pointer hover:shadow-md   shadow-gray-300 ${
-              active === "products" ? "bg-[#c6080a]" : "bg-white"
-            }  filter hover:drop-shadow-md  overflow-hidden transition-all duration-300`}
-            onClick={() => {
-              router.push("/dashboard/products");
-            }}
-          >
-            <div
-              className={`relative w-full h-full flex items-center ${
-                active === "products" ? "bg-[#c6080a]" : "bg-white"
-              } px-2 z-30 bg-transparent hover:bg-[#c6080a] hover:text-white transition-all duration-300 `}
-            >
-              {hide ? (
-                <LuWarehouse
-                  className="h-5 w-5 cursor-pointer ml-2"
-                  style={{ color: active === "products" && "#fff" }}
-                />
-              ) : (
-                <div className="flex items-center gap-2">
-                  <LuWarehouse
-                    className="h-5 w-5 cursor-pointer ml-2"
-                    style={{ color: active === "products" && "#fff" }}
-                  />
-                  <span
-                    className="text-[14px] font-[400]"
-                    style={{ color: active === "products" && "#fff" }}
-                  >
-                    Products
-                  </span>
-                </div>
-              )}
-            </div>
-          </div>
-          {/* Coupon */}
-          <div
-            className={` relative h-[2.4rem] rounded-md cursor-pointer hover:shadow-md   shadow-gray-300 ${
-              active === "coupon" ? "bg-[#c6080a]" : "bg-white"
-            }  filter hover:drop-shadow-md  overflow-hidden transition-all duration-300`}
-            onClick={() => {
-              router.push("/dashboard/coupon");
-            }}
-          >
-            <div
-              className={`relative w-full h-full flex items-center ${
-                active === "coupon" ? "bg-[#c6080a]" : "bg-white"
-              } px-2 z-30 bg-transparent hover:bg-[#c6080a] hover:text-white transition-all duration-300 `}
-            >
-              {hide ? (
-                <RiCoupon4Line
-                  className="h-5 w-5 cursor-pointer ml-2"
-                  style={{ color: active === "coupon" && "#fff" }}
-                />
-              ) : (
-                <div className="flex items-center gap-2">
-                  <RiCoupon4Line
-                    className="h-5 w-5 cursor-pointer ml-2"
-                    style={{ color: active === "coupon" && "#fff" }}
-                  />
-                  <span
-                    className="text-[14px] font-[400]"
-                    style={{ color: active === "coupon" && "#fff" }}
-                  >
-                    Coupon
-                  </span>
-                </div>
-              )}
-            </div>
-          </div>
-          {/* Card */}
-          <div
-            className={` relative h-[2.4rem] rounded-md cursor-pointer hover:shadow-md   shadow-gray-300 ${
-              active === "cards" ? "bg-[#c6080a]" : "bg-white"
-            }  filter hover:drop-shadow-md  overflow-hidden transition-all duration-300`}
-            onClick={() => {
-              router.push("/dashboard/cards");
-            }}
-          >
-            <div
-              className={`relative w-full h-full flex items-center ${
-                active === "cards" ? "bg-[#c6080a]" : "bg-white"
-              } px-2 z-30 bg-transparent hover:bg-[#c6080a] hover:text-white transition-all duration-300 `}
-            >
-              {hide ? (
-                <FaRegCreditCard
-                  className="h-5 w-5 cursor-pointer ml-2"
-                  style={{ color: active === "cards" && "#fff" }}
-                />
-              ) : (
-                <div className="flex items-center gap-2">
-                  <FaRegCreditCard
-                    className="h-5 w-5 cursor-pointer ml-2"
-                    style={{ color: active === "cards" && "#fff" }}
-                  />
-                  <span
-                    className="text-[14px] font-[400]"
-                    style={{ color: active === "cards" && "#fff" }}
-                  >
-                    Card
-                  </span>
-                </div>
-              )}
-            </div>
-          </div>
-
-          {/* Categories */}
-          <div
-            className={` relative h-[2.4rem] rounded-md cursor-pointer hover:shadow-md   shadow-gray-300 ${
-              active === "categories" ? "bg-[#c6080a]" : "bg-white"
-            }  filter hover:drop-shadow-md  overflow-hidden transition-all duration-300`}
-            onClick={() => {
-              router.push("/dashboard/categories");
-            }}
-          >
-            <div
-              className={`relative w-full h-full flex items-center ${
-                active === "categories" ? "bg-[#c6080a]" : "bg-white"
-              } px-2 z-30 bg-transparent hover:bg-[#c6080a] hover:text-white transition-all duration-300 `}
-            >
-              {hide ? (
-                <AiOutlineProduct
-                  className="h-5 w-5 cursor-pointer ml-2"
-                  style={{ color: active === "categories" && "#fff" }}
-                />
-              ) : (
-                <div className="flex items-center gap-2">
-                  <AiOutlineProduct
-                    className="h-5 w-5 cursor-pointer ml-2"
-                    style={{ color: active === "categories" && "#fff" }}
-                  />
-                  <span
-                    className="text-[14px] font-[400]"
-                    style={{ color: active === "categories" && "#fff" }}
-                  >
-                    Categories
-                  </span>
-                </div>
-              )}
-            </div>
-          </div>
-          {/* Orders */}
-          <div
-            className={` relative h-[2.4rem] rounded-md cursor-pointer hover:shadow-md   shadow-gray-300 ${
-              active === "orders" ? "bg-[#c6080a]" : "bg-white"
-            }  filter hover:drop-shadow-md  overflow-hidden transition-all duration-300`}
-            onClick={() => {
-              router.push("/dashboard/orders");
-            }}
-          >
-            <div
-              className={`relative w-full h-full flex items-center ${
-                active === "orders" ? "bg-[#c6080a]" : "bg-white"
-              } px-2 z-30 bg-transparent hover:bg-[#c6080a] hover:text-white transition-all duration-300 `}
-            >
-              {hide ? (
-                <BsBoxSeam
-                  className="h-5 w-5 cursor-pointer ml-2"
-                  style={{ color: active === "orders" && "#fff" }}
-                />
-              ) : (
-                <div className="flex items-center gap-2">
-                  <BsBoxSeam
-                    className="h-5 w-5 cursor-pointer ml-2"
-                    style={{ color: active === "orders" && "#fff" }}
-                  />
-                  <span
-                    className="text-[14px] font-[400]"
-                    style={{ color: active === "orders" && "#fff" }}
-                  >
-                    Orders
-                  </span>
-                </div>
-              )}
-            </div>
-          </div>
-          {/* Orders */}
-          <div
-            className={` relative h-[2.4rem] rounded-md cursor-pointer hover:shadow-md   shadow-gray-300 ${
-              active === "orders" ? "bg-[#c6080a]" : "bg-white"
-            }  filter hover:drop-shadow-md  overflow-hidden transition-all duration-300`}
-            onClick={() => {
-              router.push("/dashboard/chat");
-            }}
-          >
-            <div
-              className={`relative w-full h-full flex items-center ${
-                active === "chat" ? "bg-[#c6080a]" : "bg-white"
-              } px-2 z-30 bg-transparent hover:bg-[#c6080a] hover:text-white transition-all duration-300 `}
-            >
-              {hide ? (
-                <BsChatRightText
-                  className="h-5 w-5 cursor-pointer ml-2"
-                  style={{ color: active === "chat" && "#fff" }}
-                />
-              ) : (
-                <div className="flex items-center gap-2">
-                  <BsChatRightText
-                    className="h-5 w-5 cursor-pointer ml-2"
-                    style={{ color: active === "chat" && "#fff" }}
-                  />
-                  <span
-                    className="text-[14px] font-[400]"
-                    style={{ color: active === "chat" && "#fff" }}
-                  >
-                    Chat
-                  </span>
-                </div>
-              )}
-            </div>
-          </div>
-          {/* Blogs */}
-          {/* <div
-            className={` relative h-[2.4rem] rounded-md cursor-pointer hover:shadow-md   shadow-gray-300 ${
-              active === "blogs" ? "bg-[#c6080a]" : "bg-white"
-            }  filter hover:drop-shadow-md  overflow-hidden transition-all duration-300`}
-            onClick={() => {
-              router.push("/dashboard/blogs");
-            }}
-          >
-            <div
-              className={`relative w-full h-full flex items-center ${
-                active === "blogs" ? "bg-[#c6080a]" : "bg-white"
-              } px-2 z-30 bg-transparent hover:bg-[#c6080a] hover:text-white transition-all duration-300 `}
-            >
-              {hide ? (
-                <HiOutlineNewspaper
-                  className="h-5 w-5 cursor-pointer ml-2"
-                  style={{ color: active === "blogs" && "#fff" }}
-                />
-              ) : (
-                <div className="flex items-center gap-2">
-                  <HiOutlineNewspaper
-                    className="h-5 w-5 cursor-pointer ml-2"
-                    style={{ color: active === "blogs" && "#fff" }}
-                  />
-                  <span
-                    className="text-[14px] font-[400]"
-                    style={{ color: active === "blogs" && "#fff" }}
-                  >
-                    Blogs
-                  </span>
-                </div>
-              )}
-            </div>
-          </div> */}
-          {/* Notifications */}
-          <div
-            className={` relative h-[2.4rem] rounded-md cursor-pointer hover:shadow-md   shadow-gray-300 ${
-              active === "notifications" ? "bg-[#c6080a]" : "bg-white"
-            }  filter hover:drop-shadow-md  overflow-hidden transition-all duration-300`}
-            onClick={() => {
-              router.push("/dashboard/notifications");
-            }}
-          >
-            <div
-              className={`relative w-full h-full flex items-center ${
-                active === "notifications" ? "bg-[#c6080a]" : "bg-white"
-              } px-2 z-30 bg-transparent hover:bg-[#c6080a] hover:text-white transition-all duration-300 `}
-            >
-              {hide ? (
-                <MdOutlineNotificationsActive
-                  className="h-5 w-5 cursor-pointer ml-2"
-                  style={{ color: active === "notifications" && "#fff" }}
-                />
-              ) : (
-                <div className="flex items-center gap-2">
-                  <MdOutlineNotificationsActive
-                    className="h-5 w-5 cursor-pointer ml-2"
-                    style={{ color: active === "notifications" && "#fff" }}
-                  />
-                  <span
-                    className="text-[14px] font-[400]"
-                    style={{ color: active === "notifications" && "#fff" }}
-                  >
-                    Notifications
-                  </span>
-                </div>
-              )}
-            </div>
-          </div>
-          {/* Term & Policy */}
-          <div
-            className={` relative h-[2.4rem] rounded-md cursor-pointer hover:shadow-md   shadow-gray-300 ${
-              active === "privacy" ? "bg-[#c6080a]" : "bg-white"
-            }  filter hover:drop-shadow-md  overflow-hidden transition-all duration-300`}
-            onClick={() => {
-              router.push("/dashboard/privacy");
-            }}
-          >
-            <div
-              className={`relative w-full h-full flex items-center ${
-                active === "privacy" ? "bg-[#c6080a]" : "bg-white"
-              } px-2 z-30 bg-transparent hover:bg-[#c6080a] hover:text-white transition-all duration-300 `}
-            >
-              {hide ? (
-                <MdOutlinePrivacyTip
-                  className="h-5 w-5 cursor-pointer ml-2"
-                  style={{ color: active === "privacy" && "#fff" }}
-                />
-              ) : (
-                <div className="flex items-center gap-2">
-                  <MdOutlinePrivacyTip
-                    className="h-5 w-5 cursor-pointer ml-2"
-                    style={{ color: active === "privacy" && "#fff" }}
-                  />
-                  <span
-                    className="text-[14px] font-[400]"
-                    style={{ color: active === "privacy" && "#fff" }}
-                  >
-                    Term & Policy
-                  </span>
-                </div>
-              )}
-            </div>
-          </div>
-
-          {/* Settings */}
-          <hr className="w-full h-[1px] bg-gray-300" />
-          <div
-            className={` relative h-[2.4rem] rounded-md cursor-pointer hover:shadow-md   shadow-gray-300 ${
-              active === "settings" ? "bg-[#c6080a]" : "bg-white"
-            }  filter hover:drop-shadow-md  overflow-hidden transition-all duration-300`}
-            onClick={() => {
-              router.push("/dashboard/settings");
-            }}
-          >
-            <div
-              className={`relative w-full h-full flex items-center ${
-                active === "settings" ? "bg-[#c6080a]" : "bg-white"
-              } px-2 z-30 bg-transparent hover:bg-[#c6080a] hover:text-white transition-all duration-300 `}
-            >
-              {hide ? (
-                <IoSettingsOutline
-                  className="h-5 w-5 cursor-pointer ml-2"
-                  style={{ color: active === "settings" && "#fff" }}
-                />
-              ) : (
-                <div className="flex items-center gap-2">
-                  <IoSettingsOutline
-                    className="h-5 w-5 cursor-pointer ml-2"
-                    style={{ color: active === "settings" && "#fff" }}
-                  />
-                  <span
-                    className="text-[14px] font-[400]"
-                    style={{ color: active === "settings" && "#fff" }}
-                  >
-                    Settings
-                  </span>
-                </div>
-              )}
-            </div>
-          </div>
+                {(item.id === "dashboard" || item.id === "privacy") && (
+                  <hr className="w-full h-[1px] bg-gray-400" />
+                )}
+              </React.Fragment>
+            ))}
         </div>
       </div>
     </div>
