@@ -5,7 +5,7 @@ import React, { useEffect, useRef, useState } from "react";
 import { TbShoppingCartCopy } from "react-icons/tb";
 import { AiOutlineSync } from "react-icons/ai";
 import { BiPackage } from "react-icons/bi";
-import { FaTruck } from "react-icons/fa";
+import { FaSpinner, FaTruck } from "react-icons/fa";
 import { MdOutlineDoneAll } from "react-icons/md";
 import { MdCancel } from "react-icons/md";
 import { FaUndo } from "react-icons/fa";
@@ -21,6 +21,7 @@ import OrderSlip from "@/app/components/Loaders/OrderSlip";
 import { CgClose } from "react-icons/cg";
 import { HiDownload } from "react-icons/hi";
 import { ImSpinner9 } from "react-icons/im";
+import { Style } from "@/app/utils/CommonStyle";
 const MainLayout = dynamic(
   () => import("./../../../../../components/layout/MainLayout"),
   {
@@ -74,6 +75,9 @@ export default function OrderDetail({ params }) {
   const slipRef = useRef();
   const [showSlipDetail, setShowSlipDetail] = useState(false);
   const [loadDownload, setLoadDownload] = useState(false);
+  const [trackingId, setTrackingId] = useState("");
+  const [shippingCarrier, setShippingCarrier] = useState("");
+  const [loading, setLoading] = useState(false);
 
   console.log("orderDetail:", orderDetail);
 
@@ -113,6 +117,13 @@ export default function OrderDetail({ params }) {
     fetchOrderDetail();
     // eslint-disable-next-line
   }, []);
+
+  useEffect(() => {
+    if (orderDetail) {
+      setTrackingId(orderDetail.trackingId);
+      setShippingCarrier(orderDetail.shippingCarrier);
+    }
+  }, [orderDetail]);
 
   const generatePDF = () => {
     const slipContent = slipRef.current;
@@ -182,6 +193,29 @@ export default function OrderDetail({ params }) {
     } catch (error) {
       console.log("Error deleting order:", error);
       toast.error(error?.response?.data?.message || "An error occurred.");
+    }
+  };
+  // Update Order
+  const handleOrder = async (e) => {
+    e.preventDefault();
+    setLoading(true);
+    try {
+      const { data } = await axios.put(
+        `${process.env.NEXT_PUBLIC_SERVER_URI}/api/v1/order/update/status/${orderDetail._id}`,
+        {
+          trackingId: trackingId,
+          shippingCarrier: shippingCarrier,
+        }
+      );
+      if (data) {
+        toast.success("Order updated successfully!");
+        fetchOrderDetail();
+      }
+    } catch (error) {
+      console.log("Error updating order:", error);
+      toast.error(error?.response?.data?.message || "An error occurred.");
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -441,7 +475,51 @@ export default function OrderDetail({ params }) {
                           </div>
                         </details>
                       </div>
+                      {/* Shipping */}
+                      <h3 className="text-[15px] font-medium text-black">
+                        Shipping Details
+                      </h3>
+                      <form
+                        onSubmit={handleOrder}
+                        className="grid grid-cols-1 sm:grid-cols-2 gap-4 w-full"
+                      >
+                        <div className="inputBox">
+                          <input
+                            type="text"
+                            value={trackingId}
+                            onChange={(e) => setTrackingId(e.target.value)}
+                            className={`${Style.input} w-full `}
+                            placeholder="Enter Tracking ID"
+                          />
+                          <span>Tracking ID</span>
+                        </div>
+                        <div className="inputBox">
+                          <input
+                            type="text"
+                            value={shippingCarrier}
+                            onChange={(e) => setShippingCarrier(e.target.value)}
+                            className={`${Style.input} w-full `}
+                            placeholder="Enter Shipping Carrier"
+                          />
+                          <span>Shipping Carrier</span>
+                        </div>
+                        <div className="w-full flex items-center justify-end col-span-2">
+                          <button
+                            disabled={loading}
+                            className="w-[6rem] py-[.4rem] text-[14px] flex items-center justify-center rounded-sm bg-customRed hover:bg-red-700 hover:shadow-md hover:scale-[1.03] transition-all duration-300 text-white"
+                          >
+                            {loading ? (
+                              <span>
+                                <FaSpinner className="h-5 w-5 text-white animate-spin" />
+                              </span>
+                            ) : (
+                              <span>Save</span>
+                            )}
+                          </button>
+                        </div>
+                      </form>
                     </div>
+                    {/*  */}
                   </div>
 
                   {/*  */}

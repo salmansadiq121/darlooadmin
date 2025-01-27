@@ -18,6 +18,7 @@ import axios from "axios";
 import toast from "react-hot-toast";
 import { ImSpinner4 } from "react-icons/im";
 import { useAuth } from "@/app/context/authContext";
+import HandleOrderModal from "@/app/components/order/HandleOrderModal";
 const MainLayout = dynamic(
   () => import("./../../../components/layout/MainLayout"),
   {
@@ -49,6 +50,7 @@ export default function Orders() {
   const isInitialRender = useRef(true);
   const [isLoad, setIsLoad] = useState(false);
   const [orderId, setOrderId] = useState("");
+  const [isShow, setIsShow] = useState(false);
 
   console.log("Orders:", orderData);
 
@@ -512,6 +514,68 @@ export default function Orders() {
         },
       },
       {
+        accessorKey: "trackingId",
+        minSize: 70,
+        maxSize: 140,
+        size: 120,
+        grow: false,
+        Header: ({ column }) => {
+          return (
+            <div className=" flex flex-col gap-[2px]">
+              <span className="ml-1 cursor-pointer uppercase truncate">
+                TRACKING ID
+              </span>
+            </div>
+          );
+        },
+        Cell: ({ cell, row }) => {
+          const trackingId = row.original.trackingId;
+
+          return (
+            <div className="cursor-pointer text-[12px] flex items-center justify-start text-black w-full h-full">
+              {trackingId}
+            </div>
+          );
+        },
+        filterFn: (row, columnId, filterValue) => {
+          const cellValue =
+            row.original[columnId]?.toString().toLowerCase() || "";
+
+          return cellValue.includes(filterValue.toLowerCase());
+        },
+      },
+      {
+        accessorKey: "shippingCarrier",
+        minSize: 70,
+        maxSize: 140,
+        size: 120,
+        grow: false,
+        Header: ({ column }) => {
+          return (
+            <div className=" flex flex-col gap-[2px]">
+              <span className="ml-1 cursor-pointer uppercase truncate">
+                SHIPPING CARRIER
+              </span>
+            </div>
+          );
+        },
+        Cell: ({ cell, row }) => {
+          const shippingCarrier = row.original.shippingCarrier;
+
+          return (
+            <div className="cursor-pointer text-[12px] flex items-center justify-start text-black w-full h-full">
+              {shippingCarrier}
+            </div>
+          );
+        },
+        filterFn: (row, columnId, filterValue) => {
+          const cellValue =
+            row.original[columnId]?.toString().toLowerCase() || "";
+
+          return cellValue.includes(filterValue.toLowerCase());
+        },
+      },
+      {
         accessorKey: "paymentMethod",
         minSize: 70,
         maxSize: 140,
@@ -939,11 +1003,12 @@ export default function Orders() {
                     >
                       Delete All
                     </button>
-                    {/* <button
-                  className={`flex text-[14px] items-center justify-center text-white bg-[#c6080a] hover:bg-red-800   py-2 rounded-md shadow-md hover:shadow-xl transition-all duration-300 cursor-pointer hover:scale-[1.03] px-4`}
-                >
-                  ADD NEW ORDER
-                </button> */}
+                    <button
+                      onClick={() => setIsShow(true)}
+                      className={`flex text-[14px] items-center justify-center text-white bg-[#c6080a] hover:bg-red-800   py-2 rounded-md shadow-md hover:shadow-xl transition-all duration-300 cursor-pointer hover:scale-[1.03] px-4`}
+                    >
+                      ADD NEW ORDER
+                    </button>
                   </div>
                 ))}
             </div>
@@ -1005,6 +1070,15 @@ export default function Orders() {
             </div>
           </div>
         </div>
+
+        {/* --------------Modal--------------- */}
+        {isShow && (
+          <div className="fixed top-0 left-0 p-2 sm:p-4 w-full h-full flex items-center justify-center z-[9999999] bg-gray-300/80 overflow-y-auto shidden">
+            <div className=" w-full sm:w-[80%]  rounded-md shadow-lg p-4 relative">
+              <HandleOrderModal setIsShow={setIsShow} />
+            </div>
+          </div>
+        )}
       </div>
     </MainLayout>
   );

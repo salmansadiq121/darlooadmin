@@ -16,7 +16,7 @@ const OrderSlip = ({ orderDetail }) => {
         <h1 className="text-2xl font-bold text-gray-800">Order Slip</h1>
         <p className="text-sm text-gray-600">Order ID: #{orderDetail?._id}</p>
         <p className="text-sm text-gray-600">
-          Date: {format(new Date(orderDetail?.createdAt), "MMM dd, yyyy")}
+          Date: {format(new Date(), "MMM dd, yyyy")}
         </p>
       </div>
 
@@ -50,6 +50,14 @@ const OrderSlip = ({ orderDetail }) => {
             <p className="text-sm text-gray-600">
               <strong>Pincode:</strong>{" "}
               {orderDetail?.user?.addressDetails?.pincode || "N/A"}
+            </p>
+            <p className="text-sm text-gray-600">
+              <strong>Tracking Number:</strong>{" "}
+              {orderDetail?.trackingId || "N/A"}
+            </p>
+            <p className="text-sm text-gray-600">
+              <strong>Shipping Carrier:</strong>{" "}
+              {orderDetail?.shippingCarrier || "N/A"}
             </p>
           </div>
         </div>
@@ -153,7 +161,11 @@ const OrderSlip = ({ orderDetail }) => {
                     ) : (
                       <div
                         className="w-5 h-5  text-red-500 text-[13px]"
-                        style={{ backgroundColor: product.colors[0] }}
+                        style={{
+                          backgroundColor: product.colors[0]
+                            ? product.colors[0]
+                            : "#fff",
+                        }}
                         title={product.colors[0]}
                       >
                         N/A

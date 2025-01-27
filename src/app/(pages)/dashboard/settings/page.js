@@ -10,6 +10,8 @@ import HandleBannerModal from "@/app/components/Settings/HandleBannerModal";
 import Shipping from "@/app/components/Settings/Shipping";
 import HandleShippingModal from "@/app/components/Settings/HandleShippingModal";
 import Swal from "sweetalert2";
+import Ads from "@/app/components/Settings/Ads";
+import { Loader2 } from "lucide-react";
 
 const MainLayout = dynamic(
   () => import("./../../../components/layout/MainLayout"),
@@ -50,6 +52,8 @@ export default function Settings() {
   const [shippingId, setShippingId] = useState("");
   const [shippingData, setShippingData] = useState([]);
   const [selectedShipping, setSelectedShipping] = useState({});
+  const [adsData, setAdsData] = useState([]);
+  const [loading, setLoading] = useState(false);
 
   const toggleAccountVisibility = () => {
     setShowFullAccount((prev) => !prev);
@@ -171,6 +175,55 @@ export default function Settings() {
     }
   };
 
+  // ------------All Ads---------->
+  const fetchAds = async () => {
+    try {
+      const { data } = await axios.get(
+        `${process.env.NEXT_PUBLIC_SERVER_URI}/api/v1/ads/admin`
+      );
+      if (data) {
+        setAdsData(data?.video);
+      }
+    } catch (error) {
+      console.log(error);
+      toast.error(error?.response?.data?.message);
+    }
+  };
+
+  useEffect(() => {
+    fetchAds();
+  }, []);
+
+  // Update Ads
+  const handleUpdateAds = async (file) => {
+    try {
+      setLoading(true);
+      const formData = new FormData();
+      formData.append("file", file);
+      const { data } = await axios.put(
+        `${process.env.NEXT_PUBLIC_SERVER_URI}/api/v1/ads/update/${adsData._id}`,
+        formData,
+        {
+          headers: {
+            "Content-Type": "multipart/form-data",
+          },
+        }
+      );
+      if (data) {
+        fetchAds();
+        toast.success("Ads updated successfully.");
+      }
+    } catch (error) {
+      console.log(error);
+      toast.error(
+        error?.response?.data?.message ||
+          "File type not supported, please upload mp4 video."
+      );
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <MainLayout
       title="Setting - Manage Your Account and Banners"
@@ -201,6 +254,17 @@ export default function Settings() {
             >
               Banner
             </button>
+            <button
+              className={`w-[6.5rem] h-full py-[.3rem] text-[14px] font-normal border-l-2 border-red-600 ${
+                selectedTab === "ads"
+                  ? "bg-red-600 text-white"
+                  : "text-red-600 bg-white"
+              }`}
+              onClick={() => setSelectedtab("ads")}
+            >
+              Ads
+            </button>
+
             <button
               className={`w-[6.5rem] h-full py-[.3rem] text-[14px] font-normal border-l-2 border-red-600 ${
                 selectedTab === "Shipping"
@@ -309,6 +373,38 @@ export default function Settings() {
                       bannerData={bannerData}
                       fetchBanners={fetchBanners}
                     />
+                  </div>
+                </div>
+              </div>
+            ) : selectedTab === "ads" ? (
+              <div className="flex flex-col gap-4">
+                <div className="flex items-center justify-between flex-wrap gap-4">
+                  <h1 className="text-2xl font-sans font-semibold text-black">
+                    Ads Settings
+                  </h1>
+                  <div className="flex items-center gap-4 w-full sm:w-fit justify-end">
+                    <label
+                      id="update-ads"
+                      className={`flex text-[14px] items-center justify-center text-white bg-[#c6080a] hover:bg-red-800  py-2 rounded-md shadow-md hover:shadow-xl transition-all duration-300 cursor-pointer hover:scale-[1.03] px-4`}
+                    >
+                      {loading ? (
+                        <Loader2 className="animate-spin h-5 w-5" />
+                      ) : (
+                        <span>UPDATE ADS</span>
+                      )}
+                      <input
+                        type="file"
+                        accept="/video/*"
+                        hidden
+                        id="update-ads"
+                        onChange={(e) => handleUpdateAds(e.target.files[0])}
+                      />
+                    </label>
+                  </div>
+                </div>
+                <div className="w-full h-full">
+                  <div className="">
+                    <Ads adsData={adsData} fetchAds={fetchAds} />
                   </div>
                 </div>
               </div>
