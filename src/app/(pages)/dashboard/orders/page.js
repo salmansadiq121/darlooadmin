@@ -1075,7 +1075,10 @@ export default function Orders() {
         {isShow && (
           <div className="fixed top-0 left-0 p-2 sm:p-4 w-full h-full flex items-center justify-center z-[9999999] bg-gray-300/80 overflow-y-auto shidden">
             <div className=" w-full sm:w-[80%]  rounded-md shadow-lg p-4 relative">
-              <HandleOrderModal setIsShow={setIsShow} />
+              <HandleOrderModal
+                setIsShow={setIsShow}
+                fetchOrders={fetchOrders}
+              />
             </div>
           </div>
         )}

@@ -7,13 +7,13 @@ import Image from "next/image";
 import toast from "react-hot-toast";
 import { FaSpinner } from "react-icons/fa";
 
-export default function HandleOrderModal({ setIsShow }) {
+export default function HandleOrderModal({ setIsShow, fetchOrders }) {
   const [productsData, setProductsData] = useState([]);
   const [usersData, setUsersData] = useState([]);
   const [orderDetail, setOrderDetail] = useState({
     user: "",
     products: [],
-    shippingFee: 500,
+    shippingFee: 10,
     shippingAddress: {
       address: "",
       city: "",
@@ -85,7 +85,7 @@ export default function HandleOrderModal({ setIsShow }) {
           />
         </div>
         <div>
-          <span>{product.name}</span> <br />
+          <span className="text-sm">{product.name}</span> <br />
           <span className="text-sm text-gray-500">${product.price}</span>
         </div>
       </div>
@@ -148,10 +148,11 @@ export default function HandleOrderModal({ setIsShow }) {
       setLoading(true);
       console.log("orderDetail:", orderDetail);
       const response = await axios.post(
-        `${process.env.NEXT_PUBLIC_SERVER_URI}/api/v1/orders/create`,
+        `${process.env.NEXT_PUBLIC_SERVER_URI}/api/v1/order/admin/create-order`,
         orderDetail
       );
       if (response.data) {
+        fetchOrders();
         toast.success("Order created successfully!");
         setIsShow(false);
       }
@@ -220,19 +221,22 @@ export default function HandleOrderModal({ setIsShow }) {
             {orderDetail.products.map((product, index) => (
               <div
                 key={product.product}
-                className="border rounded-md p-4 shadow-lg"
+                className="border rounded-lg px-2 sm:px-4 py-2 transition-shadow duration-300 bg-gradient-to-br from-gray-50 to-gray-100"
               >
-                <h4 className="text-md font-semibold">
+                {/* Product Name */}
+                <h4 className="text-lg font-bold text-gray-700 truncate">
                   {productsData.find((p) => p._id === product.product)?.name}
                 </h4>
 
-                {/* Quantity */}
-                <div className="mt-4">
-                  <label className="block text-sm font-medium">Quantity</label>
-                  <div className="flex items-center gap-2">
+                {/* Quantity Section */}
+                <div className="mt-6">
+                  <label className="block text-sm font-medium text-gray-600">
+                    Quantity
+                  </label>
+                  <div className="flex items-center gap-4 mt-2">
                     <button
                       type="button"
-                      className="px-3 py-2 bg-gray-300 text-black rounded-md shadow-md hover:bg-gray-400"
+                      className="px-4 py-2 bg-red-600 text-white rounded-lg shadow hover:bg-red-700 hover:shadow-lg transition duration-300"
                       onClick={() =>
                         updateProductDetail(
                           index,
@@ -246,13 +250,12 @@ export default function HandleOrderModal({ setIsShow }) {
                     <input
                       type="number"
                       value={product.quantity}
-                      min="1"
                       readOnly
-                      className="w-12 text-center border-gray-300 rounded-md"
+                      className="w-14 text-center border border-gray-300 rounded-lg shadow focus:ring-2 focus:ring-blue-500"
                     />
                     <button
                       type="button"
-                      className="px-3 py-2 bg-gray-300 text-black rounded-md shadow-md hover:bg-gray-400"
+                      className="px-4 py-2 bg-green-600 text-white rounded-lg shadow hover:bg-green-700 hover:shadow-lg transition duration-300"
                       onClick={() =>
                         updateProductDetail(
                           index,
@@ -266,61 +269,67 @@ export default function HandleOrderModal({ setIsShow }) {
                   </div>
                 </div>
 
-                {/* Color Selector */}
-                {product.colors?.length > 0 && (
-                  <div className="mt-4">
-                    <label className="block text-sm font-medium">Color</label>
-                    <Select
-                      options={product.colors.map((color) => ({
-                        value: color.code,
-                        label: (
-                          <div className="flex items-center gap-2">
-                            <div
-                              style={{
-                                backgroundColor: color.code,
-                                width: "20px",
-                                height: "20px",
-                                borderRadius: "50%",
-                              }}
-                            />
-                            <span>{color.name}</span>
-                          </div>
-                        ),
-                      }))}
-                      onChange={(selected) =>
-                        updateProductDetail(
-                          index,
-                          "selectedColor",
-                          selected.value
-                        )
-                      }
-                      placeholder="Select Color"
-                      className="border-2 border-gray-300 rounded-md shadow-md hover:shadow-lg focus:ring-2 focus:ring-blue-500"
-                    />
-                  </div>
-                )}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-6">
+                  {/* Color Selector */}
+                  {product.colors?.length > 0 && (
+                    <div>
+                      <label className="block text-sm font-medium text-gray-600">
+                        Color
+                      </label>
+                      <Select
+                        options={product.colors.map((color) => ({
+                          value: color.code,
+                          label: (
+                            <div className="flex items-center gap-2">
+                              <div
+                                style={{
+                                  backgroundColor: color.code,
+                                  width: "15px",
+                                  height: "15px",
+                                  borderRadius: "50%",
+                                }}
+                              />
+                              <span>{color.name}</span>
+                            </div>
+                          ),
+                        }))}
+                        onChange={(selected) =>
+                          updateProductDetail(
+                            index,
+                            "selectedColor",
+                            selected.value
+                          )
+                        }
+                        placeholder="Select Color"
+                        className="border border-gray-300 rounded-lg shadow focus:ring-2 focus:ring-blue-500"
+                      />
+                    </div>
+                  )}
 
-                {/* Size Selector */}
-                {product.sizes?.length > 0 && (
-                  <div className="mt-4">
-                    <label className="block text-sm font-medium">Size</label>
-                    <Select
-                      options={product.sizes.map((size) => ({
-                        value: size,
-                        label: size,
-                      }))}
-                      onChange={(selected) =>
-                        updateProductDetail(
-                          index,
-                          "selectedSize",
-                          selected.value
-                        )
-                      }
-                      placeholder="Select Size"
-                      className="border-2 border-gray-300 rounded-md shadow-md hover:shadow-lg focus:ring-2 focus:ring-blue-500"
-                    />
-                  </div>
-                )}
+                  {/* Size Selector */}
+                  {product.sizes?.length > 0 && (
+                    <div>
+                      <label className="block text-sm font-medium text-gray-600">
+                        Size
+                      </label>
+                      <Select
+                        options={product.sizes.map((size) => ({
+                          value: size,
+                          label: size,
+                        }))}
+                        onChange={(selected) =>
+                          updateProductDetail(
+                            index,
+                            "selectedSize",
+                            selected.value
+                          )
+                        }
+                        placeholder="Select Size"
+                        className="border border-gray-300 rounded-lg shadow focus:ring-2 focus:ring-blue-500"
+                      />
+                    </div>
+                  )}
+                </div>
               </div>
             ))}
           </div>
@@ -328,7 +337,7 @@ export default function HandleOrderModal({ setIsShow }) {
           {/* Total Amount */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             {/* Shipping Address */}
-            <div className="border border-gray-400 rounded-md w-full p-2">
+            <div className="border rounded-lg px-2 sm:px-4 py-2 transition-shadow duration-300 bg-gradient-to-br from-gray-50 to-gray-100">
               <div className="flex items-center gap-2 w-full">
                 <label className="block text-sm font-medium text-gray-700">
                   Shipping Address:
@@ -361,7 +370,7 @@ export default function HandleOrderModal({ setIsShow }) {
               </div>
             </div>{" "}
             {/*  */}
-            <div className="border border-gray-400 rounded-md w-full p-2">
+            <div className="border rounded-lg px-2 sm:px-4 py-2 transition-shadow duration-300 bg-gradient-to-br from-gray-50 to-gray-100">
               <div className="flex items-center gap-2 w-full">
                 <label className="block text-sm font-medium text-gray-700">
                   Subtotal:
