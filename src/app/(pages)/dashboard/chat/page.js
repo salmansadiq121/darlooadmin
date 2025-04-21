@@ -690,7 +690,7 @@ export default function Chat() {
                             href={message?.content}
                             download
                             target="_blank"
-                            className="relative mt-4  w-[11rem] h-[14rem] overflow-hidden cursor-pointer rounded-lg shadow-lg"
+                            className="relative mt-4  w-[12rem] h-[11rem] overflow-hidden cursor-pointer rounded-lg shadow-lg"
                           >
                             <Image
                               src={message?.content}

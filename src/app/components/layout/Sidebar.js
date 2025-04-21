@@ -15,6 +15,8 @@ import { IoSettingsOutline } from "react-icons/io5";
 import { BsChatRightText } from "react-icons/bs";
 import { RiCoupon4Line } from "react-icons/ri";
 import { useAuth } from "@/app/context/authContext";
+import { FaRegQuestionCircle } from "react-icons/fa";
+import { LuContact } from "react-icons/lu";
 
 const rolePermissions = {
   admin: [
@@ -27,8 +29,10 @@ const rolePermissions = {
     "orders",
     "chat",
     "notifications",
+    "faq",
     "privacy",
     "settings",
+    "contact",
   ],
   superadmin: [
     "dashboard",
@@ -40,8 +44,10 @@ const rolePermissions = {
     "orders",
     "chat",
     "notifications",
+    "faq",
     "privacy",
     "settings",
+    "contact",
   ],
   agent: ["orders"],
 };
@@ -110,6 +116,18 @@ export default function Sidebar({ hide, setHide }) {
       label: "Notifications",
       icon: MdOutlineNotificationsActive,
       path: "/dashboard/notifications",
+    },
+    {
+      id: "faq",
+      label: "FAQ",
+      icon: FaRegQuestionCircle,
+      path: "/dashboard/faq",
+    },
+    {
+      id: "contact",
+      label: "Contact",
+      icon: LuContact,
+      path: "/dashboard/contact",
     },
     {
       id: "privacy",

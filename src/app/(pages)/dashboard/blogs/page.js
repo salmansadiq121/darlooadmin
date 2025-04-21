@@ -1,6 +1,5 @@
 "use client";
 import dynamic from "next/dynamic";
-
 import Image from "next/image";
 import React, { useEffect, useRef, useState } from "react";
 import { BsThreeDotsVertical } from "react-icons/bs";
