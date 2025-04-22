@@ -112,7 +112,10 @@ export const uploadImage = async (image, setAvatar, setLoad) => {
       }
     );
 
-    setAvatar(data.url);
+    console.log("data:", data);
+    setAvatar(data.files[0]);
+
+    return data.files[0];
   } catch (error) {
     console.error(error);
     toast.error("Failed to upload file");

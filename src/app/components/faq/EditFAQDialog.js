@@ -4,6 +4,9 @@ import { useEffect, useState } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
+import axios from "axios";
+import toast from "react-hot-toast";
+import { Loader } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -31,9 +34,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import axios from "axios";
-import toast from "react-hot-toast";
-import { Loader } from "lucide-react";
 
 const formSchema = z.object({
   id: z.string(),
@@ -48,7 +48,9 @@ const formSchema = z.object({
   }),
 });
 
-export function EditFAQDialog({ open, onOpenChange, faq, onEdit }) {
+export function EditFAQDialog({ open, onOpenChange, faq, onEdit, fetchFaqs }) {
+  const [loading, setLoading] = useState(false);
+
   const form = useForm({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -58,7 +60,6 @@ export function EditFAQDialog({ open, onOpenChange, faq, onEdit }) {
       category: faq?.category || "",
     },
   });
-  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     if (faq) {
@@ -71,8 +72,7 @@ export function EditFAQDialog({ open, onOpenChange, faq, onEdit }) {
     }
   }, [faq, form]);
 
-  async function onSubmit(values) {
-    alert("Submitting FAQ update...");
+  const onSubmit = async (values) => {
     setLoading(true);
 
     try {
@@ -81,6 +81,7 @@ export function EditFAQDialog({ open, onOpenChange, faq, onEdit }) {
         values
       );
       if (data) {
+        fetchFaqs();
         toast.success("FAQ Updated Successfully");
         onEdit(values);
         onOpenChange(false);
@@ -88,9 +89,10 @@ export function EditFAQDialog({ open, onOpenChange, faq, onEdit }) {
     } catch (error) {
       console.error("Error updating FAQ:", error);
       toast.error("Failed to update FAQ");
+    } finally {
       setLoading(false);
     }
-  }
+  };
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -106,6 +108,13 @@ export function EditFAQDialog({ open, onOpenChange, faq, onEdit }) {
 
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+            {/* Hidden ID field */}
+            <FormField
+              control={form.control}
+              name="id"
+              render={({ field }) => <input type="hidden" {...field} />}
+            />
+
             <FormField
               control={form.control}
               name="question"
@@ -175,9 +184,11 @@ export function EditFAQDialog({ open, onOpenChange, faq, onEdit }) {
               </Button>
               <Button
                 type="submit"
-                className="bg-red-700 hover:bg-red-800 flex items-center gap-1 z-20"
+                className="bg-red-700 hover:bg-red-800 flex items-center gap-1"
+                onClick={() => onSubmit(form.getValues())}
+                disabled={loading}
               >
-                Save Changes{" "}
+                Save Changes
                 {loading && <Loader className="animate-spin" size={18} />}
               </Button>
             </DialogFooter>

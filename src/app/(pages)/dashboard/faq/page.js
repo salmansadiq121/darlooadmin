@@ -133,6 +133,7 @@ export default function FAQ() {
                   onOpenChange={setIsEditDialogOpen}
                   faq={selectedFaq}
                   onEdit={handleEditFaq}
+                  fetchFaqs={fetchFaqs}
                 />
 
                 <DeleteFAQDialog
