@@ -819,7 +819,15 @@ export default function OrderDetail({ params }) {
                             >
                               <div className="flex items-start gap-3">
                                 <div className="w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center text-gray-600">
-                                  {item.user?.name?.charAt(0) || "A"}
+                                  <Image
+                                    src={
+                                      item?.user?.avatar || "/placeholder.svg"
+                                    }
+                                    width={40}
+                                    height={40}
+                                    alt="Comment attachment"
+                                    className="object-fill w-full h-full"
+                                  />
                                 </div>
                                 <div className="flex-1">
                                   <div className="flex items-center justify-between">
