@@ -99,7 +99,7 @@ export default function RevenueCharts() {
         ticks: {
           font: { size: 12 },
           color: "#6b7280",
-          callback: (value) => `$${value}`,
+          callback: (value) => `€${value}`,
         },
       },
     },
@@ -163,7 +163,7 @@ export default function RevenueCharts() {
                 {revenueData.map((entry, index) => (
                   <tr key={index}>
                     <td className="border-b p-2">Day {entry.day}</td>
-                    <td className="border-b p-2">${entry.totalRevenue}</td>
+                    <td className="border-b p-2">€{entry.totalRevenue}</td>
                   </tr>
                 ))}
               </tbody>

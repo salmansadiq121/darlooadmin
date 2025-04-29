@@ -69,7 +69,7 @@ const RevenueByCategory = () => {
         callbacks: {
           label: function (tooltipItem) {
             const value = tooltipItem.raw;
-            return `${tooltipItem.label}: $${value.toFixed(2)}`;
+            return `${tooltipItem.label}: €${value.toFixed(2)}`;
           },
         },
         backgroundColor: "rgba(0,0,0,0.6)",
@@ -139,7 +139,7 @@ const RevenueByCategory = () => {
               </div>
               <div className="flex items-center gap-2">
                 <span className="text-gray-900 text-[13px] font-medium">
-                  ${category.totalRevenue.toFixed(2)} |
+                  €{category.totalRevenue.toFixed(2)} |
                 </span>
                 <span className="text-gray-600 text-[11px]">
                   {(

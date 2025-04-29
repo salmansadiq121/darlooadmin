@@ -506,7 +506,7 @@ export default function Products() {
 
           return (
             <div className="cursor-pointer text-[12px] flex items-center justify-start text-black w-full h-full">
-              ${price}
+              €{price}
             </div>
           );
         },
@@ -535,7 +535,7 @@ export default function Products() {
 
           return (
             <div className="cursor-pointer text-[12px] flex items-center justify-start text-black w-full h-full">
-              ${estimatedPrice}
+              €{estimatedPrice}
             </div>
           );
         },
@@ -558,7 +558,7 @@ export default function Products() {
 
           return (
             <div className="cursor-pointer text-[12px] flex items-center justify-start text-black w-full h-full">
-              {shipping ? "$" + shipping : "Fee"}
+              {shipping ? "€" + shipping : "Fee"}
             </div>
           );
         },

@@ -44,7 +44,7 @@ export default function Shipping({
 
               {/* Shipping Fee */}
               <span className="text-lg font-bold text-gray-900">
-                ${shipping?.fee}
+                €{shipping?.fee}
               </span>
 
               {/* Hover Actions (Edit & Delete) */}

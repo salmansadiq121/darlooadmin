@@ -107,7 +107,7 @@ export default function OrderDetail() {
                           1
                         </span>
                         <span className="text-[13px] sm:text-[14px] font-normal text-gray-600">
-                          $145
+                          €145
                         </span>
                       </div>
                     </div>
@@ -128,7 +128,7 @@ export default function OrderDetail() {
                           Shipping Charges
                         </strong>
                         <span className="text-[13px] text-gray-600 font-normal">
-                          $11
+                          €11
                         </span>
                       </div>
                       {/*  */}

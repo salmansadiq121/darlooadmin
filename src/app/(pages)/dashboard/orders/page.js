@@ -479,7 +479,7 @@ export default function Orders() {
 
           return (
             <div className="cursor-pointer text-[12px] flex items-center justify-start text-black w-full h-full">
-              ${shippingFee}
+              €{shippingFee}
             </div>
           );
         },
@@ -502,7 +502,7 @@ export default function Orders() {
 
           return (
             <div className="cursor-pointer text-[12px] flex items-center justify-start text-black w-full h-full">
-              ${price}
+              €{price}
             </div>
           );
         },

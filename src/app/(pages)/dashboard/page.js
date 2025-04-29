@@ -174,7 +174,7 @@ export default function Dashboard() {
   const data = [
     {
       title: "Revenue",
-      value: `$${revenue.toLocaleString()}`,
+      value: `€${revenue.toLocaleString()}`,
       percentage: revenuePercentage,
       color: revenuePercentage?.startsWith("+")
         ? "text-green-500"

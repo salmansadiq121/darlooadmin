@@ -343,11 +343,11 @@ export default function OrderDetail({ params }) {
                               {product?.quantity}
                             </span>
                             <span className="text-[13px] sm:text-[14px] font-normal text-gray-600">
-                              ${product?.product?.price}
+                              €{product?.product?.price}
                             </span>
                             {/* Sizes */}
                             <div className="text-[13px] sm:text-[14px] font-normal text-gray-600">
-                              {product?.sizes?.length > 1 ? (
+                              {product?.sizes?.length > 0 ? (
                                 <details className="group">
                                   <summary className="cursor-pointer text-gray-600 hover:text-gray-800">
                                     Sizes
@@ -369,7 +369,7 @@ export default function OrderDetail({ params }) {
 
                             {/* Colors */}
                             <div className="text-[13px] sm:text-[14px] font-normal text-gray-600">
-                              {product.colors.length > 1 ? (
+                              {product.colors.length > 0 ? (
                                 <details className="group">
                                   <summary className="cursor-pointer text-gray-600 hover:text-gray-800">
                                     Colors
@@ -415,7 +415,7 @@ export default function OrderDetail({ params }) {
                             Shipping Charges
                           </strong>
                           <span className="text-[13px] text-gray-600 font-normal">
-                            ${orderDetail?.shippingFee}
+                            €{orderDetail?.shippingFee}
                           </span>
                         </div>
                         {/*  */}
@@ -424,7 +424,7 @@ export default function OrderDetail({ params }) {
                             Totol Price
                           </strong>
                           <span className="text-[13px] text-gray-600 font-normal">
-                            ${orderDetail?.totalAmount}
+                            €{orderDetail?.totalAmount}
                           </span>
                         </div>
                       </div>

@@ -67,7 +67,7 @@ export default function Login({ setActive }) {
             {/* <Image src="/Ayboo.png" alt="Ayoob" width={70} height={70} /> */}
 
             <h2 className=" text-2xl sm:text-3xl font-semibold text-center text-black">
-              Welcome to <span className="tgradient">Ayoob</span>
+              Welcome to <span className="tgradient">Zorante</span>
             </h2>
             <div className="flex flex-col gap-4 w-full mt-4 ">
               <div className="relative w-full">

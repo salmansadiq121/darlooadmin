@@ -148,13 +148,13 @@ export default function Sidebar({ hide, setHide }) {
       <div className="flex items-center justify-center w-full relative px-4 py-2 ">
         {hide ? (
           <div className="">
-            <h1 className="text-center text-xl mt-[1rem] font-serif font-semibold text-[#c6080a]">
-              Logo
+            <h1 className="text-center text-lg mt-[1rem] font-serif font-semibold text-[#c6080a]">
+              Zorante
             </h1>
           </div>
         ) : (
           <h1 className=" text-center text-3xl font-serif font-semibold text-[#c6080a]">
-            Ayoob
+            Zorante
           </h1>
         )}
         <div className=" absolute top-1 right-1 z-30 hidden sm:flex items-center justify-end pr-1 ">
