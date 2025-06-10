@@ -238,7 +238,7 @@ const OrderSlip = ({ orderDetail }) => {
       {/* Footer */}
       <div className="mt-6 text-center text-xs text-gray-500">
         <p>Thank you for shopping with us!</p>
-        <p>If you have any questions, contact support@ayoob.com</p>
+        <p>If you have any questions, contact support@Darloos.com</p>
       </div>
     </div>
   );

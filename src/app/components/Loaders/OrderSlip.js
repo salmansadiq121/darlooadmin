@@ -50,7 +50,7 @@ const OrderSlip = ({ orderDetail, generatePDF }) => {
               <p className="text-red-100 mt-1">Thank you for your purchase!</p>
             </div>
             <div className="text-right">
-              <div className="text-xl font-semibold">AYOOB</div>
+              <div className="text-xl font-semibold">Darloo</div>
               <div className="text-red-100 text-sm">Premium Fashion</div>
             </div>
           </div>
@@ -443,7 +443,7 @@ const OrderSlip = ({ orderDetail, generatePDF }) => {
             <div className="text-center md:text-left mb-4 md:mb-0">
               <p className="text-xs text-gray-500">
                 Questions about your order? Contact us at{" "}
-                <span className="text-red-600">support@ayoob.com</span>
+                <span className="text-red-600">support@darloo.com</span>
               </p>
               <p className="text-xs text-gray-500 mt-1">
                 Return policy: Items can be returned within 30 days of delivery

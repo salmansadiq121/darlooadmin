@@ -89,7 +89,7 @@ export default function FAQ() {
   };
 
   return (
-    <MainLayout title="FAQ's - Ayoob Admin">
+    <MainLayout title="FAQ's - Darloo Admin">
       <div className="p-1 sm:p-2 h-[100%] w-full pb-4  scroll-smooth">
         <div className="flex flex-col gap-4">
           <Breadcrumb path={currentUrl} />

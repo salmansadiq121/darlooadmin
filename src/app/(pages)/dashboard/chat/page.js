@@ -393,8 +393,8 @@ export default function Chat() {
 
   return (
     <div
-      title="Chats - Ayoob Admin"
-      className="relative w-full h-[100vh] overflow-x-hidden bg-white text-black "
+      title="Chats - Darloo Admin"
+      className="relative w-full h-[100vh] overflow-hidden  bg-white text-black "
     >
       <div className="relative w-full h-[100%] grid grid-cols-11">
         {/* ---------Sidebar----- */}
@@ -412,7 +412,7 @@ export default function Chat() {
             <h3
               className={` text-lg sm:text-xl font-serif font-semibold ${Style.text_gradient} `}
             >
-              Ayoob Chats
+              Darloo Chats
             </h3>
             <span className="p-1 cursor-pointer rounded-full bg-gray-200/70 hover:bg-gray-300/70 transition-all duration-300">
               <IoClose
@@ -438,11 +438,11 @@ export default function Chat() {
           {/* -----Chat Buttons----- */}
           <div className="flex flex-col w-full">
             {/*-----Chat Users---- */}
-            <div className="flex flex-col w-full h-full px-2  overflow-y-scroll max-h-[calc(100vh-40vh)] 2xl:max-h-[calc(100vh-34vh)] 3xl:max-h-[calc(100vh-28vh)] pb-5 shidden">
+            <div className="flex flex-col w-full h-full px-2  overflow-y-auto  max-h-[calc(100vh-24vh)] 2xl:max-h-[calc(100vh-34vh)] 3xl:max-h-[calc(100vh-28vh)]  pb-5 shidden">
               {chatLoad ? (
                 <ChatLoader />
               ) : (
-                <div className="flex flex-col gap-2 w-full h-full">
+                <div className="flex flex-col gap-2 w-full h-full ">
                   {chats?.map((chat, i) => (
                     <div
                       key={chat?._id}
@@ -454,7 +454,7 @@ export default function Chat() {
                         );
                         setShow(false);
                       }}
-                      className="px-2 py-[.4rem] cursor-pointer overflow-hidden flex items-center justify-between gap-1 bg-gray-100 hover:bg-red-50  rounded-md hover:shadow-md border border-gray-200 "
+                      className="px-2 py-[.4rem] min-h-[4rem] cursor-pointer overflow-hidden flex items-center justify-between gap-1 bg-gray-100 hover:bg-red-50  rounded-md hover:shadow-md border border-gray-200 "
                     >
                       <div className="flex items-center gap-[3px]">
                         <div className="relative w-[2.5rem] h-[2.5rem] rounded-full ring-1 ring-red-700">

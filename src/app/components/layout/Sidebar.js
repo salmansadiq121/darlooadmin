@@ -149,12 +149,12 @@ export default function Sidebar({ hide, setHide }) {
         {hide ? (
           <div className="">
             <h1 className="text-center text-lg mt-[1rem] font-serif font-semibold text-[#c6080a]">
-              Zorante
+              Darloo
             </h1>
           </div>
         ) : (
           <h1 className=" text-center text-3xl font-serif font-semibold text-[#c6080a]">
-            Zorante
+            Darloo
           </h1>
         )}
         <div className=" absolute top-1 right-1 z-30 hidden sm:flex items-center justify-end pr-1 ">

@@ -910,7 +910,7 @@ export default function Orders() {
   });
 
   return (
-    <MainLayout title="Orders - Ayoob Admin">
+    <MainLayout title="Orders - Darloo Admin">
       <div className="p-1 sm:p-2 h-[100%] w-full pb-4  scroll-smooth ">
         <div className="flex flex-col pb-2 ">
           <Breadcrumb path={currentUrl} />

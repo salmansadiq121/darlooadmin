@@ -27,7 +27,7 @@ export default function NotChat({ setShow, show }) {
         <h3
           className={`${Style.text_gradient} text-xl font-semibold text-center`}
         >
-          Welcome to Ayoob Messanger!
+          Welcome to Darloo Messanger!
         </h3>
         <p className="text-[13px] font-normal text-gray-600 text-center max-w-[20rem] mt-2">
           Pick a person from left sidebar chat list, and start your

@@ -437,7 +437,7 @@ export default function Cards() {
   });
 
   return (
-    <MainLayout title="Cards - Ayoob Admin">
+    <MainLayout title="Cards - Darloo Admin">
       <div className="p-1 sm:p-2 h-[100%] w-full pb-4  scroll-smooth">
         <div className="flex flex-col gap-3 pb-2 ">
           <Breadcrumb path={currentUrl} />

@@ -68,10 +68,10 @@ export default function MainLayout({
 }
 
 MainLayout.defaultProps = {
-  title: "Ayoob Admin - E-commerce Admin Panel | Manage Products & Orders",
+  title: "Darloo Admin - E-commerce Admin Panel | Manage Products & Orders",
   description:
-    "Ayoob Admin Panel is an intuitive and powerful admin interface for managing your e-commerce store. Track orders, manage products, and oversee inventory with ease. Built with MERN stack.",
+    "Darloo Admin Panel is an intuitive and powerful admin interface for managing your e-commerce store. Track orders, manage products, and oversee inventory with ease. Built with MERN stack.",
   keywords:
-    "E-commerce admin panel, MERN stack, Ayoob Admin, product management, order management, inventory control, online store dashboard, eCommerce backend, admin dashboard, e-commerce store management, admin interface",
+    "E-commerce admin panel, MERN stack, Darloo Admin, product management, order management, inventory control, online store dashboard, eCommerce backend, admin dashboard, e-commerce store management, admin interface",
   author: "Salman Sadiq",
 };

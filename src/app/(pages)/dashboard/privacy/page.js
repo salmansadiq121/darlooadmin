@@ -102,8 +102,8 @@ export default function Privacy() {
 
   return (
     <MainLayout
-      title="Privacy Policy - Ayoob Admin"
-      description="Ayoob Admin Panel is an intuitive and powerful admin interface for managing your e-commerce store. Track orders, manage products, and oversee inventory with ease. Built with MERN stack."
+      title="Privacy Policy - Darloo Admin"
+      description="Darloo Admin Panel is an intuitive and powerful admin interface for managing your e-commerce store. Track orders, manage products, and oversee inventory with ease. Built with MERN stack."
     >
       <div className="relative p-1 sm:p-2 px-1 sm:px-6 h-[100%] w-full pb-4 scroll-smooth">
         <div className="flex flex-col pb-2 h-full">

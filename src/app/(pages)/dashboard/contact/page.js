@@ -16,7 +16,7 @@ export default function Contact() {
     // exlint-disable-next-line
   }, []);
   return (
-    <MainLayout title="Contact - Ayoob Admin">
+    <MainLayout title="Contact - Darloo Admin">
       <div className="p-1 sm:p-2 h-[100%] w-full pb-4  scroll-smooth">
         <div className="flex flex-col gap-4">
           <Breadcrumb path={currentUrl} />
