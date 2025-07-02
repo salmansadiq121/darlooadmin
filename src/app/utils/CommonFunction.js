@@ -123,3 +123,30 @@ export const uploadImage = async (image, setAvatar, setLoad) => {
     setLoad(false);
   }
 };
+
+// Upload Product Image
+export const uploadProductImage = async (file, setLoading) => {
+  try {
+    setLoading(true);
+
+    const formData = new FormData();
+    formData.append("file", file);
+
+    const { data } = await axios.post(
+      `${process.env.NEXT_PUBLIC_SERVER_URI}/api/v1/auth/upload/file`,
+      formData,
+      {
+        headers: {
+          "Content-Type": "multipart/form-data",
+        },
+      }
+    );
+
+    return data.files[0];
+  } catch (error) {
+    console.error(error);
+    toast.error("Failed to upload file");
+  } finally {
+    setLoading(false);
+  }
+};

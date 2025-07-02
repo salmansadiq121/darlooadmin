@@ -321,7 +321,7 @@ export default function OrderDetail({ params }) {
                             <div className="w-[3rem] h-[3rem] rounded-full">
                               <div className="w-[2.9rem] h-[2.9rem] relative rounded-md overflow-hidden flex items-center justify-center">
                                 <Image
-                                  src={product?.product?.thumbnails[0]}
+                                  src={product?.product?.thumbnails}
                                   layout="fill"
                                   alt={"Avatar"}
                                   className="w-full h-full "

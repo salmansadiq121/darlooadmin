@@ -325,7 +325,7 @@ export default function OrderDetail({ params }) {
                               <div className="w-[2.9rem] h-[2.9rem] relative rounded-md overflow-hidden flex items-center justify-center">
                                 <Image
                                   src={
-                                    product?.product?.thumbnails[0] ||
+                                    product?.product?.thumbnails ||
                                     "/placeholder.svg"
                                   }
                                   layout="fill"

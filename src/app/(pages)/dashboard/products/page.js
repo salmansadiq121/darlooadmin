@@ -384,7 +384,26 @@ export default function Products() {
         Cell: ({ cell, row }) => {
           const name = row.original.name;
           const rating = row.original.ratings;
-          const avatar = row.original.thumbnails[0];
+          const thumbnail = row?.original?.thumbnails;
+
+          let avatar = "";
+
+          if (Array.isArray(thumbnail)) {
+            avatar = thumbnail[0];
+          } else if (typeof thumbnail === "string") {
+            avatar = thumbnail;
+          }
+
+          // Ensure the avatar is a valid URL
+          const isValidUrl = (url) => {
+            try {
+              return url?.startsWith("/") || new URL(url);
+            } catch {
+              return false;
+            }
+          };
+
+          avatar = isValidUrl(avatar) ? avatar : "/placeholder.png";
 
           return (
             <div className="cursor-pointer text-[12px] text-black w-full h-full">

@@ -10,6 +10,8 @@ import { ImSpinner4 } from "react-icons/im";
 import { IoSearch } from "react-icons/io5";
 import { MdDelete, MdModeEditOutline, MdNotInterested } from "react-icons/md";
 import Swal from "sweetalert2";
+import { Plus } from "lucide-react";
+import { useRouter } from "next/navigation";
 const MainLayout = dynamic(
   () => import("./../../../components/layout/MainLayout"),
   {
@@ -39,6 +41,7 @@ export default function Categories() {
   const isInitialRender = useRef(true);
   const [isLoad, setIsLoad] = useState(false);
   const [selectedCategoryId, setSelectedCategoryId] = useState([]);
+  const router = useRouter();
 
   // Fetch Page Link
   useEffect(() => {
@@ -275,6 +278,17 @@ export default function Categories() {
 
                       {/* Hover Actions (Edit & Delete) */}
                       <div className="absolute inset-0 flex items-center justify-center gap-3 opacity-0 group-hover:opacity-100 bg-black/50 rounded-lg transition-opacity duration-300">
+                        <span
+                          onClick={() => {
+                            router.push(
+                              `/dashboard/categories/${category?._id}`
+                            );
+                          }}
+                          title="Add Sub Category"
+                          className="p-1 bg-sky-500 hover:bg-sky-600 rounded-full transition-all duration-300 hover:scale-[1.03]"
+                        >
+                          <Plus className="text-[14px] text-white" />
+                        </span>
                         <span
                           onClick={() => {
                             setCategoryId(category?._id);
