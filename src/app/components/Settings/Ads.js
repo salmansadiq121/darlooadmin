@@ -2,6 +2,7 @@
 import axios from "axios";
 import React, { useState } from "react";
 import toast from "react-hot-toast";
+import Image from "next/image";
 
 export default function Ads({ adsData }) {
   const [status, setStatus] = useState(adsData?.status || false);
@@ -28,10 +29,10 @@ export default function Ads({ adsData }) {
 
   return (
     <div className="p-4 flex justify-center items-center min-h-screen bg-gray-100">
-      <div className="w-full max-w-3xl shadow-xl shadow-gray-200 drop-shadow-md rounded-lg bg-white overflow-hidden p-2 border">
-        <div className="relative ">
+      <div className="w-full max-w-fit  min-w-[320px] shadow-xl shadow-gray-200 drop-shadow-md rounded-lg bg-white overflow-hidden p-2 border">
+        <div className="relative max-w-3xl w-full ">
           {/* Video Player */}
-          <video
+          {/* <video
             src={adsData.videoURL}
             className="w-full max-h-[22rem] min-h-[18rem] object-contain rounded-lg"
             controls
@@ -40,7 +41,14 @@ export default function Ads({ adsData }) {
             type="video/mp4"
           >
             Your browser does not support the video tag.
-          </video>
+          </video> */}
+          <Image
+            src={adsData.videoURL}
+            alt="video"
+            width={500}
+            height={300}
+            className="rounded-lg w-full h-[300px] object-fill shadow-md drop-shadow-md shadow-gray-200"
+          />
         </div>
         <div className="p-4">
           <h2 className="text-xl font-semibold text-gray-800 mb-2">Video Ad</h2>
