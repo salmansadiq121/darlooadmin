@@ -409,15 +409,13 @@ export default function Products() {
             <div className="cursor-pointer text-[12px] text-black w-full h-full">
               <div className="flex flex-col gap-2">
                 <div className="flex items-center gap-1">
-                  <div className="w-[3.4rem] h-[2.4rem] relative rounded-md overflow-hidden flex items-center justify-center">
+                  <div className="min-w-[3.4rem] min-h-[2.4rem] relative rounded-md overflow-hidden flex items-center justify-center">
                     <Image
                       src={avatar}
-                      layout="fill"
                       alt="Thumbnail"
-                      // width={70}
-                      // height={40}
-                      // sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 3.4rem"
-                      className="w-full h-full"
+                      width={70}
+                      height={40}
+                      className="w-[3.3rem] min-h-[2.4rem] rounded-md"
                     />
                   </div>
                   <span className="text-[12px] capitalize truncate block ">
