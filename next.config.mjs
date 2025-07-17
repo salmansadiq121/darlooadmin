@@ -5,6 +5,10 @@ const nextConfig = {
     remotePatterns: [
       {
         protocol: "https",
+        hostname: "**",
+      },
+      {
+        protocol: "https",
         hostname: "socialface.s3.eu-north-1.amazonaws.com",
         pathname: "**",
       },
@@ -22,6 +26,11 @@ const nextConfig = {
         protocol: "https",
         hostname: "cdn.shopify.com",
         pathname: "**",
+      },
+      {
+        protocol: "https",
+        hostname: "cbu01.alicdn.com",
+        pathname: "/img/**",
       },
       {
         protocol: "https",
