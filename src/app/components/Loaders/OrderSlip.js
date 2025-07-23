@@ -213,7 +213,7 @@ const OrderSlip = ({ orderDetail, generatePDF }) => {
                         <div className="relative w-full h-full">
                           <Image
                             src={
-                              product?.product?.thumbnails?.[0] ||
+                              product?.product?.thumbnails ||
                               "/placeholder.svg?height=64&width=64"
                             }
                             layout="fill"

@@ -353,7 +353,7 @@ export default function Orders() {
                     <div className="w-[3.3rem] h-[2.1rem] relative rounded-md overflow-hidden flex items-center justify-center">
                       <Image
                         src={
-                          firstProduct?.product?.thumbnails?.[0] ||
+                          firstProduct?.product?.thumbnails ||
                           "/default-thumbnail.jpg"
                         }
                         layout="fill"
