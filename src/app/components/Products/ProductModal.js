@@ -42,7 +42,7 @@ export default function ProductModal({
   const [subCategoryId, setSubCategoryId] = useState("");
   const [price, setPrice] = useState("");
   const [estimatedPrice, setEstimatedPrice] = useState("");
-  const [thumbnail, setThumbnail] = useState(""); // Changed from thumbnails array to single thumbnail
+  const [thumbnail, setThumbnail] = useState("");
   const [variations, setVariations] = useState([
     {
       imageURL: "",
@@ -64,19 +64,16 @@ export default function ProductModal({
   const [shipping, setShipping] = useState("");
   const [isUpload, setIsUpload] = useState(false);
 
-  // New state for media type selection
-  // Remove this line: const [mediaType, setMediaType] = useState("thumbnails") // "thumbnails" or "variations"
-
   // Multi-step form state
   const [currentStep, setCurrentStep] = useState(1);
   const totalSteps = 4;
 
   // Step validation state
   const [stepsValidation, setStepsValidation] = useState({
-    1: false, // Basic Info
-    2: false, // Media
-    3: false, // Pricing
-    4: false, // Inventory & Options
+    1: false,
+    2: false,
+    3: false,
+    4: false,
   });
 
   // Get Product Detail
@@ -208,10 +205,10 @@ export default function ProductModal({
   };
 
   // Get SubCategories
-  const getSubCategories = async () => {
+  const getSubCategories = async (id) => {
     try {
       const { data } = await axios.get(
-        `${process.env.NEXT_PUBLIC_SERVER_URI}/api/v1/categories/subcategory`
+        `${process.env.NEXT_PUBLIC_SERVER_URI}/api/v1/categories/subcategory/${id}`
       );
       if (data) {
         setSubCategoryData(data.subCategories);
@@ -224,7 +221,6 @@ export default function ProductModal({
 
   useEffect(() => {
     getCategories();
-    getSubCategories();
     // eslint-disable-next-line
   }, []);
 
@@ -566,6 +562,7 @@ export default function ProductModal({
             value={category}
             onChange={(val) => {
               setCategory(val);
+              getSubCategories(val.value);
               validateStep(1);
             }}
             placeholder="Select category"
@@ -578,7 +575,7 @@ export default function ProductModal({
         {/* Sub Category */}
         <div className="">
           <label className="block text-sm font-medium text-gray-700 mb-1">
-            Sub Category<span className="text-red-700">*</span>
+            Sub Category
           </label>
           <Select
             options={subCategoryOptions}
