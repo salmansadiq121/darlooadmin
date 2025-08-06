@@ -103,7 +103,7 @@ export default function Categories() {
     }
     try {
       const { data } = await axios.get(
-        `${process.env.NEXT_PUBLIC_SERVER_URI}/api/v1/categories/all/categories`
+        `${process.env.NEXT_PUBLIC_SERVER_URI}/api/v1/categories/all/admin/categories`
       );
       if (data?.categories) {
         setCategoryData(data.categories);

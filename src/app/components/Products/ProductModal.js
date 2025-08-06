@@ -1,5 +1,4 @@
 "use client";
-
 import { Style } from "@/app/utils/CommonStyle";
 import Image from "next/image";
 import { useEffect, useState } from "react";
@@ -23,6 +22,7 @@ import {
   Settings,
   Euro,
   Palette,
+  TagIcon,
 } from "lucide-react";
 import { uploadProductImage } from "@/app/utils/CommonFunction";
 
@@ -47,8 +47,10 @@ export default function ProductModal({
     {
       imageURL: "",
       color: "",
+      title: "",
     },
   ]);
+
   const [quantity, setQuantity] = useState("");
   const [colors, setColors] = useState([]);
   const [inputSize, setInputSize] = useState("");
@@ -59,15 +61,15 @@ export default function ProductModal({
     discountPercentage: "",
     saleExpiry: null,
   });
+  const [inputTag, setInputTag] = useState("");
+  const [tags, setTags] = useState([]);
   const [deletedImages, setDeletedImages] = useState([]);
   const [isloading, setIsloading] = useState(false);
   const [shipping, setShipping] = useState("");
   const [isUpload, setIsUpload] = useState(false);
-
   // Multi-step form state
   const [currentStep, setCurrentStep] = useState(1);
   const totalSteps = 4;
-
   // Step validation state
   const [stepsValidation, setStepsValidation] = useState({
     1: false,
@@ -75,7 +77,6 @@ export default function ProductModal({
     3: false,
     4: false,
   });
-
   // Get Product Detail
   const getProductInfo = async () => {
     try {
@@ -88,7 +89,6 @@ export default function ProductModal({
         setName(product.name || "");
         setDescription(product.description || "");
         setShipping(product.shipping || 0);
-
         if (product.category && product.category._id) {
           setCategory({
             value: product.category._id,
@@ -107,7 +107,6 @@ export default function ProductModal({
             ),
           });
         }
-
         if (product.subCategoryId && product.subCategoryId._id) {
           setSubCategoryId({
             value: product.subCategoryId._id,
@@ -126,7 +125,6 @@ export default function ProductModal({
             ),
           });
         }
-
         setPrice(product.price || "");
         setEstimatedPrice(product.estimatedPrice || "");
         setThumbnail(product.thumbnails || ""); // Changed from thumbnails array to single thumbnail
@@ -153,16 +151,10 @@ export default function ProductModal({
                 };
           }) || []
         );
+        const newTags =
+          product?.tags?.[0]?.split(",").map((tag) => tag.trim()) || [];
+        setTags(newTags);
 
-        // Set media type based on what's available
-        // Remove this mediaType logic:
-        // if (product.variations && product.variations.length > 0 && product.variations[0].imageURL) {
-        //   setMediaType("variations")
-        // } else {
-        //   setMediaType("thumbnails")
-        // }
-
-        // Map size values to options
         setSizes(product.sizes || []);
         setTrending(product.trending || false);
         setSale({
@@ -172,7 +164,6 @@ export default function ProductModal({
             ? new Date(product.sale.saleExpiry)
             : null,
         });
-
         // Validate all steps after loading data
         validateAllSteps();
       }
@@ -181,14 +172,12 @@ export default function ProductModal({
       toast.error("Failed to load product data");
     }
   };
-
   useEffect(() => {
     if (productId) {
       getProductInfo();
     }
     // eslint-disable-next-line
   }, [productId]);
-
   // Get Categories
   const getCategories = async () => {
     try {
@@ -203,7 +192,6 @@ export default function ProductModal({
       toast.error("Failed to load categories");
     }
   };
-
   // Get SubCategories
   const getSubCategories = async (id) => {
     try {
@@ -218,12 +206,10 @@ export default function ProductModal({
       toast.error("Failed to load sub categories");
     }
   };
-
   useEffect(() => {
     getCategories();
     // eslint-disable-next-line
   }, []);
-
   // Handle Media Upload
   // Handle Thumbnail Upload (single image)
   const handleThumbnailUpload = async (e) => {
@@ -234,7 +220,6 @@ export default function ProductModal({
       validateStep(2);
     }
   };
-
   // Update Variations Image to AWS Directly
   const UploadVeriationImages = async (e) => {
     const file = e.target.files[0];
@@ -244,11 +229,11 @@ export default function ProductModal({
       {
         imageURL,
         color: "",
+        title: "",
       },
     ]);
     validateStep(2);
   };
-
   // Handle variation color change
   const handleVariationColorChange = (index, selectedColor) => {
     setVariations((prev) => {
@@ -256,11 +241,20 @@ export default function ProductModal({
       updated[index] = { ...updated[index], color: selectedColor?.value || "" };
       return updated;
     });
-
     // Add selected color to main colors array if not already present
     if (selectedColor && !colors.find((c) => c.value === selectedColor.value)) {
       setColors((prev) => [...prev, selectedColor]);
     }
+  };
+
+  // Handle variation title change
+  const handleVariationTitleChange = (index, newTitle) => {
+    setVariations((prev) => {
+      const updated = [...prev];
+      updated[index] = { ...updated[index], title: newTitle };
+      return updated;
+    });
+    validateStep(2);
   };
 
   // Remove variation
@@ -268,7 +262,6 @@ export default function ProductModal({
     setVariations((prev) => prev.filter((_, index) => index !== indexToRemove));
     validateStep(2);
   };
-
   // Handle Media Removal
   // Handle Thumbnail Removal
   const removeThumbnail = () => {
@@ -278,7 +271,6 @@ export default function ProductModal({
     setThumbnail("");
     validateStep(2);
   };
-
   // Handle Sizes
   const handleAddSize = () => {
     if (inputSize.trim() !== "" && !sizes.includes(inputSize.trim())) {
@@ -287,19 +279,41 @@ export default function ProductModal({
       validateStep(4);
     }
   };
-
   const handleKeyPress = (e) => {
     if (e.key === "Enter") {
       e.preventDefault();
       handleAddSize();
     }
   };
-
   const handleRemoveSize = (sizeToRemove) => {
     setSizes((prev) => prev.filter((size) => size !== sizeToRemove));
     validateStep(4);
   };
 
+  // Handle Tags
+  const handleAddTag = () => {
+    if (inputTag.trim() !== "") {
+      const newTags = inputTag
+        .split(",")
+        .map((tag) => tag.trim())
+        .filter((tag) => tag !== "" && !tags.includes(tag));
+      setTags((prev) => [...prev, ...newTags]);
+      setInputTag("");
+      validateStep(4);
+    }
+  };
+
+  const handleKeyPressForTags = (e) => {
+    if (e.key === "Enter") {
+      e.preventDefault();
+      handleAddTag();
+    }
+  };
+
+  const handleRemoveTag = (tagToRemove) => {
+    setTags((prev) => prev.filter((tag) => tag !== tagToRemove));
+    validateStep(4);
+  };
   // Handle Sale Activation
   const toggleSale = () => {
     setSale((prevSale) => ({
@@ -310,7 +324,6 @@ export default function ProductModal({
     }));
     validateStep(3);
   };
-
   // Category Options
   const categoryOptions =
     categoryData &&
@@ -330,7 +343,6 @@ export default function ProductModal({
         </div>
       ),
     }));
-
   // Sub Category Options
   const subCategoryOptions =
     subCategoryData &&
@@ -350,11 +362,9 @@ export default function ProductModal({
         </div>
       ),
     }));
-
   // Step validation functions
   const validateStep = (step) => {
     let isValid = false;
-
     switch (step) {
       case 1: // Basic Info
         isValid = !!name && !!description && !!category;
@@ -374,37 +384,30 @@ export default function ProductModal({
       default:
         isValid = false;
     }
-
     setStepsValidation((prev) => ({
       ...prev,
       [step]: isValid,
     }));
     return isValid;
   };
-
   const validateAllSteps = () => {
     for (let i = 1; i <= totalSteps; i++) {
       validateStep(i);
     }
   };
-
   // Effect to validate current step when relevant fields change
   useEffect(() => {
     validateStep(1);
   }, [name, description, category]);
-
   useEffect(() => {
     validateStep(2);
   }, [thumbnail, variations]); // Changed from thumbnails to thumbnail
-
   useEffect(() => {
     validateStep(3);
   }, [price, estimatedPrice, shipping, sale]);
-
   useEffect(() => {
     validateStep(4);
   }, [quantity, colors, sizes, trending]);
-
   // Navigation functions
   const nextStep = () => {
     if (currentStep < totalSteps && validateStep(currentStep)) {
@@ -413,13 +416,11 @@ export default function ProductModal({
       toast.error(`Please complete all required fields in Step ${currentStep}`);
     }
   };
-
   const prevStep = () => {
     if (currentStep > 1) {
       setCurrentStep((prev) => prev - 1);
     }
   };
-
   const goToStep = (step) => {
     if (step <= currentStep || validateStep(currentStep)) {
       setCurrentStep(step);
@@ -427,7 +428,6 @@ export default function ProductModal({
       toast.error(`Please complete all required fields in Step ${currentStep}`);
     }
   };
-
   // Submit function
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -439,7 +439,6 @@ export default function ProductModal({
       toast.error("Please complete all required fields in all steps");
       return;
     }
-
     setIsloading(true);
     const productData = new FormData();
     productData.append("name", name);
@@ -449,8 +448,8 @@ export default function ProductModal({
     productData.append("subCategoryId", subCategoryId.value);
     productData.append("price", price);
     productData.append("estimatedPrice", estimatedPrice);
+    productData.append("tags", tags);
     productData.append("variations", JSON.stringify(variations));
-
     // Handle single thumbnail
     if (thumbnail) {
       if (thumbnail instanceof File) {
@@ -460,7 +459,6 @@ export default function ProductModal({
         productData.append("existingThumbnail", thumbnail);
       }
     }
-
     productData.append("quantity", quantity);
     // Handle colors
     const colorIds = colors.map((color) => ({
@@ -468,13 +466,11 @@ export default function ProductModal({
       code: color.value,
     }));
     productData.append("colors", JSON.stringify(colorIds));
-
     // Handle sizes
     productData.append("sizes", sizes);
     productData.append("trending", trending);
     productData.append("sale", JSON.stringify(sale));
     productData.append("deletedImages", JSON.stringify(deletedImages));
-
     try {
       if (productId) {
         const { data } = await axios.put(
@@ -493,7 +489,6 @@ export default function ProductModal({
           toast.success(data?.message || "Product added successfully");
         }
       }
-
       // Reset and close modal
       fetchProducts();
       setShowaddProduct(false);
@@ -506,7 +501,6 @@ export default function ProductModal({
       setIsloading(false);
     }
   };
-
   // Render step content based on current step
   const renderStepContent = () => {
     switch (currentStep) {
@@ -522,7 +516,6 @@ export default function ProductModal({
         return null;
     }
   };
-
   // Step 1: Basic Information
   const renderBasicInfoStep = () => {
     return (
@@ -533,7 +526,6 @@ export default function ProductModal({
           </div>
           <h3 className="text-lg font-medium">Basic Information</h3>
         </div>
-
         {/* Product Name */}
         <div className="">
           <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -551,7 +543,6 @@ export default function ProductModal({
             required
           />
         </div>
-
         {/* Category */}
         <div className="">
           <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -571,7 +562,6 @@ export default function ProductModal({
             classNamePrefix="select "
           />
         </div>
-
         {/* Sub Category */}
         <div className="">
           <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -590,7 +580,6 @@ export default function ProductModal({
             classNamePrefix="select"
           />
         </div>
-
         {/* Description */}
         <div className="">
           <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -610,7 +599,6 @@ export default function ProductModal({
       </div>
     );
   };
-
   // Step 2: Media
   const renderMediaStep = () => {
     return (
@@ -621,14 +609,12 @@ export default function ProductModal({
           </div>
           <h3 className="text-lg font-medium">Product Media</h3>
         </div>
-
         {/* Main Thumbnail Section - Required */}
         <div className="border rounded-md p-4 bg-white shadow-sm">
           <h4 className="text-sm font-medium text-gray-700 mb-3 flex items-center gap-2">
             <ImageIcon size={16} className="text-customRed" />
             Main Product Image<span className="text-red-700">*</span>
           </h4>
-
           {!thumbnail ? (
             <div className="border-2 border-dashed border-gray-300 p-6 md:p-8 flex flex-col items-center justify-center rounded-md bg-gray-50 hover:bg-gray-100/50 transition-colors duration-200 group">
               <label className="cursor-pointer flex flex-col items-center gap-4">
@@ -680,14 +666,12 @@ export default function ProductModal({
             </div>
           )}
         </div>
-
         {/* Variations Section - Required */}
         <div className="border rounded-md p-4 bg-white shadow-sm">
           <h4 className="text-sm font-medium text-gray-700 mb-3 flex items-center gap-2">
             <Palette size={16} className="text-customRed" />
             Variation Images<span className="text-red-700">*</span>
           </h4>
-
           {/* Variation Upload */}
           <div className="border-2 border-dashed border-gray-300 p-6 md:p-8 flex flex-col items-center justify-center rounded-md bg-gray-50 hover:bg-gray-100/50 transition-colors duration-200 group mb-4">
             <label className="cursor-pointer flex flex-col items-center gap-4">
@@ -710,7 +694,6 @@ export default function ProductModal({
               />
             </label>
           </div>
-
           {/* Variations Preview */}
           {variations && variations.some((v) => v.imageURL) ? (
             <div className="space-y-4">
@@ -719,7 +702,6 @@ export default function ProductModal({
               </p>
               {variations?.map((variation, index) => {
                 if (!variation.imageURL) return null;
-
                 return (
                   <div
                     key={index}
@@ -742,8 +724,7 @@ export default function ProductModal({
                         <IoIosClose className="text-[16px]" />
                       </button>
                     </div>
-
-                    {/* Color Selection */}
+                    {/* Color Selection and Title Input */}
                     <div className="flex-1">
                       <label className="block text-sm font-medium text-gray-700 mb-2">
                         Select Color for this Variation
@@ -770,6 +751,21 @@ export default function ProductModal({
                           Selected: {variation.color}
                         </div>
                       )}
+                      {/* Add Title Input */}
+                      <div className="mt-4">
+                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                          Variation Title
+                        </label>
+                        <input
+                          type="text"
+                          value={variation.title}
+                          onChange={(e) =>
+                            handleVariationTitleChange(index, e.target.value)
+                          }
+                          className={`${Style.input} w-full`}
+                          placeholder="Enter title for this variation"
+                        />
+                      </div>
                     </div>
                   </div>
                 );
@@ -782,7 +778,6 @@ export default function ProductModal({
             </div>
           )}
         </div>
-
         {/* Requirements Note */}
         <div className="bg-blue-50 border border-blue-200 rounded-md p-4">
           <div className="flex items-start gap-2">
@@ -806,7 +801,6 @@ export default function ProductModal({
       </div>
     );
   };
-
   // Step 3: Pricing
   const renderPricingStep = () => {
     return (
@@ -817,7 +811,6 @@ export default function ProductModal({
           </div>
           <h3 className="text-lg font-medium">Pricing Information</h3>
         </div>
-
         {/* Price */}
         <div className="">
           <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -842,7 +835,6 @@ export default function ProductModal({
             />
           </div>
         </div>
-
         {/* Estimate Price */}
         <div className="">
           <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -869,7 +861,6 @@ export default function ProductModal({
             Original price before discount (if applicable)
           </p>
         </div>
-
         {/* Shipping Price */}
         <div className="">
           <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -893,7 +884,6 @@ export default function ProductModal({
             />
           </div>
         </div>
-
         {/* Sale Settings */}
         <div className="border rounded-md p-4 md:p-5 bg-gradient-to-r from-gray-50 to-red-50/30 shadow-sm">
           <div className="flex items-center justify-between mb-4">
@@ -914,15 +904,14 @@ export default function ProductModal({
                 className="sr-only peer"
               />
               <div
-                className="w-11 h-6 bg-gray-200 rounded-full peer peer-focus:ring-4 peer-focus:ring-red-100 
-                    peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full 
-                    peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] 
-                    after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full 
-                    after:h-5 after:w-5 after:transition-all peer-checked:bg-customRed"
+                className="w-11 h-6 bg-gray-200 rounded-full peer peer-focus:ring-4 peer-focus:ring-red-100
+                        peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full
+                        peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px]
+                        after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full
+                        after:h-5 after:w-5 after:transition-all peer-checked:bg-customRed"
               ></div>
             </label>
           </div>
-
           {sale.isActive && (
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-4 pt-4 border-t border-gray-200">
               <div>
@@ -950,7 +939,6 @@ export default function ProductModal({
                   </span>
                 </div>
               </div>
-
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
                   Sale Expiry Date<span className="text-red-700">*</span>
@@ -979,7 +967,6 @@ export default function ProductModal({
       </div>
     );
   };
-
   // Step 4: Inventory & Options
   const renderInventoryOptionsStep = () => {
     return (
@@ -990,7 +977,6 @@ export default function ProductModal({
           </div>
           <h3 className="text-lg font-medium">Inventory & Options</h3>
         </div>
-
         {/* Quantity */}
         <div className="">
           <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -1009,7 +995,6 @@ export default function ProductModal({
             min="0"
           />
         </div>
-
         {/* Colors */}
         <div className="border rounded-md p-4 md:p-5 bg-white shadow-sm">
           <label className="block text-sm font-medium text-gray-700 mb-3 flex items-center gap-2">
@@ -1033,7 +1018,6 @@ export default function ProductModal({
             {/* {mediaType === "variations" && " (Colors from variations are automatically added)"} */}
           </p>
         </div>
-
         {/* Sizes */}
         <div className="border rounded-md p-4 md:p-5 bg-white shadow-sm">
           <label className="block text-sm font-medium text-gray-700 mb-3 flex items-center gap-2">
@@ -1060,7 +1044,6 @@ export default function ProductModal({
               Add
             </button>
           </div>
-
           {/* Display the added sizes */}
           <div className="flex flex-wrap gap-2 mt-4">
             {sizes.map((size) => (
@@ -1086,7 +1069,57 @@ export default function ProductModal({
             )}
           </div>
         </div>
-
+        {/* Tags */}
+        <div className="border rounded-md p-4 md:p-5 bg-white shadow-sm">
+          <label className=" text-sm font-medium text-gray-700 mb-3 flex items-center gap-2">
+            <div className="w-5 h-5 rounded-full bg-red-100 flex items-center justify-center">
+              <TagIcon size={14} className="text-customRed" />
+            </div>
+            Product Tags
+          </label>
+          <div className="flex flex-col sm:flex-row gap-2">
+            <input
+              type="text"
+              value={inputTag}
+              onChange={(e) => setInputTag(e.target.value)}
+              onKeyPress={handleKeyPressForTags}
+              placeholder="Enter tags (comma-separated, e.g., 'new, summer, sale')"
+              className={`${Style.input} border rounded p-2 flex-grow`}
+            />
+            <button
+              type="button"
+              onClick={handleAddTag}
+              className="px-4 py-2 bg-customRed text-white rounded-md hover:bg-red-700 transition-colors shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
+              disabled={!inputTag.trim()}
+            >
+              Add
+            </button>
+          </div>
+          {/* Display the added tags */}
+          <div className="flex flex-wrap gap-2 mt-4">
+            {tags.map((tag) => (
+              <span
+                key={tag}
+                className="bg-gray-100 px-4 py-1.5 rounded-full text-sm flex items-center gap-2 border border-gray-200 shadow-sm hover:shadow-md transition-all duration-200"
+              >
+                {tag}
+                <button
+                  type="button"
+                  onClick={() => handleRemoveTag(tag)}
+                  className="text-red-500 hover:text-red-700 transition-colors"
+                  aria-label={`Remove ${tag}`}
+                >
+                  ×
+                </button>
+              </span>
+            ))}
+            {tags.length === 0 && (
+              <span className="text-xs text-gray-500 italic py-2">
+                No tags added yet
+              </span>
+            )}
+          </div>
+        </div>
         {/* Trending */}
         <div className="border rounded-md p-4 bg-gradient-to-r from-gray-50 to-red-50/30 shadow-sm">
           <div className="flex items-center justify-between">
@@ -1105,11 +1138,11 @@ export default function ProductModal({
                 className="sr-only peer"
               />
               <div
-                className="w-11 h-6 bg-gray-200 rounded-full peer peer-focus:ring-4 peer-focus:ring-red-100 
-                    peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full 
-                    peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] 
-                    after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full 
-                    after:h-5 after:w-5 after:transition-all peer-checked:bg-customRed"
+                className="w-11 h-6 bg-gray-200 rounded-full peer peer-focus:ring-4 peer-focus:ring-red-100
+                        peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full
+                        peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px]
+                        after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full
+                        after:h-5 after:w-5 after:transition-all peer-checked:bg-customRed"
               ></div>
             </label>
           </div>
@@ -1121,7 +1154,6 @@ export default function ProductModal({
       </div>
     );
   };
-
   // Render mobile stepper for small screens
   const renderMobileStepper = () => {
     return (
@@ -1135,13 +1167,13 @@ export default function ProductModal({
             >
               <div
                 className={`w-8 h-8 rounded-full flex items-center justify-center cursor-pointer transition-all duration-300
-                ${
-                  currentStep === step
-                    ? "bg-customRed text-white ring-2 ring-red-100"
-                    : step < currentStep || stepsValidation[step]
-                    ? "bg-green-500 text-white"
-                    : "bg-gray-100 text-gray-500"
-                }`}
+              ${
+                currentStep === step
+                  ? "bg-customRed text-white ring-2 ring-red-100"
+                  : step < currentStep || stepsValidation[step]
+                  ? "bg-green-500 text-white"
+                  : "bg-gray-100 text-gray-500"
+              }`}
               >
                 {step < currentStep || stepsValidation[step] ? (
                   <CheckCircle2 size={14} />
@@ -1149,33 +1181,31 @@ export default function ProductModal({
                   step
                 )}
               </div>
-
               <span
                 className={`text-[10px] mt-1 font-medium transition-colors duration-300
-                ${
-                  currentStep === step
-                    ? "text-customRed"
-                    : step < currentStep || stepsValidation[step]
-                    ? "text-green-500"
-                    : "text-gray-500"
-                }`}
+              ${
+                currentStep === step
+                  ? "text-customRed"
+                  : step < currentStep || stepsValidation[step]
+                  ? "text-green-500"
+                  : "text-gray-500"
+              }`}
               >
                 {step === 1 && "Info"}
                 {step === 2 && "Media"}
                 {step === 3 && "Price"}
                 {step === 4 && "Stock"}
               </span>
-
               {/* Connector line */}
               {step < 4 && (
                 <div
                   className={`absolute top-4 left-8 w-[calc(100%-1rem)] h-[2px] transition-colors duration-300
-                  ${
-                    step < currentStep ||
-                    (stepsValidation[step] && stepsValidation[step + 1])
-                      ? "bg-green-500"
-                      : "bg-gray-200"
-                  }`}
+                ${
+                  step < currentStep ||
+                  (stepsValidation[step] && stepsValidation[step + 1])
+                    ? "bg-green-500"
+                    : "bg-gray-200"
+                }`}
                 />
               )}
             </div>
@@ -1184,7 +1214,6 @@ export default function ProductModal({
       </div>
     );
   };
-
   // Render desktop stepper for larger screens
   const renderDesktopStepper = () => {
     return (
@@ -1198,13 +1227,13 @@ export default function ProductModal({
             >
               <div
                 className={`w-10 h-10 rounded-full flex items-center justify-center cursor-pointer transition-all duration-300 shadow-sm
-                ${
-                  currentStep === step
-                    ? "bg-customRed text-white ring-4 ring-red-100"
-                    : step < currentStep || stepsValidation[step]
-                    ? "bg-green-500 text-white"
-                    : "bg-gray-100 text-gray-500"
-                }`}
+              ${
+                currentStep === step
+                  ? "bg-customRed text-white ring-4 ring-red-100"
+                  : step < currentStep || stepsValidation[step]
+                  ? "bg-green-500 text-white"
+                  : "bg-gray-100 text-gray-500"
+              }`}
               >
                 {step < currentStep || stepsValidation[step] ? (
                   <CheckCircle2 size={18} />
@@ -1212,16 +1241,15 @@ export default function ProductModal({
                   step
                 )}
               </div>
-
               <span
                 className={`text-xs mt-2 font-medium transition-colors duration-300
-                ${
-                  currentStep === step
-                    ? "text-customRed"
-                    : step < currentStep || stepsValidation[step]
-                    ? "text-green-500"
-                    : "text-gray-500"
-                }`}
+              ${
+                currentStep === step
+                  ? "text-customRed"
+                  : step < currentStep || stepsValidation[step]
+                  ? "text-green-500"
+                  : "text-gray-500"
+              }`}
               >
                 {step === 1 && "Basic Info"}
                 {step === 2 && "Media"}
@@ -1234,7 +1262,6 @@ export default function ProductModal({
       </div>
     );
   };
-
   return (
     <div
       ref={closeModal}
@@ -1265,18 +1292,15 @@ export default function ProductModal({
           <CgClose className="text-[18px]" />
         </span>
       </div>
-
       {/* Stepper - Different versions for mobile and desktop */}
       {renderMobileStepper()}
       {renderDesktopStepper()}
-
       {/* Form Content */}
       <div className="w-full flex-1 overflow-y-auto px-4 sm:px-6">
         <form onSubmit={handleSubmit} className="h-full">
           {renderStepContent()}
         </form>
       </div>
-
       {/* Footer with Navigation */}
       <div className="border-t px-4 sm:px-6 py-2 sm:py-4 flex items-center justify-between bg-gray-50">
         <button
@@ -1284,31 +1308,29 @@ export default function ProductModal({
           onClick={prevStep}
           disabled={currentStep === 1}
           className={`px-3 sm:px-5 py-2 sm:py-2.5 flex items-center gap-1 sm:gap-2 rounded-md border text-sm transition-all duration-200
-          ${
-            currentStep === 1
-              ? "bg-gray-100 text-gray-400 cursor-not-allowed border-gray-200"
-              : "bg-white text-gray-700 hover:bg-gray-50 border-gray-300 hover:shadow-sm"
-          }`}
+        ${
+          currentStep === 1
+            ? "bg-gray-100 text-gray-400 cursor-not-allowed border-gray-200"
+            : "bg-white text-gray-700 hover:bg-gray-50 border-gray-300 hover:shadow-sm"
+        }`}
         >
           <ChevronLeft size={16} />
           <span className="hidden xs:inline">Previous</span>
         </button>
-
         <div className="text-xs sm:text-sm text-gray-500 font-medium bg-white px-2 sm:px-3 py-1 sm:py-1.5 rounded-full border border-gray-200 shadow-sm">
           Step {currentStep} of {totalSteps}
         </div>
-
         {currentStep < totalSteps ? (
           <button
             type="button"
             onClick={nextStep}
             disabled={!stepsValidation[currentStep]}
             className={`px-3 sm:px-5 py-2 sm:py-2.5 flex items-center gap-1 sm:gap-2 rounded-md text-sm transition-all duration-200
-            ${
-              stepsValidation[currentStep]
-                ? "bg-customRed text-white hover:bg-red-700 shadow-sm hover:shadow"
-                : "bg-gray-200 text-gray-500 cursor-not-allowed"
-            }`}
+          ${
+            stepsValidation[currentStep]
+              ? "bg-customRed text-white hover:bg-red-700 shadow-sm hover:shadow"
+              : "bg-gray-200 text-gray-500 cursor-not-allowed"
+          }`}
           >
             <span className="hidden xs:inline">Next</span>
             <ChevronRight size={16} />
@@ -1321,11 +1343,11 @@ export default function ProductModal({
               !Object.values(stepsValidation).every(Boolean) || isloading
             }
             className={`px-4 sm:px-6 py-2 sm:py-2.5 rounded-md flex items-center gap-2 text-sm transition-all duration-200
-            ${
-              Object.values(stepsValidation).every(Boolean) && !isloading
-                ? "bg-customRed text-white hover:bg-red-700 shadow-sm hover:shadow"
-                : "bg-gray-200 text-gray-500 cursor-not-allowed"
-            }`}
+          ${
+            Object.values(stepsValidation).every(Boolean) && !isloading
+              ? "bg-customRed text-white hover:bg-red-700 shadow-sm hover:shadow"
+              : "bg-gray-200 text-gray-500 cursor-not-allowed"
+          }`}
           >
             {isloading ? (
               <>

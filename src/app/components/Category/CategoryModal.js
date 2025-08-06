@@ -9,6 +9,8 @@ import "react-datepicker/dist/react-datepicker.css";
 import toast from "react-hot-toast";
 import axios from "axios";
 import { FaSpinner } from "react-icons/fa";
+import { Switch } from "@/components/ui/switch";
+import { Label } from "@/components/ui/label";
 
 export default function CategoryModal({
   closeModal,
@@ -21,6 +23,7 @@ export default function CategoryModal({
   const [name, setName] = useState("");
   const [image, setImage] = useState("");
   const [isloading, setIsloading] = useState(false);
+  const [disable, setDisable] = useState(false);
 
   // Handle Media Upload
   const handleMediaUpload = (e) => {
@@ -37,6 +40,7 @@ export default function CategoryModal({
       if (data) {
         setName(data.category.name);
         setImage(data.category.image);
+        setDisable(data.category.disable);
       }
     } catch (error) {
       console.log(error);
@@ -62,6 +66,7 @@ export default function CategoryModal({
     const formData = new FormData();
     formData.append("name", name);
     formData.append("file", image);
+    formData.append("disable", disable);
 
     try {
       const { data } = await axios.post(
@@ -94,6 +99,7 @@ export default function CategoryModal({
 
     const formData = new FormData();
     formData.append("name", name);
+    formData.append("disable", disable);
     if (image) {
       formData.append("file", image);
     }
@@ -197,8 +203,17 @@ export default function CategoryModal({
                 placeholder="Enter category name"
               />
             </div>
-
-            {/*  */}
+            {/* --------Disable---------- */}
+            <div className="flex items-center space-x-2 py-2">
+              <Switch
+                id="disable-switch"
+                checked={disable}
+                onCheckedChange={setDisable}
+              />
+              <Label htmlFor="disable-switch">
+                {disable ? "Disabled" : "Enabled"}
+              </Label>
+            </div>
           </div>
 
           <div className="flex items-center justify-end w-full pb-3">

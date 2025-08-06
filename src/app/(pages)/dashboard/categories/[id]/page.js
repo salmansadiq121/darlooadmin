@@ -473,6 +473,7 @@ export default function SubCategoryPage() {
                       alt={category.name}
                       width={120}
                       height={120}
+                      objectFit="min-cover"
                       className="rounded-2xl object-cover shadow-lg ring-4 ring-red-100"
                     />
                     <div className="absolute -top-2 -right-2 bg-red-600 text-white rounded-full p-2">
