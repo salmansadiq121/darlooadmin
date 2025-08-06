@@ -182,7 +182,7 @@ export default function ProductModal({
   const getCategories = async () => {
     try {
       const { data } = await axios.get(
-        `${process.env.NEXT_PUBLIC_SERVER_URI}/api/v1/categories/all/categories`
+        `${process.env.NEXT_PUBLIC_SERVER_URI}/api/v1/categories/all/admin/categories`
       );
       if (data) {
         setCategoryData(data.categories);
@@ -726,7 +726,7 @@ export default function ProductModal({
                     </div>
                     {/* Color Selection and Title Input */}
                     <div className="flex-1">
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                      {/* <label className="block text-sm font-medium text-gray-700 mb-2">
                         Select Color for this Variation
                       </label>
                       <Select
@@ -741,8 +741,8 @@ export default function ProductModal({
                         className="basic-single"
                         classNamePrefix="select"
                         isClearable
-                      />
-                      {variation.color && (
+                      /> */}
+                      {/* {variation.color && (
                         <div className="mt-2 flex items-center gap-2 text-xs text-gray-600">
                           <div
                             className="w-3 h-3 rounded-full border"
@@ -750,7 +750,7 @@ export default function ProductModal({
                           ></div>
                           Selected: {variation.color}
                         </div>
-                      )}
+                      )} */}
                       {/* Add Title Input */}
                       <div className="mt-4">
                         <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -996,8 +996,8 @@ export default function ProductModal({
           />
         </div>
         {/* Colors */}
-        <div className="border rounded-md p-4 md:p-5 bg-white shadow-sm">
-          <label className="block text-sm font-medium text-gray-700 mb-3 flex items-center gap-2">
+        {/* <div className="border rounded-md p-4 md:p-5 bg-white shadow-sm">
+          <label className=" text-sm font-medium text-gray-700 mb-3 flex items-center gap-2">
             <div className="w-5 h-5 rounded-full bg-gradient-to-r from-red-500 to-blue-500 flex items-center justify-center"></div>
             Available Colors
           </label>
@@ -1015,12 +1015,11 @@ export default function ProductModal({
           />
           <p className="text-xs text-gray-500 mt-2">
             Select all colors available for this product
-            {/* {mediaType === "variations" && " (Colors from variations are automatically added)"} */}
           </p>
-        </div>
+        </div> */}
         {/* Sizes */}
         <div className="border rounded-md p-4 md:p-5 bg-white shadow-sm">
-          <label className="block text-sm font-medium text-gray-700 mb-3 flex items-center gap-2">
+          <label className=" text-sm font-medium text-gray-700 mb-3 flex items-center gap-2">
             <div className="w-5 h-5 rounded-full bg-red-100 flex items-center justify-center">
               <span className="text-xs font-bold text-customRed">S</span>
             </div>
