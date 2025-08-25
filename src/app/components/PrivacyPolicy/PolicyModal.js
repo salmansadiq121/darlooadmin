@@ -13,8 +13,10 @@ export default function PrivacyModal({
   privacyId,
   setPrivacyId,
   getPrivacy,
+  tab,
 }) {
   const [description, setDescription] = useState("");
+  const [return_policy, setReturn_policy] = useState("");
   const editor = useRef(null);
 
   const [isloading, setIsloading] = useState(false);
@@ -28,6 +30,7 @@ export default function PrivacyModal({
       );
       if (data) {
         setDescription(data.privacy.description);
+        setReturn_policy(data.privacy.return_policy);
       }
     } catch (error) {
       console.log(error);
@@ -49,10 +52,10 @@ export default function PrivacyModal({
     try {
       const { data } = await axios.put(
         `${process.env.NEXT_PUBLIC_SERVER_URI}/api/v1/privacy/update/privacy/${privacyId}`,
-        { description }
+        { description, return_policy }
       );
       if (data) {
-        toast.success("Privacy updated successfully!");
+        toast.success("Data updated successfully!");
         getPrivacy();
         setAddPrivacy(false);
       }
@@ -76,9 +79,15 @@ export default function PrivacyModal({
   return (
     <div className="w-[44rem] bg-white rounded-md overflow-hidden shadow min-h-[15rem] max-h-[99%] flex flex-col">
       <div className="flex items-center justify-between bg-customRed px-4 py-2 sm:py-4 ">
-        <h3 className="text-lg font-medium text-white">
-          {privacyId ? "Edit Privacy" : "Add New Privacy"}
-        </h3>
+        {tab === "privacy" ? (
+          <h3 className="text-lg font-medium text-white">
+            {privacyId ? "Edit Privacy" : "Add New Privacy"}
+          </h3>
+        ) : (
+          <h3 className="text-lg font-medium text-white">
+            {privacyId ? "Edit Return Policy" : "Add Return Policy"}
+          </h3>
+        )}
         <span
           onClick={() => {
             setPrivacyId("");
@@ -95,15 +104,25 @@ export default function PrivacyModal({
           className=" flex flex-col gap-4 px-4 py-2 mt-4 h-full w-full "
         >
           {/* Description */}
-          <JoditEditor
-            ref={editor}
-            value={description}
-            config={config}
-            color="#fff"
-            tabIndex={1}
-            onBlur={(newContent) => setDescription(newContent)}
-          />
-
+          {tab === "privacy" ? (
+            <JoditEditor
+              ref={editor}
+              value={description}
+              config={config}
+              color="#fff"
+              tabIndex={1}
+              onBlur={(newContent) => setDescription(newContent)}
+            />
+          ) : (
+            <JoditEditor
+              ref={editor}
+              value={return_policy}
+              config={config}
+              color="#fff"
+              tabIndex={1}
+              onBlur={(newContent) => setReturn_policy(newContent)}
+            />
+          )}
           <div className="flex items-center justify-end w-full pb-3">
             <div className="flex items-center gap-4">
               <button

@@ -446,7 +446,7 @@ const OrderSlip = ({ orderDetail, generatePDF }) => {
                 <span className="text-red-600">support@darloo.com</span>
               </p>
               <p className="text-xs text-gray-500 mt-1">
-                Return policy: Items can be returned within 30 days of delivery
+                Return policy: Items can be returned within 14 days of delivery
               </p>
             </div>
           </div>

@@ -28,6 +28,7 @@ export default function Privacy() {
   const [privacyDetail, setPrivacyDetail] = useState({});
   const [loading, setLoading] = useState(false);
   const isInitialRender = useRef(true);
+  const [tab, setTab] = useState("privacy");
 
   console.log("privacyDetail:", privacyDetail);
 
@@ -108,43 +109,106 @@ export default function Privacy() {
       <div className="relative p-1 sm:p-2 px-1 sm:px-6 h-[100%] w-full pb-4 scroll-smooth">
         <div className="flex flex-col pb-2 h-full">
           <Breadcrumb path={currentUrl} />
-          <div className="flex flex-col gap-4 mt-4  w-full h-full">
-            <div className="flex items-center justify-between flex-wrap gap-4">
-              <h1 className="text-2xl font-sans font-semibold text-black">
-                Terms & Policy
-              </h1>
-              <div className="flex items-center gap-4">
-                <button
-                  onClick={() => {
-                    setPrivacyId(privacyDetail._id);
-                    setAddPrivacy(true);
-                  }}
-                  className="flex text-[15px] w-[8rem] items-center justify-center text-white bg-slate-400 hover:bg-slate-500  py-2 rounded-md shadow-md hover:shadow-xl transition-all duration-300 cursor-pointer hover:scale-[1.03]"
-                >
-                  EDIT
-                </button>
-                <button
-                  onClick={() => handleStatusConfirmation(privacyDetail._id)}
-                  className={`flex text-[15px] w-[8rem] items-center justify-center text-white bg-[#c6080a] hover:bg-red-800   py-2 rounded-md shadow-md hover:shadow-xl transition-all duration-300 cursor-pointer hover:scale-[1.03]`}
-                >
-                  DELETE
-                </button>
+          <div className="flex items-center gap-2 w-fit my-4 border-2 border-red-600">
+            <button
+              className={`py-2 px-5 cursor-pointer text-sm ${
+                tab === "privacy"
+                  ? "bg-red-600 text-white "
+                  : "text-black bg-gray-100"
+              }`}
+              onClick={() => setTab("privacy")}
+            >
+              Privacy Policy
+            </button>
+            <button
+              className={`py-2 px-5 cursor-pointer text-sm ${
+                tab === "return"
+                  ? "bg-red-600 text-white "
+                  : "text-black bg-gray-100"
+              }`}
+              onClick={() => setTab("return")}
+            >
+              Return Policy
+            </button>
+          </div>
+          {/* Privacy */}
+          {tab === "privacy" ? (
+            <div className="flex flex-col gap-4 mt-4  w-full h-full">
+              <div className="flex items-center justify-between flex-wrap gap-4">
+                <h1 className="text-2xl font-sans font-semibold text-black">
+                  Terms & Policy
+                </h1>
+                <div className="flex items-center gap-4">
+                  <button
+                    onClick={() => {
+                      setPrivacyId(privacyDetail._id);
+                      setAddPrivacy(true);
+                    }}
+                    className="flex text-[15px] w-[8rem] items-center justify-center text-white bg-slate-400 hover:bg-slate-500  py-2 rounded-md shadow-md hover:shadow-xl transition-all duration-300 cursor-pointer hover:scale-[1.03]"
+                  >
+                    EDIT
+                  </button>
+                  <button
+                    onClick={() => handleStatusConfirmation(privacyDetail._id)}
+                    className={`flex text-[15px] w-[8rem] items-center justify-center text-white bg-[#c6080a] hover:bg-red-800   py-2 rounded-md shadow-md hover:shadow-xl transition-all duration-300 cursor-pointer hover:scale-[1.03]`}
+                  >
+                    DELETE
+                  </button>
+                </div>
+              </div>
+              {/*  */}
+              <div className="relative overflow-hidden w-full h-[85%] py-3 sm:py-4 bg-white rounded-md shadow px-3 sm:px-4 mt-4 overflow-y-auto shidden">
+                {loading ? (
+                  <Loader />
+                ) : (
+                  <div
+                    dangerouslySetInnerHTML={{
+                      __html: privacyDetail?.description,
+                    }}
+                    className=" px-2 py-2"
+                  ></div>
+                )}
               </div>
             </div>
-            {/*  */}
-            <div className="relative overflow-hidden w-full h-[85%] py-3 sm:py-4 bg-white rounded-md shadow px-3 sm:px-4 mt-4 overflow-y-auto shidden">
-              {loading ? (
-                <Loader />
-              ) : (
-                <div
-                  dangerouslySetInnerHTML={{
-                    __html: privacyDetail?.description,
-                  }}
-                  className="whitespace-pre-wrap break-words px-2 py-2"
-                ></div>
-              )}
+          ) : (
+            <div className="flex flex-col gap-4 mt-4  w-full h-full">
+              <div className="flex items-center justify-between flex-wrap gap-4">
+                <h1 className="text-2xl font-sans font-semibold text-black">
+                  Return Policy
+                </h1>
+                <div className="flex items-center gap-4">
+                  <button
+                    onClick={() => {
+                      setPrivacyId(privacyDetail._id);
+                      setAddPrivacy(true);
+                    }}
+                    className="flex text-[15px] w-[8rem] items-center justify-center text-white bg-slate-400 hover:bg-slate-500  py-2 rounded-md shadow-md hover:shadow-xl transition-all duration-300 cursor-pointer hover:scale-[1.03]"
+                  >
+                    EDIT
+                  </button>
+                  <button
+                    onClick={() => handleStatusConfirmation(privacyDetail._id)}
+                    className={`flex text-[15px] w-[8rem] items-center justify-center text-white bg-[#c6080a] hover:bg-red-800   py-2 rounded-md shadow-md hover:shadow-xl transition-all duration-300 cursor-pointer hover:scale-[1.03]`}
+                  >
+                    DELETE
+                  </button>
+                </div>
+              </div>
+              {/*  */}
+              <div className="relative overflow-hidden w-full h-[85%] py-3 sm:py-4 bg-white rounded-md shadow px-3 sm:px-4 mt-4 overflow-y-auto shidden">
+                {loading ? (
+                  <Loader />
+                ) : (
+                  <div
+                    dangerouslySetInnerHTML={{
+                      __html: privacyDetail?.return_policy,
+                    }}
+                    className=" px-2 py-2"
+                  ></div>
+                )}
+              </div>
             </div>
-          </div>
+          )}
         </div>
         {/* -------------Handle Product Modal------------ */}
         {addPrivacy && (
@@ -154,6 +218,7 @@ export default function Privacy() {
               privacyId={privacyId}
               setPrivacyId={setPrivacyId}
               getPrivacy={fetchPrivacy}
+              tab={tab}
             />
           </div>
         )}
