@@ -19,7 +19,6 @@ import toast from "react-hot-toast";
 import { ImSpinner4 } from "react-icons/im";
 import { useAuth } from "@/app/context/authContext";
 import HandleOrderModal from "@/app/components/order/HandleOrderModal";
-import { HiDownload } from "react-icons/hi";
 const MainLayout = dynamic(
   () => import("./../../../components/layout/MainLayout"),
   {
@@ -52,10 +51,8 @@ export default function Orders() {
   const [isLoad, setIsLoad] = useState(false);
   const [orderId, setOrderId] = useState("");
   const [isShow, setIsShow] = useState(false);
-  // Export
-  const [showExportModal, setShowExportModal] = useState(false);
 
-  console.log("rowSelection:", Object.keys(rowSelection));
+  console.log("Orders:", orderData);
 
   // Current URL
   useEffect(() => {
@@ -316,124 +313,6 @@ export default function Orders() {
       console.error(error);
       toast.error("Failed to delete orders. Please try again later.");
     }
-  };
-
-  // Export Orders In CSV
-  const convertToCSV = (data) => {
-    if (!data || data.length === 0) return "";
-
-    const headers = [
-      "Order ID",
-      "Customer Name",
-      "Customer Email",
-      "Customer Phone",
-      "Products",
-      "Total Amount",
-      "Payment Method",
-      "Payment Status",
-      "Order Status",
-      "Shipping Fee",
-      "Shipping Address",
-      "Tracking ID",
-      "Shipping Carrier",
-      "Order Date",
-    ];
-
-    const csvContent = [
-      headers.join(","),
-      ...data.map((order) => {
-        const products =
-          order.products
-            ?.map(
-              (p) =>
-                `${p.product?.name || "N/A"} (Qty: ${p.quantity}, Price: $${
-                  p.price
-                })`
-            )
-            .join("; ") || "No products";
-
-        const shippingAddress = order.shippingAddress
-          ? `${order.shippingAddress.address}, ${order.shippingAddress.city}, ${order.shippingAddress.state} ${order.shippingAddress.postalCode}, ${order.shippingAddress.country}`
-          : "N/A";
-
-        return [
-          `"${order._id || ""}"`,
-          `"${order.user?.name || "N/A"}"`,
-          `"${order.user?.email || "N/A"}"`,
-          `"${order.user?.number || "N/A"}"`,
-          `"${products}"`,
-          `"$${order.totalAmount || "0"}"`,
-          `"${order.paymentMethod || "N/A"}"`,
-          `"${order.paymentStatus || "N/A"}"`,
-          `"${order.orderStatus || "N/A"}"`,
-          `"$${order.shippingFee || "0"}"`,
-          `"${shippingAddress}"`,
-          `"${order.trackingId || "N/A"}"`,
-          `"${order.shippingCarrier || "N/A"}"`,
-          `"${
-            order.createdAt
-              ? format(new Date(order.createdAt), "yyyy-MM-dd HH:mm:ss")
-              : order.createdAt
-          }"`,
-        ].join(",");
-      }),
-    ].join("\n");
-
-    return csvContent;
-  };
-
-  const downloadCSV = (csvContent, filename) => {
-    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
-    const link = document.createElement("a");
-    const url = URL.createObjectURL(blob);
-    link.setAttribute("href", url);
-    link.setAttribute("download", filename);
-    link.style.visibility = "hidden";
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-  };
-
-  const handleExportSelected = () => {
-    const selectedRows = Object.keys(rowSelection);
-    if (selectedRows.length === 0) {
-      toast.error("Please select orders to export");
-      return;
-    }
-
-    const selectedOrders = filterOrders.filter((order) =>
-      Object.keys(rowSelection).includes(order._id.toString())
-    );
-    const csvContent = convertToCSV(selectedOrders);
-    const filename = `selected_orders_${format(
-      new Date(),
-      "yyyy-MM-dd_HH-mm-ss"
-    )}.csv`;
-    downloadCSV(csvContent, filename);
-    setShowExportModal(false);
-    toast.success(`Exported ${selectedRows.length} selected orders`);
-  };
-
-  const handleExportAll = () => {
-    const csvContent = convertToCSV(orderData);
-    const filename = `all_orders_${format(
-      new Date(),
-      "yyyy-MM-dd_HH-mm-ss"
-    )}.csv`;
-    downloadCSV(csvContent, filename);
-    setShowExportModal(false);
-    toast.success(`Exported ${orderData.length} orders`);
-  };
-
-  const handleExportCurrentPage = () => {
-    const csvContent = convertToCSV(filterOrders);
-    const filename = `current_page_orders_${format(
-      new Date(),
-      "yyyy-MM-dd_HH-mm-ss"
-    )}.csv`;
-    downloadCSV(csvContent, filename);
-    setShowExportModal(false);
-    toast.success(`Exported ${filterOrders.length} orders from current page`);
   };
 
   const columns = useMemo(
@@ -1119,13 +998,6 @@ export default function Orders() {
                 (auth?.user?.role === "superadmin" && (
                   <div className="flex items-center gap-4">
                     <button
-                      onClick={() => setShowExportModal(true)}
-                      className="flex items-center gap-2 text-[14px] py-2 px-4 hover:border-2 hover:rounded-md hover:shadow-md hover:scale-[1.03] text-green-600 hover:text-green-800 border-b-2 border-green-600 transition-all duration-300"
-                    >
-                      <HiDownload className="text-[16px]" />
-                      Export Orders
-                    </button>
-                    <button
                       onClick={() => handleDeleteConfirmationOrder()}
                       className="text-[14px] py-2 px-4 hover:border-2 hover:rounded-md hover:shadow-md hover:scale-[1.03] text-gray-600 hover:text-gray-800 border-b-2 border-gray-600 transition-all duration-300 "
                     >
@@ -1207,92 +1079,6 @@ export default function Orders() {
                 setIsShow={setIsShow}
                 fetchOrders={fetchOrders}
               />
-            </div>
-          </div>
-        )}
-        {/* Export modal */}
-        {showExportModal && (
-          <div className="fixed top-0 left-0 p-2 sm:p-4 w-full h-full flex items-center justify-center z-[9999999] bg-gray-300/80 overflow-y-auto shidden">
-            <div className="bg-white w-full sm:w-[500px] rounded-md shadow-lg p-6 relative">
-              <div className="flex items-center justify-between mb-6">
-                <h2 className="text-xl font-semibold text-gray-800">
-                  Export Orders
-                </h2>
-                <button
-                  onClick={() => setShowExportModal(false)}
-                  className="text-gray-500 hover:text-gray-700 text-2xl"
-                >
-                  ×
-                </button>
-              </div>
-
-              <div className="space-y-4">
-                <div className="p-4 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors">
-                  <button
-                    onClick={handleExportSelected}
-                    className="w-full text-left"
-                  >
-                    <div className="flex items-center gap-3">
-                      <HiDownload className="text-blue-600 text-xl" />
-                      <div>
-                        <h3 className="font-medium text-gray-800">
-                          Export Selected Orders
-                        </h3>
-                        <p className="text-sm text-gray-600">
-                          Export {Object.keys(rowSelection).length} selected
-                          orders to CSV
-                        </p>
-                      </div>
-                    </div>
-                  </button>
-                </div>
-
-                <div className="p-4 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors">
-                  <button
-                    onClick={handleExportCurrentPage}
-                    className="w-full text-left"
-                  >
-                    <div className="flex items-center gap-3">
-                      <HiDownload className="text-green-600 text-xl" />
-                      <div>
-                        <h3 className="font-medium text-gray-800">
-                          Export Current Page
-                        </h3>
-                        <p className="text-sm text-gray-600">
-                          Export {filterOrders.length} orders from current view
-                          to CSV
-                        </p>
-                      </div>
-                    </div>
-                  </button>
-                </div>
-
-                <div className="p-4 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors">
-                  <button
-                    onClick={handleExportAll}
-                    className="w-full text-left"
-                  >
-                    <div className="flex items-center gap-3">
-                      <HiDownload className="text-red-600 text-xl" />
-                      <div>
-                        <h3 className="font-medium text-gray-800">
-                          Export All Orders
-                        </h3>
-                        <p className="text-sm text-gray-600">
-                          Export all {orderData.length} orders to CSV
-                        </p>
-                      </div>
-                    </div>
-                  </button>
-                </div>
-              </div>
-
-              <div className="mt-6 pt-4 border-t border-gray-200">
-                <p className="text-xs text-gray-500">
-                  CSV files will include order details, customer information,
-                  products, and status information.
-                </p>
-              </div>
             </div>
           </div>
         )}

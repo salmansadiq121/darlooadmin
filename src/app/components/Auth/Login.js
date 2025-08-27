@@ -1,8 +1,6 @@
 "use client";
-import { Style } from "@/app/utils/CommonStyle";
 import axios from "axios";
-import Image from "next/image";
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import toast from "react-hot-toast";
 import { MdOutlineAttachEmail } from "react-icons/md";
 import { TbPasswordUser } from "react-icons/tb";
@@ -36,7 +34,11 @@ export default function Login({ setActive }) {
     try {
       const { data } = await axios.post(
         `${process.env.NEXT_PUBLIC_SERVER_URI}/api/v1/auth/login`,
-        { email, password, rememberMe }
+        {
+          email,
+          password,
+          rememberMe,
+        }
       );
       if (data) {
         router.push("/dashboard");
@@ -60,83 +62,159 @@ export default function Login({ setActive }) {
   };
 
   return (
-    <div className="w-full min-h-screen flex items-center justify-center py-4 px-4 bg-white">
-      <div className="w-[30rem] py-4 px-2 sm:px-4 bg-gray-100 shadow-md  rounded-md">
-        <form onSubmit={handleLogin} className="">
-          <div className="flex items-center justify-center text-black flex-col gap-2 w-full">
-            {/* <Image src="/Ayboo.png" alt="Ayoob" width={70} height={70} /> */}
+    <div className="w-full min-h-screen flex items-center justify-center py-8 px-4 bg-gradient-to-br from-slate-50 via-red-50 to-red-100 relative overflow-hidden">
+      <div className="absolute inset-0 overflow-hidden">
+        <div className="absolute -top-40 -right-40 w-80 h-80 bg-red-400/10 rounded-full blur-3xl animate-pulse"></div>
+        <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-red-500/10 rounded-full blur-3xl animate-pulse delay-1000"></div>
+        <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-red-400/5 rounded-full blur-3xl animate-pulse delay-500"></div>
+      </div>
 
-            <h2 className=" text-2xl sm:text-3xl font-semibold text-center text-black">
-              Welcome to <span className="tgradient">Darloo</span>
-            </h2>
-            <div className="flex flex-col gap-4 w-full mt-4 ">
-              <div className="relative w-full">
-                <MdOutlineAttachEmail className="absolute top-[.7rem] left-2 h-5 w-5  z-10  " />
-                <input
-                  type="email"
-                  placeholder="Email"
-                  required
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  className={`${Style.input} text-black pl-8`}
-                />
+      <div className="relative w-full max-w-md">
+        <div className="absolute inset-0 bg-gradient-to-r from-red-600 to-red-700 rounded-2xl blur-xl opacity-20 animate-pulse"></div>
+        <div className="relative bg-white/80 backdrop-blur-xl border border-white/20 shadow-2xl rounded-2xl p-8 space-y-6">
+          <form onSubmit={handleLogin} className="space-y-6">
+            <div className="text-center space-y-4">
+              <div className="w-16 h-16 bg-gradient-to-br from-red-600 to-red-700 rounded-2xl flex items-center justify-center mx-auto shadow-lg">
+                <div className="w-8 h-8 bg-white rounded-lg flex items-center justify-center">
+                  <div className="w-4 h-4 bg-gradient-to-br from-red-600 to-red-700 rounded-sm"></div>
+                </div>
               </div>
 
-              <div className="relative w-full">
-                <span
-                  className="absolute top-[.5rem] right-2   z-10  cursor-pointer "
-                  onClick={() => setShow(!show)}
-                >
-                  {!show ? (
-                    <IoMdEyeOff className="h-6 w-6 text-black" />
-                  ) : (
-                    <IoEye className="h-6 w-6 text-black" />
-                  )}
-                </span>
-
-                <TbPasswordUser className="absolute top-[.7rem] left-2 h-5 w-5 z-10 " />
-
-                <input
-                  type={show ? "text" : "password"}
-                  placeholder="Password"
-                  required
-                  value={password}
-                  minLength={8}
-                  onChange={(e) => setPassword(e.target.value)}
-                  className={`${Style.input} text-black pl-8`}
-                />
-              </div>
-              <div className="flex items-center justify-between">
-                <span className="flex items-center gap-1 text-[14px] text-gray-700">
-                  <input
-                    type="checkbox"
-                    checked={rememberMe}
-                    onChange={(e) => setRememberMe(e.target.checked)}
-                    className="h-4 w-4 border rounded-sm bg-white  accent-red-600 cursor-pointer relative  "
-                  />
-                  Remember me
-                </span>
-
-                {/* <span
-                  onClick={() => setActive("resetPassword")}
-                  className="text-[14px] text-red-600 hover:text-red-700 cursor-pointer"
-                >
-                  Forgot Password
-                </span> */}
-              </div>
-              {/* Button */}
-              <div className="flex items-center justify-center w-full py-4 px-2 sm:px-[2rem]">
-                <button type="submit" className={`${Style.button1}`}>
-                  {loading ? (
-                    <BiLoaderCircle className="h-5 w-5 text-white animate-spin" />
-                  ) : (
-                    "Login"
-                  )}
-                </button>
+              <div className="space-y-2">
+                <h1 className="text-3xl font-bold bg-gradient-to-r from-gray-900 to-gray-600 bg-clip-text text-transparent">
+                  Welcome Back
+                </h1>
+                <h2 className="text-xl font-semibold text-gray-700">
+                  Sign in to{" "}
+                  <span className="bg-gradient-to-r from-red-600 to-red-700 bg-clip-text text-transparent font-bold">
+                    Darloo
+                  </span>
+                </h2>
+                <p className="text-sm text-gray-500">
+                  Access your admin dashboard
+                </p>
               </div>
             </div>
-          </div>
-        </form>
+
+            <div className="space-y-5">
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-gray-700 block">
+                  Email Address
+                </label>
+                <div className="relative group">
+                  <div className="absolute inset-0 bg-gradient-to-r from-red-600 to-red-700 rounded-xl blur opacity-0 group-hover:opacity-20 transition-opacity duration-300"></div>
+                  <div className="relative">
+                    <MdOutlineAttachEmail className="absolute top-5 left-4 h-5 w-5 text-gray-400 z-10 group-focus-within:text-red-600 transition-colors duration-200" />
+                    <input
+                      type="email"
+                      placeholder="Enter your email"
+                      required
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                      className="w-full pl-12 pr-4 py-4 bg-gray-50/50 border border-gray-200 rounded-xl text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-red-500/20 focus:border-red-500 transition-all duration-200 backdrop-blur-sm"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-gray-700 block">
+                  Password
+                </label>
+                <div className="relative group">
+                  <div className="absolute inset-0 bg-gradient-to-r from-red-600 to-red-700 rounded-xl blur opacity-0 group-hover:opacity-20 transition-opacity duration-300"></div>
+                  <div className="relative">
+                    <TbPasswordUser className="absolute top-5 left-4 h-5 w-5 text-gray-400 z-10 group-focus-within:text-red-600 transition-colors duration-200" />
+                    <input
+                      type={show ? "text" : "password"}
+                      placeholder="Enter your password"
+                      required
+                      value={password}
+                      minLength={8}
+                      onChange={(e) => setPassword(e.target.value)}
+                      className="w-full pl-12 pr-12 py-4 bg-gray-50/50 border border-gray-200 rounded-xl text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-red-500/20 focus:border-red-500 transition-all duration-200 backdrop-blur-sm"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShow(!show)}
+                      className="absolute top-5 right-4 text-gray-400 hover:text-gray-600 transition-colors duration-200 z-10"
+                    >
+                      {!show ? (
+                        <IoMdEyeOff className="h-5 w-5" />
+                      ) : (
+                        <IoEye className="h-5 w-5" />
+                      )}
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              <div className="flex items-center justify-between pt-2">
+                <label className="flex items-center space-x-3 cursor-pointer group">
+                  <div className="relative">
+                    <input
+                      type="checkbox"
+                      checked={rememberMe}
+                      onChange={(e) => setRememberMe(e.target.checked)}
+                      className="sr-only"
+                    />
+                    <div
+                      className={`w-5 h-5 rounded-md border-2 transition-all duration-200 ${
+                        rememberMe
+                          ? "bg-gradient-to-r from-red-600 to-red-700 border-transparent shadow-md"
+                          : "border-gray-300 bg-white group-hover:border-red-400 group-hover:shadow-sm"
+                      }`}
+                    >
+                      {rememberMe && (
+                        <svg
+                          className="w-3 h-3 text-white absolute top-1 left-1"
+                          fill="currentColor"
+                          viewBox="0 0 20 20"
+                        >
+                          <path
+                            fillRule="evenodd"
+                            d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
+                            clipRule="evenodd"
+                          />
+                        </svg>
+                      )}
+                    </div>
+                  </div>
+                  <span className="text-sm text-gray-600 group-hover:text-gray-800 transition-colors duration-200 select-none">
+                    Remember me
+                  </span>
+                </label>
+              </div>
+
+              <button
+                type="submit"
+                disabled={loading}
+                className="w-full relative group overflow-hidden bg-gradient-to-r from-red-600 to-red-700 text-white font-semibold py-4 px-6 rounded-xl shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 transition-all duration-200 disabled:opacity-70 disabled:cursor-not-allowed disabled:transform-none"
+              >
+                <div className="absolute inset-0 bg-gradient-to-r from-red-700 to-red-800 opacity-0 group-hover:opacity-100 transition-opacity duration-200"></div>
+                <div className="relative flex items-center justify-center space-x-2">
+                  {loading ? (
+                    <>
+                      <BiLoaderCircle className="h-5 w-5 animate-spin" />
+                      <span>Signing in...</span>
+                    </>
+                  ) : (
+                    <span>Sign In to Dashboard</span>
+                  )}
+                </div>
+              </button>
+            </div>
+
+            <div className="pt-4 border-t border-gray-100">
+              <div className="flex items-center justify-center space-x-2 text-xs text-gray-500">
+                <div className="w-3 h-3 bg-green-500 rounded-full flex items-center justify-center">
+                  <div className="w-1.5 h-1.5 bg-white rounded-full"></div>
+                </div>
+                <span>Secured with 256-bit SSL encryption</span>
+              </div>
+            </div>
+          </form>
+        </div>
       </div>
     </div>
   );
