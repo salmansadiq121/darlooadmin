@@ -269,10 +269,15 @@ export default function Users() {
               <div className=" w-[2rem] h-[2rem] relative rounded-full bg-sky-600 overflow-hidden flex items-center justify-center">
                 {avatar ? (
                   <Image
-                    src={avatar ? avatar : "/profile.png"}
-                    layout="fill"
+                    src={
+                      avatar && avatar !== "N/A" && avatar.startsWith("http")
+                        ? avatar
+                        : "/profile.png"
+                    }
                     alt={"Avatar"}
-                    className="w-full h-full"
+                    width={50}
+                    height={50}
+                    className="w-[2rem] h-[2rem] rounded-full"
                   />
                 ) : (
                   <h3 className="text-[18px] font-medium text-white uppercase">

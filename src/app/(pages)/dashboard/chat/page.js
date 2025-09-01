@@ -85,6 +85,8 @@ export default function Chat() {
 
   //---------- Fetch Chat Users--------->
   const fetchChats = async () => {
+    console.log("Auth:", auth?.user?._id);
+    if (!auth?.user?._id) return;
     if (initialChatLoad.current) {
       setChatLoad(true);
     }
@@ -461,16 +463,23 @@ export default function Chat() {
                           <Image
                             src={
                               chat?.users[1]?._id === auth.user?._id
-                                ? chat?.users[0]?.avatar || "/profile.png"
-                                : chat?.users[1]?.avatar || "/profile.png"
+                                ? chat?.users[0]?.avatar &&
+                                  chat?.users[0]?.avatar !== "N/A"
+                                  ? chat?.users[0]?.avatar
+                                  : "/profile.png"
+                                : chat?.users[1]?.avatar &&
+                                  chat?.users[1]?.avatar !== "N/A"
+                                ? chat?.users[1]?.avatar
+                                : "/profile.png"
                             }
                             alt={
                               chat?.users[1]?._id === auth.user?._id
-                                ? `${chat?.users[0]?.name}`
-                                : `${chat?.users[1]?.name}`
+                                ? `${chat?.users[0]?.name || "User"}`
+                                : `${chat?.users[1]?.name || "User"}`
                             }
-                            layout="fill"
-                            className="rounded-full"
+                            width={50}
+                            height={50}
+                            className="rounded-full w-[2.5rem] h-[2.5rem]"
                           />
 
                           <span
@@ -557,12 +566,19 @@ export default function Chat() {
                     <Image
                       src={
                         selectedChat?.users[1]?._id === auth.user?._id
-                          ? selectedChat?.users[0]?.avatar || "/profile.png"
-                          : selectedChat?.users[1]?.avatar || "/profile.png"
+                          ? selectedChat?.users[0]?.avatar &&
+                            selectedChat?.users[0]?.avatar !== "N/A"
+                            ? selectedChat?.users[0]?.avatar
+                            : "/profile.png"
+                          : selectedChat?.users[1]?.avatar &&
+                            selectedChat?.users[1]?.avatar !== "N/A"
+                          ? selectedChat?.users[1]?.avatar
+                          : "/profile.png"
                       }
-                      alt={`User`}
-                      layout="fill"
-                      className="rounded-full ring-2 ring-green-200 "
+                      alt="User"
+                      width={50}
+                      height={50}
+                      className="rounded-full ring-2 ring-green-200 w-[2.6rem] h-[2.6rem] object-cover"
                     />
                   </div>
                   <div className="flex flex-col leading-tight ml-1 ">
@@ -663,13 +679,15 @@ export default function Chat() {
                           <div className="relative w-[2.2rem] h-[2.2rem] rounded-full overflow-hidden">
                             <Image
                               src={
-                                message?.sender?.avatar
+                                message?.sender?.avatar &&
+                                message?.sender?.avatar !== "N/A"
                                   ? message?.sender?.avatar
                                   : "/profile.png"
                               }
-                              alt={`Avatar`}
-                              layout="fill"
-                              className="rounded-full"
+                              alt="Avatar"
+                              width={50}
+                              height={50}
+                              className="rounded-full w-[2.2rem] h-[2.2rem] object-cover"
                             />
                           </div>
                         </div>
@@ -693,10 +711,14 @@ export default function Chat() {
                             className="relative mt-4  w-[12rem] h-[11rem] overflow-hidden cursor-pointer rounded-lg shadow-lg"
                           >
                             <Image
-                              src={message?.content}
+                              src={
+                                message?.content && message?.content !== "N/A"
+                                  ? message?.content
+                                  : "/profile.png"
+                              }
                               alt="Sent image"
-                              layout="fill"
-                              className="rounded-lg"
+                              fill
+                              className="rounded-lg "
                             />
                           </a>
                         ) : message.contentType === "Video" ? (

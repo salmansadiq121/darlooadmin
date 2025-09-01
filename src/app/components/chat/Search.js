@@ -108,7 +108,7 @@ export default function Search({ friends, getAllChats }) {
         </div>
 
         {/* Friends list */}
-        <div className="w-full flex flex-col gap-3 mt-2">
+        <div className="w-full flex flex-col gap-3 mt-2 overflow-y-auto shidden max-h-[80vh]">
           {filterFriends.length > 0 ? (
             filterFriends.map((friend) => (
               <div
@@ -121,10 +121,14 @@ export default function Search({ friends, getAllChats }) {
               >
                 <div className="relative w-[2.5rem] h-[2.5rem] rounded-full">
                   <Image
-                    src={friend?.avatar ? friend?.avatar : "/profile.png"}
-                    alt={`${friend.name}`}
-                    layout="fill"
-                    className="w-10 h-10 rounded-full inline-block mr-2"
+                    src={
+                      friend?.avatar && friend?.avatar !== "N/A"
+                        ? friend?.avatar
+                        : "/profile.png"
+                    }
+                    alt={friend?.name || "User"}
+                    fill
+                    className="rounded-full inline-block mr-2 object-cover w-10 h-10"
                   />
                 </div>
                 <span className="text-gray-900 ">{friend.name}</span>
