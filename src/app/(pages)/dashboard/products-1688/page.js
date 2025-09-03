@@ -189,7 +189,7 @@ export default function Products() {
             ) : (
               <Plus className="w-4 h-4 mr-1" />
             )}
-            Add to DB
+            Add Product
           </Button>
         </div>
       </CardContent>
@@ -576,7 +576,7 @@ export default function Products() {
                         ) : (
                           <Plus className="w-4 h-4 mr-2" />
                         )}
-                        Add to Database
+                        Add Product
                       </Button>
                       {/* <Button
                         variant="outline"
