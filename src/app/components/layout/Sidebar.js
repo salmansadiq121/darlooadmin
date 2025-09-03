@@ -18,11 +18,14 @@ import { useAuth } from "@/app/context/authContext";
 import { FaRegQuestionCircle } from "react-icons/fa";
 import { LuContact } from "react-icons/lu";
 
+import { LuPackageSearch } from "react-icons/lu";
+
 const rolePermissions = {
   admin: [
     "dashboard",
     "users",
     "products",
+    "1688-products",
     "coupon",
     "card",
     "categories",
@@ -38,6 +41,7 @@ const rolePermissions = {
     "dashboard",
     "users",
     "products",
+    "1688-products",
     "coupon",
     "card",
     "categories",
@@ -78,8 +82,14 @@ export default function Sidebar({ hide, setHide }) {
     {
       id: "products",
       label: "Products",
-      icon: LuWarehouse,
+      icon: LuPackageSearch,
       path: "/dashboard/products",
+    },
+    {
+      id: "1688-products",
+      label: "1688 Products",
+      icon: LuWarehouse,
+      path: "/dashboard/products-1688",
     },
     {
       id: "coupon",
