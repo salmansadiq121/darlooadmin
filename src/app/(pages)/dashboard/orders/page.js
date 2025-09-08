@@ -1115,16 +1115,17 @@ export default function Orders() {
               <h1 className="text-2xl font-sans font-semibold text-black">
                 Latest Orders
               </h1>
-              {auth?.user?.role === "admin" ||
-                (auth?.user?.role === "superadmin" && (
+              <div className="flex items-center gap-4">
+                <button
+                  onClick={() => setShowExportModal(true)}
+                  className="flex items-center gap-2 text-[14px] py-2 px-4 hover:border-2 hover:rounded-md hover:shadow-md hover:scale-[1.03] text-green-600 hover:text-green-800 border-b-2 border-green-600 transition-all duration-300"
+                >
+                  <HiDownload className="text-[16px]" />
+                  Export Orders
+                </button>
+                {(auth?.user?.role === "admin" ||
+                  auth?.user?.role === "superadmin") && (
                   <div className="flex items-center gap-4">
-                    <button
-                      onClick={() => setShowExportModal(true)}
-                      className="flex items-center gap-2 text-[14px] py-2 px-4 hover:border-2 hover:rounded-md hover:shadow-md hover:scale-[1.03] text-green-600 hover:text-green-800 border-b-2 border-green-600 transition-all duration-300"
-                    >
-                      <HiDownload className="text-[16px]" />
-                      Export Orders
-                    </button>
                     <button
                       onClick={() => handleDeleteConfirmationOrder()}
                       className="text-[14px] py-2 px-4 hover:border-2 hover:rounded-md hover:shadow-md hover:scale-[1.03] text-gray-600 hover:text-gray-800 border-b-2 border-gray-600 transition-all duration-300 "
@@ -1138,7 +1139,8 @@ export default function Orders() {
                       ADD NEW ORDER
                     </button>
                   </div>
-                ))}
+                )}
+              </div>
             </div>
           </div>
           {/*  */}
