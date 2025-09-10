@@ -62,9 +62,17 @@ export default function HandleOrderModal({ setIsShow, fetchOrders }) {
       <div className="flex items-center gap-2">
         <div className="w-6 h-6 rounded-full relative overflow-hidden">
           <Image
-            src={user.avatar || "/profile.png"}
-            layout="fill"
+            src={
+              user?.avatar &&
+              user?.avatar !== "N/A" &&
+              user?.avatar.startsWith("http")
+                ? user?.avatar
+                : "/profile.png"
+            }
+            width={30}
+            height={30}
             alt={user.name}
+            className="rounded-full w-6 h-6 object-cover"
           />
         </div>
         {user.name}
@@ -77,11 +85,19 @@ export default function HandleOrderModal({ setIsShow, fetchOrders }) {
     value: product._id,
     label: (
       <div className="flex items-center gap-2">
-        <div className="w-9 h-6 rounded-md relative overflow-hidden">
+        <div className="w-12 h-9 rounded-md relative overflow-hidden">
           <Image
-            src={product.thumbnails?.[0] || "/placeholder.png"}
-            layout="fill"
+            src={
+              product.thumbnails &&
+              product.thumbnails !== "N/A" &&
+              product.thumbnails.startsWith("http")
+                ? product.thumbnails
+                : "/profile.png"
+            }
+            width={50}
+            height={40}
             alt={product.name}
+            className="rounded-md w-12 h-9 object-cover"
           />
         </div>
         <div>
@@ -251,7 +267,7 @@ export default function HandleOrderModal({ setIsShow, fetchOrders }) {
                       type="number"
                       value={product.quantity}
                       readOnly
-                      className="w-14 text-center border border-gray-300 rounded-lg shadow focus:ring-2 focus:ring-blue-500"
+                      className="w-14  h-[2.5rem] text-center border border-gray-300 rounded-lg shadow focus:ring-2 focus:ring-blue-500"
                     />
                     <button
                       type="button"
