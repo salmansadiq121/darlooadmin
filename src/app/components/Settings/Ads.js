@@ -47,6 +47,7 @@ export default function Ads({ adsData }) {
             alt="video"
             width={500}
             height={300}
+            unoptimized
             className="rounded-lg w-full h-[300px] object-fill shadow-md drop-shadow-md shadow-gray-200"
           />
         </div>

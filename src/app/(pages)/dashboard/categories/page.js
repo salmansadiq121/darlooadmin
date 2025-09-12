@@ -270,6 +270,7 @@ export default function Categories() {
                           layout="fill"
                           alt={"Avatar"}
                           className="w-full h-full"
+                          unoptimized
                         />
                       </div>
                       <h3 className="text-[16px] text-gray-800 font-medium">

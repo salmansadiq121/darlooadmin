@@ -100,6 +100,7 @@ export default function ProductModal({
                     layout="fill"
                     alt={product.category.name}
                     className="w-full h-full"
+                    unoptimized
                   />
                 </div>
                 {product.category.name}
@@ -118,6 +119,7 @@ export default function ProductModal({
                     layout="fill"
                     alt={product.subCategoryId.name}
                     className="w-full h-full"
+                    unoptimized
                   />
                 </div>
                 {product.subCategoryId.name}
@@ -337,6 +339,7 @@ export default function ProductModal({
               layout="fill"
               alt={cat.name}
               className="w-full h-full"
+              unoptimized
             />
           </div>
           {cat.name}
@@ -356,6 +359,7 @@ export default function ProductModal({
               layout="fill"
               alt={cat.name}
               className="w-full h-full"
+              unoptimized
             />
           </div>
           {cat?.name}
@@ -649,6 +653,7 @@ export default function ProductModal({
                   layout="fill"
                   objectFit="cover"
                   alt="Main product image"
+                  unoptimized
                   className="w-full h-full group-hover:scale-105 transition-transform duration-300"
                 />
                 <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors duration-200"></div>
@@ -714,6 +719,7 @@ export default function ProductModal({
                         layout="fill"
                         objectFit="cover"
                         alt={`Variation ${index + 1}`}
+                        unoptimized
                         className="w-full h-full group-hover:scale-105 transition-transform duration-300"
                       />
                       <button

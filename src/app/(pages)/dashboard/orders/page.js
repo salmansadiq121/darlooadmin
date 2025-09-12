@@ -480,6 +480,7 @@ export default function Orders() {
                         layout="fill"
                         alt={"Product Thumbnail"}
                         className="w-[3.5rem] h-[3rem]"
+                        unoptimized
                       />
                     </div>
                     <span className="text-[12px] h-[3rem] hover:text-sky-600 truncate">
@@ -513,6 +514,7 @@ export default function Orders() {
                                 layout="fill"
                                 alt={"Product Thumbnail"}
                                 className="w-[3.5rem] h-[3rem]"
+                                unoptimized
                               />
                             </div>
                             <span className="text-[12px] truncate">

@@ -328,6 +328,7 @@ export default function Notifications() {
                                   layout="fill"
                                   alt={"Avatar"}
                                   className="w-full h-full "
+                                  unoptimized
                                 />
                               </div>
                             </div>

@@ -234,6 +234,7 @@ export default function Blogs() {
                             fill
                             alt={"Avatar"}
                             className="w-full h-full "
+                            unoptimized
                           />
                         </div>
                       </div>

@@ -73,6 +73,7 @@ export default function HandleOrderModal({ setIsShow, fetchOrders }) {
             height={30}
             alt={user.name}
             className="rounded-full w-6 h-6 object-cover"
+            unoptimized
           />
         </div>
         {user.name}
@@ -98,6 +99,7 @@ export default function HandleOrderModal({ setIsShow, fetchOrders }) {
             height={40}
             alt={product.name}
             className="rounded-md w-12 h-9 object-cover"
+            unoptimized
           />
         </div>
         <div>

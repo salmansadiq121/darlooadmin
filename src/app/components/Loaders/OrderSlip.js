@@ -219,6 +219,7 @@ const OrderSlip = ({ orderDetail, generatePDF }) => {
                             layout="fill"
                             objectFit="fill"
                             alt={product?.product?.name || "Product image"}
+                            unoptimized
                           />
                         </div>
                       </div>

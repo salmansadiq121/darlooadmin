@@ -407,6 +407,7 @@ export default function SubCategoryPage() {
                                 width={60}
                                 height={60}
                                 className="rounded-lg object-cover border-2 border-red-200"
+                                unoptimized
                               />
                               <div className="flex-1">
                                 <p className="text-sm font-medium text-red-700">

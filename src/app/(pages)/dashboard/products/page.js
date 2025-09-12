@@ -416,6 +416,7 @@ export default function Products() {
                       width={70}
                       height={40}
                       className="w-[3.3rem] min-h-[2.4rem] rounded-md"
+                      unoptimized
                     />
                   </div>
                   <span className="text-[12px] capitalize truncate block ">

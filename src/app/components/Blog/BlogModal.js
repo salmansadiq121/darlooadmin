@@ -124,6 +124,7 @@ export default function BlogModal({
                       layout="fill"
                       alt={"thumbnail"}
                       className="w-full h-full"
+                      unoptimized
                     />
                   </div>
 

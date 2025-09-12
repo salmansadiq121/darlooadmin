@@ -177,6 +177,7 @@ export default function Header() {
                     layout="fill"
                     alt={"Avatar"}
                     className="w-full h-full"
+                    unoptimized
                   />
                 ) : (
                   <h3 className="text-[20px] font-medium uppercase">

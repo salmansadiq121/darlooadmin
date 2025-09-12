@@ -480,6 +480,7 @@ export default function Chat() {
                             width={50}
                             height={50}
                             className="rounded-full w-[2.5rem] h-[2.5rem]"
+                            unoptimized
                           />
 
                           <span
@@ -576,6 +577,7 @@ export default function Chat() {
                           : "/profile.png"
                       }
                       alt="User"
+                      unoptimized
                       width={50}
                       height={50}
                       className="rounded-full ring-2 ring-green-200 w-[2.6rem] h-[2.6rem] object-cover"
@@ -687,6 +689,7 @@ export default function Chat() {
                               alt="Avatar"
                               width={50}
                               height={50}
+                              unoptimized
                               className="rounded-full w-[2.2rem] h-[2.2rem] object-cover"
                             />
                           </div>

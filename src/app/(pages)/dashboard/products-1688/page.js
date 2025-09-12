@@ -246,6 +246,7 @@ export default function Products() {
             alt={product?.title}
             width={300}
             height={200}
+            unoptimized
             className="w-full h-48 object-cover group-hover:scale-105 transition-transform duration-300"
           />
           <div className="absolute top-2 right-2">
@@ -312,6 +313,7 @@ export default function Products() {
             alt={product.title}
             width={60}
             height={60}
+            unoptimized
             className="rounded-lg object-cover"
           />
           <div>
@@ -732,6 +734,7 @@ export default function Products() {
                         alt={selectedProduct.title}
                         width={400}
                         height={300}
+                        unoptimized
                         className="w-full rounded-lg object-cover"
                       />
                       <div className="grid grid-cols-4 gap-2">
@@ -744,6 +747,7 @@ export default function Products() {
                               alt={`Product ${index + 1}`}
                               width={80}
                               height={80}
+                              unoptimized
                               className="rounded-lg object-cover aspect-square"
                             />
                           ))}

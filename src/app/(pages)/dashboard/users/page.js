@@ -278,6 +278,7 @@ export default function Users() {
                     width={50}
                     height={50}
                     className="w-[2rem] h-[2rem] rounded-full"
+                    unoptimized
                   />
                 ) : (
                   <h3 className="text-[18px] font-medium text-white uppercase">

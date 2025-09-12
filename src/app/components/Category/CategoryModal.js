@@ -178,6 +178,7 @@ export default function CategoryModal({
                       layout="fill"
                       alt={"Thumnail"}
                       className="w-full h-full"
+                      unoptimized
                     />
                   </div>
 
