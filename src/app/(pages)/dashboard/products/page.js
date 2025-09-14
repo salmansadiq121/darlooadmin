@@ -416,7 +416,6 @@ export default function Products() {
                       width={70}
                       height={40}
                       className="w-[3.3rem] min-h-[2.4rem] rounded-md"
-                      unoptimized
                     />
                   </div>
                   <span className="text-[12px] capitalize truncate block ">
@@ -559,7 +558,7 @@ export default function Products() {
         },
       },
       {
-        accessorKey: "shipping",
+        accessorKey: "isPC",
         minSize: 70,
         maxSize: 140,
         size: 100,
@@ -567,16 +566,49 @@ export default function Products() {
         Header: ({ column }) => {
           return (
             <div className=" flex flex-col gap-[2px]">
-              <span className="ml-1 cursor-pointer">Shipping</span>
+              <span className="ml-1 cursor-pointer">Website</span>
             </div>
           );
         },
         Cell: ({ cell, row }) => {
-          const shipping = row.original.shipping;
+          const pc = row.original.isPC;
 
           return (
-            <div className="cursor-pointer text-[12px] flex items-center justify-start text-black w-full h-full">
-              {shipping ? "€" + shipping : "Fee"}
+            <div
+              className={`  cursor-pointer text-[12px] flex items-center  px-3 rounded-md h-[2rem] justify-center ${
+                pc ? "bg-green-100 text-green-600" : "bg-red-100 text-red-600"
+              }  w-full`}
+            >
+              {pc ? "Display" : "Hidden"}
+            </div>
+          );
+        },
+      },
+      {
+        accessorKey: "isMobile",
+        minSize: 70,
+        maxSize: 140,
+        size: 100,
+        grow: false,
+        Header: ({ column }) => {
+          return (
+            <div className=" flex flex-col gap-[2px]">
+              <span className="ml-1 cursor-pointer">Mobile</span>
+            </div>
+          );
+        },
+        Cell: ({ cell, row }) => {
+          const mobile = row.original.isMobile;
+
+          return (
+            <div
+              className={`  cursor-pointer text-[12px] flex items-center justify-center   px-3 rounded-md h-[2rem] ${
+                mobile
+                  ? "bg-green-100 text-green-600"
+                  : "bg-red-100 text-red-600"
+              }  w-full`}
+            >
+              {mobile ? "Display" : "Hidden"}
             </div>
           );
         },

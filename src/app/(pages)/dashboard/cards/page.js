@@ -180,7 +180,6 @@ export default function Cards() {
                     height={50}
                     alt="Avatar"
                     className="w-full h-full object-cover"
-                    unoptimized
                   />
                 ) : (
                   <h3 className="text-[18px] font-medium text-white uppercase">

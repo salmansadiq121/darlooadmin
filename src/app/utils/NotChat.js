@@ -23,7 +23,6 @@ export default function NotChat({ setShow, show }) {
           height={120}
           width={120}
           className="animate-pulse"
-          unoptimized
         />
         <h3
           className={`${Style.text_gradient} text-xl font-semibold text-center`}

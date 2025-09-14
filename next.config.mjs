@@ -7,8 +7,12 @@ const nextConfig = {
         protocol: "https",
         hostname: "**",
       },
+      {
+        protocol: "https",
+        hostname: "cbu01.alicdn.com",
+      },
     ],
-    // unoptimized: true,
+    unoptimized: true,
   },
   reactStrictMode: true,
 };

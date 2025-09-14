@@ -331,7 +331,6 @@ export default function OrderDetail({ params }) {
                                   layout="fill"
                                   alt={"Avatar"}
                                   className="w-full h-full "
-                                  unoptimized
                                 />
                               </div>
                             </div>
@@ -774,7 +773,6 @@ export default function OrderDetail({ params }) {
                                   height={64}
                                   alt="Comment attachment"
                                   className="object-cover w-full h-full"
-                                  unoptimized
                                 />
                               </div>
                               <button
@@ -829,7 +827,6 @@ export default function OrderDetail({ params }) {
                                     height={40}
                                     alt="Comment attachment"
                                     className="object-fill w-full h-full"
-                                    unoptimized
                                   />
                                 </div>
                                 <div className="flex-1">
@@ -862,7 +859,6 @@ export default function OrderDetail({ params }) {
                                             height={150}
                                             alt="Comment attachment"
                                             className="object-cover w-full h-full"
-                                            unoptimized
                                           />
                                         </div>
                                         <a

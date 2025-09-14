@@ -67,6 +67,8 @@ export default function ProductModal({
   const [isloading, setIsloading] = useState(false);
   const [shipping, setShipping] = useState("");
   const [isUpload, setIsUpload] = useState(false);
+  const [isMobile, setIsMobile] = useState(true);
+  const [isPC, setIsPC] = useState(true);
   // Multi-step form state
   const [currentStep, setCurrentStep] = useState(1);
   const totalSteps = 4;
@@ -100,7 +102,6 @@ export default function ProductModal({
                     layout="fill"
                     alt={product.category.name}
                     className="w-full h-full"
-                    unoptimized
                   />
                 </div>
                 {product.category.name}
@@ -119,7 +120,6 @@ export default function ProductModal({
                     layout="fill"
                     alt={product.subCategoryId.name}
                     className="w-full h-full"
-                    unoptimized
                   />
                 </div>
                 {product.subCategoryId.name}
@@ -166,6 +166,8 @@ export default function ProductModal({
             ? new Date(product.sale.saleExpiry)
             : null,
         });
+        setIsMobile(product.isMobile || false);
+        setIsPC(product.isPC || false);
         // Validate all steps after loading data
         validateAllSteps();
       }
@@ -339,7 +341,6 @@ export default function ProductModal({
               layout="fill"
               alt={cat.name}
               className="w-full h-full"
-              unoptimized
             />
           </div>
           {cat.name}
@@ -359,7 +360,6 @@ export default function ProductModal({
               layout="fill"
               alt={cat.name}
               className="w-full h-full"
-              unoptimized
             />
           </div>
           {cat?.name}
@@ -454,6 +454,8 @@ export default function ProductModal({
     productData.append("estimatedPrice", estimatedPrice);
     productData.append("tags", tags);
     productData.append("variations", JSON.stringify(variations));
+    productData.append("isMobile", isMobile);
+    productData.append("isPC", isPC);
     // Handle single thumbnail
     if (thumbnail) {
       if (thumbnail instanceof File) {
@@ -505,6 +507,15 @@ export default function ProductModal({
       setIsloading(false);
     }
   };
+
+  const isValidUrl = (url) => {
+    try {
+      return url?.startsWith("/") || new URL(url);
+    } catch {
+      return false;
+    }
+  };
+
   // Render step content based on current step
   const renderStepContent = () => {
     switch (currentStep) {
@@ -648,12 +659,13 @@ export default function ProductModal({
                   src={
                     thumbnail instanceof File
                       ? URL.createObjectURL(thumbnail)
-                      : thumbnail
+                      : isValidUrl(thumbnail)
+                      ? thumbnail
+                      : "/placeholder.png"
                   }
                   layout="fill"
                   objectFit="cover"
                   alt="Main product image"
-                  unoptimized
                   className="w-full h-full group-hover:scale-105 transition-transform duration-300"
                 />
                 <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors duration-200"></div>
@@ -719,7 +731,6 @@ export default function ProductModal({
                         layout="fill"
                         objectFit="cover"
                         alt={`Variation ${index + 1}`}
-                        unoptimized
                         className="w-full h-full group-hover:scale-105 transition-transform duration-300"
                       />
                       <button
@@ -1154,6 +1165,67 @@ export default function ProductModal({
           <p className="text-xs text-gray-500 mt-2">
             Trending products will be featured prominently on the homepage and
             in search results
+          </p>
+        </div>
+        {/* IS PC */}
+        <div className="border rounded-md p-4 bg-gradient-to-r from-gray-50 to-red-50/30 shadow-sm">
+          <div className="flex items-center justify-between">
+            <label className="flex items-center gap-2 text-sm font-medium text-gray-700">
+              <Settings size={16} className="text-customRed" />
+              <span>Display this product on PC</span>
+            </label>
+            <label className="relative inline-flex items-center cursor-pointer">
+              <input
+                type="checkbox"
+                checked={isPC}
+                onChange={(e) => {
+                  setIsPC(e.target.checked);
+                  validateStep(4);
+                }}
+                className="sr-only peer"
+              />
+              <div
+                className="w-11 h-6 bg-gray-200 rounded-full peer peer-focus:ring-4 peer-focus:ring-red-100
+                        peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full
+                        peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px]
+                        after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full
+                        after:h-5 after:w-5 after:transition-all peer-checked:bg-customRed"
+              ></div>
+            </label>
+          </div>
+          <p className="text-xs text-gray-500 mt-2">
+            Display this product on PC
+          </p>
+        </div>
+
+        {/* IS MOBILE */}
+        <div className="border rounded-md p-4 bg-gradient-to-r from-gray-50 to-red-50/30 shadow-sm">
+          <div className="flex items-center justify-between">
+            <label className="flex items-center gap-2 text-sm font-medium text-gray-700">
+              <Settings size={16} className="text-customRed" />
+              <span>Display this product on Mobile</span>
+            </label>
+            <label className="relative inline-flex items-center cursor-pointer">
+              <input
+                type="checkbox"
+                checked={isMobile}
+                onChange={(e) => {
+                  setIsMobile(e.target.checked);
+                  validateStep(4);
+                }}
+                className="sr-only peer"
+              />
+              <div
+                className="w-11 h-6 bg-gray-200 rounded-full peer peer-focus:ring-4 peer-focus:ring-red-100
+                        peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full
+                        peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px]
+                        after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full
+                        after:h-5 after:w-5 after:transition-all peer-checked:bg-customRed"
+              ></div>
+            </label>
+          </div>
+          <p className="text-xs text-gray-500 mt-2">
+            Display this product on Mobile Application
           </p>
         </div>
       </div>

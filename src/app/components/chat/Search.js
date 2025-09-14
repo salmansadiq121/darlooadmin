@@ -129,7 +129,6 @@ export default function Search({ friends, getAllChats }) {
                     alt={friend?.name || "User"}
                     fill
                     className="rounded-full inline-block mr-2 object-cover w-10 h-10"
-                    unoptimized
                   />
                 </div>
                 <span className="text-gray-900 ">{friend.name}</span>

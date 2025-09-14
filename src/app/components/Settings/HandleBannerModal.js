@@ -132,7 +132,6 @@ export default function HandleBannerModal({
                       layout="fill"
                       alt={"banner"}
                       className="w-full h-full"
-                      unoptimized
                     />
                   </div>
 

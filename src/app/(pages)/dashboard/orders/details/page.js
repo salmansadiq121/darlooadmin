@@ -95,7 +95,6 @@ export default function OrderDetail() {
                               layout="fill"
                               alt={"Avatar"}
                               className="w-full h-full "
-                              unoptimized
                             />
                           </div>
                         </div>
