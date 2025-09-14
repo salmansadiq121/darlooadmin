@@ -12,7 +12,6 @@ const nextConfig = {
         hostname: "cbu01.alicdn.com",
       },
     ],
-    unoptimized: true,
   },
   reactStrictMode: true,
 };
