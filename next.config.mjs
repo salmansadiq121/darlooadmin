@@ -18,49 +18,44 @@ const nextConfig = {
 
 export default nextConfig;
 
-// ------------------------------------------------------------------
+// // export default nextConfig;
+
 // /** @type {import('next').NextConfig} */
 // const nextConfig = {
-//   reactStrictMode: false,
 //   images: {
 //     remotePatterns: [
 //       {
 //         protocol: "https",
-//         hostname: "**",
+//         hostname: "cbu01.alicdn.com", // 1688 images
 //       },
 //       {
 //         protocol: "https",
-//         hostname: "socialface.s3.eu-north-1.amazonaws.com",
-//         pathname: "**",
+//         hostname: "s3.eu-north-1.amazonaws.com", // AWS S3
 //       },
 //       {
 //         protocol: "https",
-//         hostname: "s3.eu-north-1.amazonaws.com",
-//         pathname: "**",
+//         hostname: "your-cloudfront-domain.cloudfront.net", // CloudFront
 //       },
-//       {
-//         protocol: "https",
-//         hostname: "ayoob.ecom.s3.eu-north-1.amazonaws.com",
-//         pathname: "**",
-//       },
-//       {
+//        {
 //         protocol: "https",
 //         hostname: "cdn.shopify.com",
 //         pathname: "**",
 //       },
 //       {
 //         protocol: "https",
-//         hostname: "cbu01.alicdn.com",
-//         pathname: "/img/**",
+//         hostname: "avatars.githubusercontent.com", // GitHub avatars
 //       },
 //       {
 //         protocol: "https",
-//         hostname: "lh3.googleusercontent.com",
-//         pathname: "**",
+//         hostname: "raw.githubusercontent.com", // GitHub raw files
+//       },
+//       {
+//         protocol: "https",
+//         hostname: "user-images.githubusercontent.com", // GitHub repo assets
 //       },
 //     ],
-//     domains: ["cdn.shopify.com", "lh3.googleusercontent.com"],
 //   },
+//   reactStrictMode: true,
 // };
 
 // export default nextConfig;

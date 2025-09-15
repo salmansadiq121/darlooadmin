@@ -17,6 +17,7 @@ import { RiCoupon4Line } from "react-icons/ri";
 import { useAuth } from "@/app/context/authContext";
 import { FaRegQuestionCircle } from "react-icons/fa";
 import { LuContact } from "react-icons/lu";
+import { TbTruckReturn } from "react-icons/tb";
 
 import { LuPackageSearch } from "react-icons/lu";
 
@@ -32,6 +33,7 @@ const rolePermissions = {
     "orders",
     "chat",
     "notifications",
+    "return",
     "faq",
     "privacy",
     "settings",
@@ -46,6 +48,7 @@ const rolePermissions = {
     "card",
     "categories",
     "orders",
+    "return",
     "chat",
     "notifications",
     "faq",
@@ -114,6 +117,12 @@ export default function Sidebar({ hide, setHide }) {
       label: "Orders",
       icon: BsBoxSeam,
       path: "/dashboard/orders",
+    },
+    {
+      id: "return",
+      label: "Retrun Center",
+      icon: TbTruckReturn,
+      path: "/dashboard/return-center",
     },
     {
       id: "chat",
