@@ -7,19 +7,15 @@ const nextConfig = {
         protocol: "https",
         hostname: "**",
       },
-      {
-        protocol: "https",
-        hostname: "cbu01.alicdn.com",
-      },
     ],
+    // unoptimized: true,
   },
   reactStrictMode: true,
 };
 
 export default nextConfig;
 
-// export default nextConfig;
-
+// ------------------------------------------------------------------
 // /** @type {import('next').NextConfig} */
 // const nextConfig = {
 //   images: {

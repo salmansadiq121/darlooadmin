@@ -241,12 +241,11 @@ export default function Products() {
         onClick={() => setSelectedProduct(product)}
       >
         <div className="relative overflow-hidden rounded-t-lg">
-          <img
+          <Image
             src={product?.mainImage || "/placeholder.svg"}
             alt={product?.title}
             width={300}
             height={200}
-            unoptimized
             className="w-full h-48 object-cover group-hover:scale-105 transition-transform duration-300"
           />
           <div className="absolute top-2 right-2">
@@ -308,12 +307,11 @@ export default function Products() {
       </TableCell>
       <TableCell>
         <div className="flex items-center gap-3">
-          <img
+          <Image
             src={product.mainImage || "/placeholder.svg"}
             alt={product.title}
             width={60}
             height={60}
-            unoptimized
             className="rounded-lg object-cover"
           />
           <div>
@@ -729,7 +727,7 @@ export default function Products() {
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                   <div>
                     <div className="space-y-4">
-                      <img
+                      <Image
                         src={selectedProduct.mainImage || "/placeholder.svg"}
                         alt={selectedProduct.title}
                         width={400}
@@ -740,7 +738,7 @@ export default function Products() {
                         {selectedProduct.images
                           .slice(0, 4)
                           .map((image, index) => (
-                            <img
+                            <Image
                               key={index}
                               src={image || "/placeholder.svg"}
                               alt={`Product ${index + 1}`}

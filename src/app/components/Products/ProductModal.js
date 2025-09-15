@@ -655,7 +655,7 @@ export default function ProductModal({
           ) : (
             <div className="relative w-full max-w-xs mx-auto">
               <div className="relative aspect-square bg-gray-100 rounded-md overflow-hidden group shadow-sm hover:shadow-md transition-all duration-200">
-                <img
+                <Image
                   src={
                     thumbnail instanceof File
                       ? URL.createObjectURL(thumbnail)
@@ -726,7 +726,7 @@ export default function ProductModal({
                   >
                     {/* Image */}
                     <div className="relative w-full sm:w-24 h-24 bg-gray-100 rounded-md overflow-hidden group shadow-sm">
-                      <img
+                      <Image
                         src={variation.imageURL || "/placeholder.svg"}
                         layout="fill"
                         objectFit="cover"

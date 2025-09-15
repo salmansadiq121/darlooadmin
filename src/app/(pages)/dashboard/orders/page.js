@@ -471,7 +471,7 @@ export default function Orders() {
                 {/* First Product */}
                 {firstProduct && (
                   <div className="flex items-center gap-2">
-                    <div className="min-w-[5rem] h-[4rem] relative rounded-md overflow-hidden flex items-center justify-center">
+                    <div className="w-[5rem] h-[3rem] relative rounded-md overflow-hidden flex items-center justify-center">
                       <Image
                         src={
                           firstProduct?.product?.thumbnails ||
@@ -479,7 +479,7 @@ export default function Orders() {
                         }
                         layout="fill"
                         alt={"Product Thumbnail"}
-                        className="min-w-[5rem] h-[4rem]"
+                        className="w-[5rem] h-[4rem]"
                       />
                     </div>
                     <span className="text-[12px] h-[3rem] hover:text-sky-600 truncate">

@@ -410,7 +410,7 @@ export default function Products() {
               <div className="flex flex-col gap-2">
                 <div className="flex items-center gap-1">
                   <div className="min-w-[3.4rem] min-h-[2.4rem] relative rounded-md overflow-hidden flex items-center justify-center">
-                    <img
+                    <Image
                       src={avatar}
                       alt="Thumbnail"
                       width={70}
