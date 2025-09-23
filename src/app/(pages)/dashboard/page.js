@@ -335,7 +335,7 @@ export default function Dashboard() {
           {/* -----------3rd------------ */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <RevenueByDevice />
-            <TrafficChart />
+            <TrafficChart usersAnalytics={usersAnalytics} />
           </div>
         </div>
       </div>
