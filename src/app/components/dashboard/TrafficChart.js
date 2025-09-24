@@ -25,13 +25,13 @@ ChartJS.register(
 const TrafficChart = ({ usersAnalytics }) => {
   console.log(usersAnalytics);
 
-  const labels = usersAnalytics.map((item) => {
+  const labels = usersAnalytics?.map((item) => {
     // Format the date to show just month and day for cleaner display
     const date = new Date(item.month);
     return date.toLocaleDateString("en-US", { month: "short", day: "numeric" });
   });
 
-  const chartData = usersAnalytics.map((item) => item.count);
+  const chartData = usersAnalytics?.map((item) => item.count);
 
   const totalVisits = chartData.reduce((sum, count) => sum + count, 0);
   const averageVisits = Math.round(totalVisits / chartData.length);
