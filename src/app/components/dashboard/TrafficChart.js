@@ -33,11 +33,11 @@ const TrafficChart = ({ usersAnalytics }) => {
 
   const chartData = usersAnalytics?.map((item) => item.count);
 
-  const totalVisits = chartData.reduce((sum, count) => sum + count, 0);
+  const totalVisits = chartData?.reduce((sum, count) => sum + count, 0);
   const averageVisits = Math.round(totalVisits / chartData.length);
 
   // Calculate percentage change (comparing last vs first non-zero value)
-  const firstNonZero = chartData.find((count) => count > 0) || 0;
+  const firstNonZero = chartData?.find((count) => count > 0) || 0;
   const lastValue = chartData[chartData.length - 1];
   const percentageChange =
     firstNonZero > 0

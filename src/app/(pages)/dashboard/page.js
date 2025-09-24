@@ -58,6 +58,7 @@ export default function Dashboard() {
   const [cardLoading, setCardLoading] = useState(false);
   const [isloading, setIsLoading] = useState(false);
   const [conversionRate, setConversionRate] = useState(0);
+  const [fetching, setFetching] = useState(false);
   const router = useRouter();
 
   // Current Path
@@ -107,6 +108,7 @@ export default function Dashboard() {
 
   // -----------User Analytics---------
   const userAnalytics = async () => {
+    setFetching(true);
     try {
       const { data } = await axios.get(
         `${process.env.NEXT_PUBLIC_SERVER_URI}/api/v1/analytics/users`
@@ -118,6 +120,7 @@ export default function Dashboard() {
       console.log(error?.response?.data?.message);
     } finally {
       setIsLoading(false);
+      setFetching(false);
     }
   };
 
@@ -335,7 +338,7 @@ export default function Dashboard() {
           {/* -----------3rd------------ */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <RevenueByDevice />
-            <TrafficChart usersAnalytics={usersAnalytics} />
+            {!fetching && <TrafficChart usersAnalytics={usersAnalytics} />}
           </div>
         </div>
       </div>
