@@ -25,6 +25,7 @@ import {
   TagIcon,
 } from "lucide-react";
 import { uploadProductImage } from "@/app/utils/CommonFunction";
+import { RichTextEditor } from "@/components/ui/rich-text-editor";
 
 export default function ProductModal({
   closeModal,
@@ -43,11 +44,13 @@ export default function ProductModal({
   const [price, setPrice] = useState("");
   const [estimatedPrice, setEstimatedPrice] = useState("");
   const [thumbnail, setThumbnail] = useState("");
+  const [size_chart, setSize_chart] = useState("");
   const [variations, setVariations] = useState([
     {
       imageURL: "",
       color: "",
       title: "",
+      price: "",
     },
   ]);
 
@@ -129,7 +132,8 @@ export default function ProductModal({
         }
         setPrice(product.price || "");
         setEstimatedPrice(product.estimatedPrice || "");
-        setThumbnail(product.thumbnails || ""); // Changed from thumbnails array to single thumbnail
+        setThumbnail(product.thumbnails || "");
+        setSize_chart(product.size_chart || "");
         setVariations(product.variations || []);
         setQuantity(product.quantity || "");
         setColors(
@@ -214,7 +218,14 @@ export default function ProductModal({
     getCategories();
     // eslint-disable-next-line
   }, []);
-  // Handle Media Upload
+  // Handle Size Chart Image Upload
+  const handleSizeChartUpload = async (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      const imageURL = await uploadProductImage(file, setIsUpload);
+      setSize_chart(imageURL);
+    }
+  };
   // Handle Thumbnail Upload (single image)
   const handleThumbnailUpload = async (e) => {
     const file = e.target.files[0];
@@ -224,6 +235,7 @@ export default function ProductModal({
       validateStep(2);
     }
   };
+
   // Update Variations Image to AWS Directly
   const UploadVeriationImages = async (e) => {
     const file = e.target.files[0];
@@ -261,12 +273,24 @@ export default function ProductModal({
     validateStep(2);
   };
 
+  const handleVariationPriceChange = (index, newPrice) => {
+    setVariations((prev) => {
+      const updated = [...prev];
+      updated[index] = { ...updated[index], price: newPrice };
+      return updated;
+    });
+    validateStep(2);
+  };
+
   // Remove variation
   const removeVariation = (indexToRemove) => {
     setVariations((prev) => prev.filter((_, index) => index !== indexToRemove));
     validateStep(2);
   };
-  // Handle Media Removal
+  // Handle Size Chart Removal
+  const removeSizeChart = () => {
+    setSize_chart("");
+  };
   // Handle Thumbnail Removal
   const removeThumbnail = () => {
     if (typeof thumbnail === "string") {
@@ -456,6 +480,7 @@ export default function ProductModal({
     productData.append("variations", JSON.stringify(variations));
     productData.append("isMobile", isMobile);
     productData.append("isPC", isPC);
+    productData.append("size_chart", size_chart);
     // Handle single thumbnail
     if (thumbnail) {
       if (thumbnail instanceof File) {
@@ -597,7 +622,7 @@ export default function ProductModal({
         </div>
         {/* Description */}
         <div className="">
-          <label className="block text-sm font-medium text-gray-700 mb-1">
+          {/* <label className="block text-sm font-medium text-gray-700 mb-1">
             Description<span className="text-red-700">*</span>
           </label>
           <textarea
@@ -609,7 +634,73 @@ export default function ProductModal({
             className={`${Style.input} w-full h-[8rem] md:h-[10rem]`}
             placeholder="Enter product description"
             required
-          ></textarea>
+          ></textarea> */}
+          <RichTextEditor
+            label="Description *"
+            value={description}
+            onChange={(value) => setDescription(value || "")}
+            placeholder="Enter product description..."
+            maxLength={3000}
+          />
+        </div>
+        {/* Main Thumbnail Section - Required */}
+        <div className="border rounded-md p-4 bg-white shadow-sm">
+          <h4 className="text-sm font-medium text-gray-700 mb-3 flex items-center gap-2">
+            <ImageIcon size={16} className="text-customRed" />
+            Size Chart Image
+          </h4>
+          {!size_chart ? (
+            <div className="border-2 border-dashed border-gray-300 p-6 md:p-8 flex flex-col items-center justify-center rounded-md bg-gray-50 hover:bg-gray-100/50 transition-colors duration-200 group">
+              <label className="cursor-pointer flex flex-col items-center gap-4">
+                <div className="w-14 h-14 md:w-16 md:h-16 rounded-full bg-red-100 flex items-center justify-center text-customRed group-hover:scale-110 transition-transform duration-300">
+                  <IoCameraOutline className="text-[28px] md:text-[32px]" />
+                </div>
+                <p className="text-sm text-gray-600 text-center max-w-xs">
+                  Upload the size chart image. This will be the primary image
+                  displayed for your product description.
+                </p>
+                <span className="text-white px-5 py-2.5 text-sm font-medium rounded-md bg-customRed hover:bg-red-700 transition-all duration-300 shadow-sm hover:shadow">
+                  {isUpload ? "Uploading..." : "Upload size chart Image"}
+                </span>
+                <input
+                  type="file"
+                  accept="image/*"
+                  className="hidden"
+                  onChange={handleSizeChartUpload}
+                  disabled={isUpload}
+                />
+              </label>
+            </div>
+          ) : (
+            <div className="relative w-full max-w-xs mx-auto">
+              <div className="relative aspect-square bg-gray-100 rounded-md overflow-hidden group shadow-sm hover:shadow-md transition-all duration-200">
+                <Image
+                  src={
+                    size_chart instanceof File
+                      ? URL.createObjectURL(size_chart)
+                      : isValidUrl(size_chart)
+                      ? size_chart
+                      : "/placeholder.png"
+                  }
+                  layout="fill"
+                  objectFit="cover"
+                  alt="Main product image"
+                  className="w-full h-full group-hover:scale-105 transition-transform duration-300"
+                />
+                <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors duration-200"></div>
+                <button
+                  onClick={removeSizeChart}
+                  className="absolute top-2 right-2 bg-red-600 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity duration-200 hover:bg-red-700"
+                  aria-label="Remove main image"
+                >
+                  <IoIosClose className="text-[20px]" />
+                </button>
+              </div>
+              <p className="text-xs text-gray-500 text-center mt-2">
+                Size Chart Image
+              </p>
+            </div>
+          )}
         </div>
       </div>
     );
@@ -781,6 +872,20 @@ export default function ProductModal({
                           }
                           className={`${Style.input} w-full`}
                           placeholder="Enter title for this variation"
+                        />
+                      </div>
+                      <div className="mt-4">
+                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                          Variation Price
+                        </label>
+                        <input
+                          type="number"
+                          value={variation.price}
+                          onChange={(e) =>
+                            handleVariationPriceChange(index, e.target.value)
+                          }
+                          className={`${Style.input} w-full`}
+                          placeholder="Enter Price for this variation"
                         />
                       </div>
                     </div>

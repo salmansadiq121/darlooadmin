@@ -1,19 +1,35 @@
 /** @type {import('next').NextConfig} */
+
 const nextConfig = {
   images: {
-    domains: ["*"],
     remotePatterns: [
       {
         protocol: "https",
-        hostname: "**",
+        hostname: "*",
       },
     ],
-    // unoptimized: true,
+    unoptimized: true,
   },
-  reactStrictMode: true,
 };
 
 export default nextConfig;
+
+// /** @type {import('next').NextConfig} */
+// const nextConfig = {
+//   images: {
+//     domains: ["*"],
+//     remotePatterns: [
+//       {
+//         protocol: "https",
+//         hostname: "**",
+//       },
+//     ],
+//     unoptimized: true,
+//   },
+//   reactStrictMode: true,
+// };
+
+// export default nextConfig;
 
 // ------------------------------------------------------------------
 // /** @type {import('next').NextConfig} */
