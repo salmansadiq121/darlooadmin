@@ -54,8 +54,14 @@ export default function Ads({ adsData }) {
           <h2 className="text-xl font-semibold text-gray-800 mb-2">Video Ad</h2>
           {/* Update Status */}
           <div className="flex items-center justify-between mt-4">
-            <span className="text-sm text-gray-700 font-medium">
-              Status: {status ? "Active" : "Inactive"}
+            <span
+              className={`text-sm  font-medium ${
+                status === false
+                  ? " bg-green-100 rounded-2xl py-1 px-3 text-green-600"
+                  : "bg-red-100 rounded-2xl py-1 px-3 text-red-600"
+              } `}
+            >
+              Status: {status ? "Inactive" : "Active"}
             </span>
             <label className="relative inline-flex items-center cursor-pointer">
               <input
@@ -65,8 +71,8 @@ export default function Ads({ adsData }) {
                 className="sr-only peer"
               />
               <div
-                className="w-11 h-6 bg-gray-300 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-red-300 rounded-full peer 
-                peer-checked:bg-green-500 after:content-[''] after:absolute after:top-0.5 after:left-[2px] 
+                className="w-11 h-6 bg-green-300 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-red-300 rounded-full peer 
+                peer-checked:bg-red-500 after:content-[''] after:absolute after:top-0.5 after:left-[2px] 
                 after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 
                 after:transition-all peer-checked:after:translate-x-full peer-checked:after:border-white"
               ></div>
