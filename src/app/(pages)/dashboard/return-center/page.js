@@ -34,6 +34,7 @@ import {
   XCircleIcon,
   ClockIcon,
   RefreshCwIcon,
+  Euro,
 } from "lucide-react";
 import MainLayout from "@/app/components/layout/MainLayout";
 import Swal from "sweetalert2";
@@ -339,11 +340,13 @@ export default function ReturnCenter() {
                           {/* User Avatar */}
                           <Avatar className="h-12 w-12">
                             <AvatarImage
-                              src={returnItem.user.avatar || "/placeholder.svg"}
-                              alt={returnItem.user.name}
+                              src={
+                                returnItem?.user?.avatar || "/placeholder.svg"
+                              }
+                              alt={returnItem?.user?.name}
                             />
                             <AvatarFallback className="bg-red-100 text-red-600">
-                              {returnItem.user.name.charAt(0)}
+                              {returnItem?.user?.name?.charAt(0)}
                             </AvatarFallback>
                           </Avatar>
 
@@ -351,31 +354,32 @@ export default function ReturnCenter() {
                           <div className="flex-1 min-w-0">
                             <div className="flex items-center gap-3 mb-2">
                               <h3 className="text-lg font-semibold text-gray-900 w-full line-clamp-2">
-                                {returnItem.product.name}
+                                {returnItem?.product?.name}
                               </h3>
                               <Badge
                                 className={`${getStatusColor(
-                                  returnItem.return_status
+                                  returnItem?.return_status
                                 )} flex items-center gap-1`}
                               >
                                 {getStatusIcon(returnItem.return_status)}
-                                {returnItem.return_status}
+                                {returnItem?.return_status}
                               </Badge>
                             </div>
                             <div className="flex items-center gap-4 text-sm text-gray-500">
                               <span className="flex items-center gap-1">
                                 <UserIcon className="h-4 w-4" />
-                                {returnItem.user.name}
+                                {returnItem?.user?.name}
                               </span>
                               <span className="flex items-center gap-1">
                                 <CalendarIcon className="h-4 w-4" />
                                 {new Date(
-                                  returnItem.createdAt
+                                  returnItem?.createdAt
                                 ).toLocaleDateString()}
                               </span>
-                              <span className="font-medium text-red-600">
-                                ${returnItem.product.price} ×{" "}
-                                {returnItem.quantity}
+                              <span className="font-medium text-red-600 flex items-center gap-1">
+                                <Euro />
+                                {returnItem?.product?.price} ×{" "}
+                                {returnItem?.quantity}
                               </span>
                             </div>
                             <Button
@@ -431,7 +435,7 @@ export default function ReturnCenter() {
                                       Order ID:
                                     </span>
                                     <span className="font-mono text-sm">
-                                      {returnItem.order._id}
+                                      {returnItem?.order?._id}
                                     </span>
                                   </div>
                                   <div className="flex justify-between">
@@ -439,7 +443,7 @@ export default function ReturnCenter() {
                                       Reason:
                                     </span>
                                     <span className="font-medium">
-                                      {returnItem.reason}
+                                      {returnItem?.reason}
                                     </span>
                                   </div>
                                   <div className="flex justify-between">
@@ -447,7 +451,7 @@ export default function ReturnCenter() {
                                       Quantity:
                                     </span>
                                     <span className="font-medium">
-                                      {returnItem.quantity}
+                                      {returnItem?.quantity}
                                     </span>
                                   </div>
                                   <div className="flex justify-between">
@@ -455,31 +459,31 @@ export default function ReturnCenter() {
                                       Order Total:
                                     </span>
                                     <span className="font-medium text-red-600">
-                                      ${returnItem.order.totalAmount}
+                                      ${returnItem?.order?.totalAmount}
                                     </span>
                                   </div>
                                 </div>
                               </div>
 
-                              {returnItem.comment && (
+                              {returnItem?.comment && (
                                 <div>
                                   <h4 className="font-semibold text-gray-900 mb-2">
                                     Customer Comment
                                   </h4>
                                   <p className="text-gray-700 bg-gray-50 p-4 rounded-lg">
-                                    {returnItem.comment}
+                                    {returnItem?.comment}
                                   </p>
                                 </div>
                               )}
 
                               {/* Status-specific information */}
-                              {returnItem.return_label && (
+                              {returnItem?.return_label && (
                                 <div>
                                   <h4 className="font-semibold text-gray-900 mb-2">
                                     Return Label
                                   </h4>
                                   <p className="text-gray-700 bg-green-50 p-4 rounded-lg border border-green-200">
-                                    {returnItem.return_label}
+                                    {returnItem?.return_label}
                                   </p>
                                 </div>
                               )}
@@ -490,18 +494,18 @@ export default function ReturnCenter() {
                                     Return Instructions
                                   </h4>
                                   <p className="text-gray-700 bg-green-50 p-4 rounded-lg border border-green-200">
-                                    {returnItem.return_instructions}
+                                    {returnItem?.return_instructions}
                                   </p>
                                 </div>
                               )}
 
-                              {returnItem.reject_reason && (
+                              {returnItem?.reject_reason && (
                                 <div>
                                   <h4 className="font-semibold text-gray-900 mb-2">
                                     Rejection Reason
                                   </h4>
                                   <p className="text-gray-700 bg-red-50 p-4 rounded-lg border border-red-200">
-                                    {returnItem.reject_reason}
+                                    {returnItem?.reject_reason}
                                   </p>
                                 </div>
                               )}
@@ -517,38 +521,41 @@ export default function ReturnCenter() {
                                 <div className="bg-gray-50 p-4 rounded-lg">
                                   <img
                                     src={
-                                      returnItem.product.thumbnails ||
+                                      returnItem.product?.thumbnails ||
                                       "/placeholder.svg"
                                     }
-                                    alt={returnItem.product.name}
+                                    alt={returnItem?.product?.name}
                                     className="w-full h-48 object-cover rounded-lg mb-3"
                                   />
                                   <p className="font-medium text-gray-900">
-                                    {returnItem.product.name}
+                                    {returnItem?.product?.name}
                                   </p>
                                   <p className="text-red-600 font-semibold">
-                                    ${returnItem.product.price}
+                                    ${returnItem?.product?.price}
                                   </p>
                                 </div>
                               </div>
 
                               {/* Return Images */}
-                              {returnItem.images &&
-                                returnItem.images.length > 0 && (
+                              {returnItem?.images &&
+                                returnItem?.images?.length > 0 && (
                                   <div>
                                     <h4 className="font-semibold text-gray-900 mb-2 flex items-center gap-2">
                                       <ImageIcon className="h-4 w-4" />
-                                      Return Images ({returnItem.images.length})
+                                      Return Images (
+                                      {returnItem?.images?.length})
                                     </h4>
                                     <div className="grid grid-cols-2 gap-2">
-                                      {returnItem.images.map((image, index) => (
-                                        <img
-                                          key={index}
-                                          src={image || "/placeholder.svg"}
-                                          alt={`Return image ${index + 1}`}
-                                          className="w-full h-24 object-cover rounded-lg border border-gray-200"
-                                        />
-                                      ))}
+                                      {returnItem?.images?.map(
+                                        (image, index) => (
+                                          <img
+                                            key={index}
+                                            src={image || "/placeholder.svg"}
+                                            alt={`Return image ${index + 1}`}
+                                            className="w-full h-24 object-cover rounded-lg border border-gray-200"
+                                          />
+                                        )
+                                      )}
                                     </div>
                                   </div>
                                 )}
@@ -566,18 +573,18 @@ export default function ReturnCenter() {
                                           returnItem.user.avatar ||
                                           "/placeholder.svg"
                                         }
-                                        alt={returnItem.user.name}
+                                        alt={returnItem?.user?.name}
                                       />
                                       <AvatarFallback className="bg-red-100 text-red-600 text-xs">
-                                        {returnItem.user.name.charAt(0)}
+                                        {returnItem?.user?.name?.charAt(0)}
                                       </AvatarFallback>
                                     </Avatar>
                                     <div>
                                       <p className="font-medium text-gray-900">
-                                        {returnItem.user.name}
+                                        {returnItem?.user?.name}
                                       </p>
                                       <p className="text-sm text-gray-600">
-                                        {returnItem.user.email}
+                                        {returnItem?.user?.email}
                                       </p>
                                     </div>
                                   </div>
