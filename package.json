@@ -50,7 +50,7 @@
     "jspdf": "^2.5.2",
     "lucide-react": "^0.468.0",
     "material-react-table": "^3.1.0",
-    "next": "^15.0.3",
+    "next": "^15.5.4",
     "punycode": "^2.3.1",
     "react": "^19.0.0",
     "react-chartjs-2": "^5.2.0",

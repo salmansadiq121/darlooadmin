@@ -1,56 +1,39 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  webpack(config) {
+    config.module.rules.push({
+      test: /\.svg$/,
+      use: ["@svgr/webpack"],
+    });
+    return config;
+  },
   images: {
-    domains: ["*"],
+    unoptimized: true,
     remotePatterns: [
       {
         protocol: "https",
-        hostname: "**",
-      },
-      {
-        protocol: "https",
-        hostname: "cbu01.alicdn.com",
-        pathname: "/**",
-      },
-      {
-        protocol: "https",
-        hostname: "*.alicdn.com",
-        pathname: "/**",
-      },
-      {
-        protocol: "https",
-        hostname: "lh3.googleusercontent.com",
-        pathname: "/**",
-      },
-      {
-        protocol: "https",
-        hostname: "avatars.githubusercontent.com",
-        pathname: "/**",
-      },
-      {
-        protocol: "https",
-        hostname: "s3.eu-north-1.amazonaws.com",
+        hostname: "darloo.com",
+        port: "",
         pathname: "/**",
       },
       {
         protocol: "https",
         hostname: "secure.gravatar.com",
-        pathname: "/**",
       },
       {
         protocol: "https",
         hostname: "flagcdn.com",
-        pathname: "/**",
-      },
-      {
-        protocol: "https",
-        hostname: "cdn.shopify.com",
-        pathname: "**",
       },
     ],
-    // unoptimized: false,
   },
-  reactStrictMode: false,
+
+  webpack: (config, context) => {
+    config.externals.push({
+      "thread-stream": "commonjs thread-stream",
+    });
+    return config;
+  },
+  staticPageGenerationTimeout: 280,
 };
 
 export default nextConfig;

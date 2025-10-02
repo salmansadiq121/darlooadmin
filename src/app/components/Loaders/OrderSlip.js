@@ -238,11 +238,13 @@ const OrderSlip = ({ orderDetail, generatePDF }) => {
                                 <span className="inline-flex items-center">
                                   <span className="mr-1">Color:</span>
                                   <span
-                                    className="inline-block w-3 h-3 rounded-full border border-gray-300"
+                                    className="inline-block   border border-gray-300"
                                     style={{
                                       backgroundColor: product.colors[0],
                                     }}
-                                  ></span>
+                                  >
+                                    {product.colors[0]}
+                                  </span>
                                 </span>
                               )}
                             </div>

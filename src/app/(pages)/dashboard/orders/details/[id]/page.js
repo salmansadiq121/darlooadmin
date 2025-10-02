@@ -376,12 +376,7 @@ export default function OrderDetail({ params }) {
                                   </summary>
                                   <div className="flex items-center flex-row gap-2 pl-4 group-open:block">
                                     {product.colors.map((color, index) => (
-                                      <div
-                                        key={index}
-                                        className="w-4 h-4 rounded-full border mt-1 border-gray-300"
-                                        style={{ backgroundColor: color }}
-                                        title={color}
-                                      ></div>
+                                      <span key={index}>{color}</span>
                                     ))}
                                   </div>
                                 </details>
