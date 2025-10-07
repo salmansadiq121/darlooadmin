@@ -159,6 +159,7 @@ export default function Orders() {
       const lowercasedSearch = search.toLowerCase();
       filtered = filtered.filter((order) => {
         const {
+          _id,
           products = [],
           shippingFee = "",
           totalAmount = "",
@@ -174,6 +175,7 @@ export default function Orders() {
           .toLowerCase();
 
         return (
+          _id.toLowerCase().includes(lowercasedSearch) ||
           productNames.includes(lowercasedSearch) ||
           shippingFee.toString().toLowerCase().includes(lowercasedSearch) ||
           totalAmount.toString().toLowerCase().includes(lowercasedSearch) ||

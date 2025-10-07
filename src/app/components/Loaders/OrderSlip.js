@@ -65,7 +65,7 @@ const OrderSlip = ({ orderDetail, generatePDF }) => {
                   Order ID
                 </div>
                 <div className="font-mono text-sm font-medium">
-                  #{orderDetail?._id?.slice(-8)}
+                  #{orderDetail?._id}
                 </div>
               </div>
               <div>

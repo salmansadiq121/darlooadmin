@@ -129,7 +129,6 @@ export default function Settings() {
       const { data } = await axios.get(
         `${process.env.NEXT_PUBLIC_SERVER_URI}/api/v1/shipping/getAll`
       );
-      console.log("Shipping Data:", data);
       if (data) {
         setShippingData(data?.shippings);
       }
