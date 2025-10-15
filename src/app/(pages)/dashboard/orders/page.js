@@ -329,7 +329,11 @@ export default function Orders() {
       "Customer Name",
       "Customer Email",
       "Customer Phone",
-      "Products",
+      "Product Name",
+      "Quantity",
+      "Price",
+      "color",
+      "size",
       "Total Amount",
       "Payment Method",
       "Payment Status",
@@ -341,47 +345,117 @@ export default function Orders() {
       "Order Date",
     ];
 
-    const csvContent = [
-      headers.join(","),
-      ...data.map((order) => {
-        const products =
-          order.products
-            ?.map(
-              (p) =>
-                `${p.product?.name || "N/A"} (Qty: ${p.quantity}, Price: $${
-                  p.price
-                })`
-            )
-            .join("; ") || "No products";
+    const rows = [];
 
-        const shippingAddress = order.shippingAddress
-          ? `${order.shippingAddress.address}, ${order.shippingAddress.city}, ${order.shippingAddress.state} ${order.shippingAddress.postalCode}, ${order.shippingAddress.country}`
-          : "N/A";
+    data.forEach((order) => {
+      const base = [
+        `"${order._id || ""}"`,
+        `"${order.user?.name || "N/A"}"`,
+        `"${order.user?.email || "N/A"}"`,
+        `"${order.user?.number || "N/A"}"`,
+      ];
 
-        return [
-          `"${order._id || ""}"`,
-          `"${order.user?.name || "N/A"}"`,
-          `"${order.user?.email || "N/A"}"`,
-          `"${order.user?.number || "N/A"}"`,
-          `"${products}"`,
-          `"$${order.totalAmount || "0"}"`,
-          `"${order.paymentMethod || "N/A"}"`,
-          `"${order.paymentStatus || "N/A"}"`,
-          `"${order.orderStatus || "N/A"}"`,
-          `"$${order.shippingFee || "0"}"`,
-          `"${shippingAddress}"`,
-          `"${order.trackingId || "N/A"}"`,
-          `"${order.shippingCarrier || "N/A"}"`,
-          `"${
-            order.createdAt
-              ? format(new Date(order.createdAt), "yyyy-MM-dd HH:mm:ss")
-              : order.createdAt
-          }"`,
-        ].join(",");
-      }),
-    ].join("\n");
+      const shippingAddress = order.shippingAddress
+        ? `"${order.shippingAddress.address}, ${order.shippingAddress.city}, ${order.shippingAddress.state} ${order.shippingAddress.postalCode}, ${order.shippingAddress.country}"`
+        : `"N/A"`;
 
-    return csvContent;
+      const dateFormatted = order.createdAt
+        ? `"${format(new Date(order.createdAt), "yyyy-MM-dd HH:mm:ss")}"`
+        : `"N/A"`;
+
+      // 🔹 CASE 1: Proper array of product objects
+      if (Array.isArray(order.products) && order.products.length > 0) {
+        order.products.forEach((p) => {
+          rows.push(
+            [
+              ...base,
+              `"${p.product?.name || "N/A"}"`,
+              `"${p.quantity || 0}"`,
+              `"${p.price || 0}"`,
+              `"${p.colors?.join(",") || "N/A"}"`,
+              `"${p.sizes?.join(",") || "N/A"}"`,
+              `"$${order.totalAmount || "0"}"`,
+              `"${order.paymentMethod || "N/A"}"`,
+              `"${order.paymentStatus || "N/A"}"`,
+              `"${order.orderStatus || "N/A"}"`,
+              `"$${order.shippingFee || "0"}"`,
+              shippingAddress,
+              `"${order.trackingId || "N/A"}"`,
+              `"${order.shippingCarrier || "N/A"}"`,
+              dateFormatted,
+            ].join(",")
+          );
+        });
+      }
+
+      // 🔹 CASE 2: Combined product string like “A (Qty: 1, Price: $20); B (Qty: 1, Price: $25)”
+      else if (
+        typeof order.products === "string" &&
+        order.products.includes(";")
+      ) {
+        const items = order.products
+          .split(";")
+          .map((p) => p.trim())
+          .filter(Boolean);
+
+        items.forEach((item) => {
+          // Extract name, quantity, and price
+          const match = item.match(
+            /^(.*?) \(Qty:\s*(\d+), Price:\s*\$?([\d.]+)\)$/
+          );
+          const name = match ? match[1].trim() : item;
+          const qty = match ? match[2] : "1";
+          const price = match ? match[3] : "0";
+          const color = p.colors?.join(",") || "N/A";
+          const size = p.sizes?.join(",") || "N/A";
+
+          rows.push(
+            [
+              ...base,
+              `"${name}"`,
+              `"${qty}"`,
+              `"${price}"`,
+              `"${color}"`,
+              `"${size}"`,
+              `"$${order.totalAmount || "0"}"`,
+              `"${order.paymentMethod || "N/A"}"`,
+              `"${order.paymentStatus || "N/A"}"`,
+              `"${order.orderStatus || "N/A"}"`,
+              `"$${order.shippingFee || "0"}"`,
+              shippingAddress,
+              `"${order.trackingId || "N/A"}"`,
+              `"${order.shippingCarrier || "N/A"}"`,
+              dateFormatted,
+            ].join(",")
+          );
+        });
+      }
+
+      // 🔹 CASE 3: No products at all
+      else {
+        rows.push(
+          [
+            ...base,
+            `"No products"`,
+            `"0"`,
+            `"0"`,
+            `"${"N/A"}"`,
+            `"${"N/A"}"`,
+            `"$${order.totalAmount || "0"}"`,
+            `"${order.paymentMethod || "N/A"}"`,
+            `"${order.paymentStatus || "N/A"}"`,
+            `"${order.orderStatus || "N/A"}"`,
+            `"$${order.shippingFee || "0"}"`,
+            shippingAddress,
+            `"${order.trackingId || "N/A"}"`,
+            `"${order.shippingCarrier || "N/A"}"`,
+            dateFormatted,
+          ].join(",")
+        );
+      }
+    });
+
+    return [headers.join(","), ...rows].join("\n");
   };
 
   const downloadCSV = (csvContent, filename) => {

@@ -23,6 +23,7 @@ import { HiDownload } from "react-icons/hi";
 import { ImSpinner9 } from "react-icons/im";
 import { Style } from "@/app/utils/CommonStyle";
 import { uploadImage } from "@/app/utils/CommonFunction";
+import OrderTimeline from "@/app/components/order/Timeline";
 const MainLayout = dynamic(
   () => import("./../../../../../components/layout/MainLayout"),
   {
@@ -83,9 +84,7 @@ export default function OrderDetail({ params }) {
   const [image, setImage] = useState("");
   const [uploading, setUploading] = useState(false);
 
-  console.log("image:", image);
-
-  console.log("orderDetail:", orderDetail);
+  // console.log("orderDetail:", orderDetail);
 
   //   Get Page URL
   useEffect(() => {
@@ -401,7 +400,7 @@ export default function OrderDetail({ params }) {
                             Discount Coupon
                           </strong>
                           <span className="text-[13px] text-gray-600 font-normal">
-                            29%
+                            0%
                           </span>
                         </div>
                         {/*  */}
@@ -654,7 +653,7 @@ export default function OrderDetail({ params }) {
                         Order Status History
                       </h3>
                       <div className="flex flex-col gap-3">
-                        {statusMapping.map(
+                        {/* {statusMapping.map(
                           ({ status, icon: Icon, color, label }, index) => {
                             const isActive =
                               orderDetail?.orderStatus === status;
@@ -699,8 +698,13 @@ export default function OrderDetail({ params }) {
                               </div>
                             );
                           }
-                        )}
+                        )} */}
+                        <OrderTimeline timeline={orderDetail?.timeline || []} />
                       </div>
+                      {/* <OrderTimeline
+                        timeline={orderDetail?.timeline || []}
+                        currentStatus={orderDetail?.orderStatus}
+                      /> */}
                     </div>
                   </div>
                   {/* Comment Section */}
