@@ -10,7 +10,7 @@ import {
   MaterialReactTable,
   useMaterialReactTable,
 } from "material-react-table";
-import { format } from "date-fns";
+import { format, set } from "date-fns";
 import Image from "next/image";
 import { MdModeEditOutline } from "react-icons/md";
 import { MdDelete } from "react-icons/md";
@@ -53,6 +53,7 @@ export default function Users() {
   const closeModal = useRef(null);
   const [userId, setUserId] = useState("");
   const isInitialRender = useRef(true);
+  const [role, setRole] = useState("user");
 
   const fetchUsers = async () => {
     if (isInitialRender.current) {
@@ -60,7 +61,7 @@ export default function Users() {
     }
     try {
       const { data } = await axios.get(
-        `${process.env.NEXT_PUBLIC_SERVER_URI}/api/v1/auth/allUsers`
+        `${process.env.NEXT_PUBLIC_SERVER_URI}/api/v1/auth/allUsers?role=${role}`
       );
       if (data) {
         setUserData(data.users);
@@ -78,7 +79,7 @@ export default function Users() {
   useEffect(() => {
     fetchUsers();
     // eslint-disable-next-line
-  }, []);
+  }, [role]);
 
   useEffect(() => {
     setFilterUsers(userData);
@@ -928,11 +929,11 @@ export default function Users() {
       <div className="relative p-1 sm:p-2 h-[100%] w-full pb-4 flex flex-col ">
         <div className="flex flex-col pb-2 ">
           <Breadcrumb path={currentUrl} />
-          <div className="flex flex-col gap-5 mt-4">
+          <div className="flex flex-col gap-5 mt-4 ">
             {/* Tabs */}
-            <div className="w-full px-4 rounded-md bg-white flex items-center gap-4">
+            <div className="w-full px-4 rounded-md bg-white flex items-center gap-4 overflow-x-auto shidden">
               <button
-                className={`border-b-[3px] py-3 text-[14px] px-2 font-medium cursor-pointer ${
+                className={`border-b-[3px] py-3 text-[14px] px-2 font-medium cursor-pointer min-w-fit ${
                   activeTab === "All"
                     ? " border-red-600 text-red-600"
                     : "text-gray-700 hover:text-gray-800 border-white"
@@ -942,7 +943,7 @@ export default function Users() {
                 All ({userData.length})
               </button>
               <button
-                className={`border-b-[3px] py-3 text-[14px] px-2 font-medium cursor-pointer ${
+                className={`border-b-[3px] py-3 text-[14px] px-2 font-medium cursor-pointer min-w-fit ${
                   activeTab === "Active"
                     ? "border-b-[3px] border-red-600 text-red-600"
                     : "text-gray-700 hover:text-gray-800 border-white"
@@ -952,7 +953,7 @@ export default function Users() {
                 Active ({activeUsers})
               </button>
               <button
-                className={` border-b-[3px] py-3 text-[14px] px-2 font-medium cursor-pointer ${
+                className={` border-b-[3px] py-3 text-[14px] px-2 font-medium cursor-pointer min-w-fit ${
                   activeTab === "Blocked"
                     ? "border-b-[3px] border-red-600 text-red-600"
                     : "text-gray-700 hover:text-gray-800 border-white"
@@ -960,6 +961,56 @@ export default function Users() {
                 onClick={() => handleTabClick("Blocked")}
               >
                 Blocked ({blockUsers})
+              </button>
+              <button
+                className={` border-b-[3px] py-3 text-[14px] px-2 font-medium cursor-pointer ${
+                  role === "user"
+                    ? "border-b-[3px] border-red-600 text-red-600"
+                    : "text-gray-700 hover:text-gray-800 border-white"
+                }`}
+                onClick={() => setRole("user")}
+              >
+                Customer
+              </button>
+              <button
+                className={` border-b-[3px] py-3 text-[14px] px-2 font-medium cursor-pointer ${
+                  role === "admin"
+                    ? "border-b-[3px] border-red-600 text-red-600"
+                    : "text-gray-700 hover:text-gray-800 border-white"
+                }`}
+                onClick={() => setRole("admin")}
+              >
+                Admin
+              </button>
+              <button
+                className={` border-b-[3px] py-3 text-[14px] px-2 font-medium cursor-pointer ${
+                  role === "agent"
+                    ? "border-b-[3px] border-red-600 text-red-600"
+                    : "text-gray-700 hover:text-gray-800 border-white"
+                }`}
+                onClick={() => setRole("agent")}
+              >
+                Agent
+              </button>
+              <button
+                className={` border-b-[3px] py-3 text-[14px] px-2 font-medium cursor-pointer min-w-fit ${
+                  role === "superadmin"
+                    ? "border-b-[3px] border-red-600 text-red-600"
+                    : "text-gray-700 hover:text-gray-800 border-white"
+                }`}
+                onClick={() => setRole("superadmin")}
+              >
+                Super Admin
+              </button>
+              <button
+                className={` border-b-[3px] py-3 text-[14px] px-2 font-medium cursor-pointer ${
+                  role === "123"
+                    ? "border-b-[3px] border-red-600 text-red-600"
+                    : "text-gray-700 hover:text-gray-800 border-white"
+                }`}
+                onClick={() => setRole("")}
+              >
+                Clear
               </button>
             </div>
             {/* Actions */}

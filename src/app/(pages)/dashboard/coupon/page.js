@@ -364,6 +364,34 @@ export default function Coupon() {
           );
         },
       },
+      // Is Public
+      {
+        accessorKey: "isPublic",
+        minSize: 70,
+        maxSize: 140,
+        size: 100,
+        grow: false,
+        Header: ({ column }) => {
+          return (
+            <div className=" flex flex-col gap-[2px]">
+              <span className="ml-1 cursor-pointer">Public</span>
+            </div>
+          );
+        },
+        Cell: ({ cell, row }) => {
+          const isPublic = row?.original?.isPublic || false;
+
+          return (
+            <div
+              className={`text-[13px] flex items-start  w-full ${
+                isPublic ? "text-green-600" : "text-red-600"
+              }`}
+            >
+              {isPublic ? "Public" : "Private"}
+            </div>
+          );
+        },
+      },
       //   startDate
       {
         accessorKey: "startDate",

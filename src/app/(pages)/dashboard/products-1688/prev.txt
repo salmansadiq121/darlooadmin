@@ -50,7 +50,6 @@ import Image from "next/image";
 import axios from "axios";
 import MainLayout from "@/app/components/layout/MainLayout";
 import toast from "react-hot-toast";
-import Link from "next/link";
 
 export default function Products() {
   const [products, setProducts] = useState([]);
@@ -85,12 +84,12 @@ export default function Products() {
     try {
       const searchParam = debouncedSearch || category;
       const { data } = await axios.get(
-        `${process.env.NEXT_PUBLIC_SERVER_URI}/api/v1/products/1688/new/products?page=${page}&perPage=${perPage}&keyword=${debouncedSearch}`
+        `${process.env.NEXT_PUBLIC_SERVER_URI}/api/v1/products/1688/products?page=${page}&perPage=${perPage}&q=${debouncedSearch}`
       );
 
       if (data) {
         setProducts(data.products);
-        setTotalCount(data.total);
+        setTotalCount(data.totalCount);
       }
     } catch (error) {
       console.error("Error fetching products:", error);
@@ -114,7 +113,7 @@ export default function Products() {
     setLoading(true);
     try {
       const { data } = await axios.get(
-        `${process.env.NEXT_PUBLIC_SERVER_URI}/api/v1/products/1688/product/detail/${product.id}`
+        `${process.env.NEXT_PUBLIC_SERVER_URI}/api/v1/products/1688/product/${product.id}`
       );
       if (data) {
         toast.success("Product added successfully!");
@@ -227,7 +226,7 @@ export default function Products() {
   };
 
   const ProductCard = ({ product }) => (
-    <Card className="group hover:shadow-lg relative transition-all duration-300 border-red-100 hover:border-red-300">
+    <Card className="group hover:shadow-lg ga transition-all duration-300 border-red-100 hover:border-red-300">
       <div className="absolute top-2 left-2 z-[999]">
         <Checkbox
           checked={selectedProductsIds.includes(product.id)}
@@ -243,7 +242,7 @@ export default function Products() {
       >
         <div className="relative overflow-hidden rounded-t-lg">
           <Image
-            src={product?.image || "/placeholder.svg"}
+            src={product?.mainImage || "/placeholder.svg"}
             alt={product?.title}
             width={300}
             height={200}
@@ -251,7 +250,7 @@ export default function Products() {
           />
           <div className="absolute top-2 right-2">
             <Badge variant="secondary" className="bg-red-600 text-white">
-              ${product?.price}
+              {product?.prices?.currency} {product?.prices?.promo}
             </Badge>
           </div>
         </div>
@@ -263,11 +262,11 @@ export default function Products() {
         <div className="flex items-center justify-between mb-3">
           <div className="flex items-center gap-2">
             <span className="text-lg font-bold text-red-600">
-              ${product.prices}
+              ${product.prices.original}
             </span>
-            {product.price > product.price && (
+            {product.prices.original > product.prices.promo && (
               <span className="text-sm text-muted-foreground line-through">
-                ${product.prices}
+                ${product.prices.original}
               </span>
             )}
           </div>
@@ -309,7 +308,7 @@ export default function Products() {
       <TableCell>
         <div className="flex items-center gap-3">
           <Image
-            src={product.image || "/placeholder.svg"}
+            src={product.mainImage || "/placeholder.svg"}
             alt={product.title}
             width={60}
             height={60}
@@ -326,23 +325,34 @@ export default function Products() {
       </TableCell>
       <TableCell>
         <div className="flex items-center gap-2">
-          <span className="font-bold text-red-600">${product.price}</span>
+          <span className="font-bold text-red-600">
+            ${product.prices.promo}
+          </span>
+          {product.prices.original > product.prices.promo && (
+            <span className="text-sm text-muted-foreground line-through">
+              ${product.prices.original}
+            </span>
+          )}
+        </div>
+      </TableCell>
+      <TableCell>
+        <div className="flex items-center gap-1">
+          <ImageIcon className="w-4 h-4 text-muted-foreground" />
+          <span className="text-sm">{product.images.length}</span>
         </div>
       </TableCell>
       <TableCell>
         <div className="flex gap-2">
           <Dialog>
             <DialogTrigger asChild>
-              <Link href={product.url} target="_blank">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="border-red-600 text-red-600 hover:bg-red-50 bg-transparent"
-                  // onClick={() => setSelectedProduct(product)}
-                >
-                  <Eye className="w-4 h-4" />
-                </Button>
-              </Link>
+              <Button
+                variant="outline"
+                size="sm"
+                className="border-red-600 text-red-600 hover:bg-red-50 bg-transparent"
+                onClick={() => setSelectedProduct(product)}
+              >
+                <Eye className="w-4 h-4" />
+              </Button>
             </DialogTrigger>
           </Dialog>
           <Button
@@ -532,6 +542,7 @@ export default function Products() {
                         <TableHead>Product</TableHead>
                         <TableHead>Category</TableHead>
                         <TableHead>Price</TableHead>
+                        <TableHead>Images</TableHead>
                         <TableHead>Actions</TableHead>
                       </TableRow>
                     </TableHeader>
@@ -709,7 +720,7 @@ export default function Products() {
               <DialogContent className="max-w-5xl max-h-[95vh] overflow-y-auto">
                 <DialogHeader>
                   <DialogTitle className="text-xl font-bold text-balance">
-                    {selectedProduct?.title}
+                    {selectedProduct.title}
                   </DialogTitle>
                 </DialogHeader>
 
@@ -717,14 +728,14 @@ export default function Products() {
                   <div>
                     <div className="space-y-4">
                       <Image
-                        src={selectedProduct?.image || "/placeholder.svg"}
-                        alt={selectedProduct?.title}
+                        src={selectedProduct.mainImage || "/placeholder.svg"}
+                        alt={selectedProduct.title}
                         width={400}
                         height={300}
                         className="w-full rounded-lg object-cover"
                       />
-                      {/* <div className="grid grid-cols-4 gap-2">
-                        {selectedProduct?.images
+                      <div className="grid grid-cols-4 gap-2">
+                        {selectedProduct.images
                           .slice(0, 4)
                           .map((image, index) => (
                             <Image
@@ -736,7 +747,7 @@ export default function Products() {
                               className="rounded-lg object-cover aspect-square"
                             />
                           ))}
-                      </div> */}
+                      </div>
                     </div>
                   </div>
 
