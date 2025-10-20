@@ -762,6 +762,7 @@ export default function ProductModal({
                 <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors duration-200"></div>
                 <button
                   onClick={removeThumbnail}
+                  type="button"
                   className="absolute top-2 right-2 bg-red-600 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity duration-200 hover:bg-red-700"
                   aria-label="Remove main image"
                 >

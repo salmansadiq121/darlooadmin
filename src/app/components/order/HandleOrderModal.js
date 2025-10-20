@@ -1,11 +1,12 @@
 "use client";
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { CgClose } from "react-icons/cg";
 import Select from "react-select";
 import axios from "axios";
 import Image from "next/image";
 import toast from "react-hot-toast";
-import { FaSpinner } from "react-icons/fa";
+import { FaSpinner, FaTrash } from "react-icons/fa";
+import { MdAdd } from "react-icons/md";
 
 export default function HandleOrderModal({ setIsShow, fetchOrders }) {
   const [productsData, setProductsData] = useState([]);
@@ -26,6 +27,9 @@ export default function HandleOrderModal({ setIsShow, fetchOrders }) {
   });
   const [loading, setLoading] = useState(false);
 
+  console.log("Products Data:", productsData);
+  console.log("Order Detail:", orderDetail);
+
   // Fetch All Products
   const fetchProducts = async () => {
     try {
@@ -35,6 +39,7 @@ export default function HandleOrderModal({ setIsShow, fetchOrders }) {
       setProductsData(data.products || []);
     } catch (error) {
       console.log(error);
+      toast.error("Failed to fetch products");
     }
   };
 
@@ -47,6 +52,7 @@ export default function HandleOrderModal({ setIsShow, fetchOrders }) {
       setUsersData(data.users || []);
     } catch (error) {
       console.log(error);
+      toast.error("Failed to fetch users");
     }
   };
 
@@ -75,7 +81,7 @@ export default function HandleOrderModal({ setIsShow, fetchOrders }) {
             className="rounded-full w-6 h-6 object-cover"
           />
         </div>
-        {user.name}
+        <span className="font-medium">{user.name}</span>
       </div>
     ),
   }));
@@ -84,15 +90,15 @@ export default function HandleOrderModal({ setIsShow, fetchOrders }) {
   const productOptions = productsData.map((product) => ({
     value: product._id,
     label: (
-      <div className="flex items-center gap-2">
-        <div className="w-12 h-9 rounded-md relative overflow-hidden">
+      <div className="flex items-center gap-3">
+        <div className="w-12 h-9 rounded-md relative overflow-hidden flex-shrink-0">
           <Image
             src={
               product.thumbnails &&
               product.thumbnails !== "N/A" &&
               product.thumbnails.startsWith("http")
                 ? product.thumbnails
-                : "/profile.png"
+                : "/placeholder.svg?height=40&width=50&query=product"
             }
             width={50}
             height={40}
@@ -100,44 +106,71 @@ export default function HandleOrderModal({ setIsShow, fetchOrders }) {
             className="rounded-md w-12 h-9 object-cover"
           />
         </div>
-        <div>
-          <span className="text-sm">{product.name}</span> <br />
-          <span className="text-sm text-gray-500">${product.price}</span>
+        <div className="flex-1">
+          <div className="text-sm font-medium line-clamp-1">{product.name}</div>
+          <div className="text-xs text-gray-500">
+            ${product.price.toFixed(2)}
+          </div>
         </div>
       </div>
     ),
   }));
 
-  // Handle Add Product
   const handleAddProduct = (selectedProducts) => {
-    const updatedProducts = selectedProducts.map((product) => ({
-      product: product.value,
-      quantity: 1,
-      price: productsData.find((p) => p._id === product.value)?.price || 0,
-      colors: productsData.find((p) => p._id === product.value)?.colors || [],
-      sizes: productsData.find((p) => p._id === product.value)?.sizes || [],
-      selectedColor: "",
-      selectedSize: "",
-    }));
+    const updatedProducts = selectedProducts.map((product) => {
+      const productData = productsData.find((p) => p._id === product.value);
+      return {
+        product: product.value,
+        quantity: 1,
+        price: productData?.price || 0,
+        variationPrice: productData?.price || 0,
+        selectedVariation: "",
+        colors: "",
+        sizes: "",
+      };
+    });
     setOrderDetail((prev) => ({
       ...prev,
       products: updatedProducts,
     }));
   };
 
-  // Update Product Details (Quantity, Color, Size)
   const updateProductDetail = (index, field, value) => {
     const updatedProducts = [...orderDetail.products];
     updatedProducts[index][field] = value;
 
-    const totalAmount = updatedProducts
-      .reduce((sum, prod) => sum + prod.quantity * prod.price, 0)
+    // If variation is selected, update price to variation price
+    if (field === "selectedVariation" && value) {
+      const product = productsData.find(
+        (p) => p._id === updatedProducts[index].product
+      );
+      const variation = product?.variations?.find((v) => v._id === value);
+      if (variation) {
+        updatedProducts[index].variationPrice = variation.price;
+        updatedProducts[index].colors = variation.color;
+        updatedProducts[index].sizes = variation.sizes;
+      }
+    }
+
+    calculateTotal(updatedProducts);
+    setOrderDetail((prev) => ({
+      ...prev,
+      products: updatedProducts,
+    }));
+  };
+
+  const calculateTotal = (products) => {
+    const total = products
+      .reduce(
+        (sum, prod) =>
+          sum + prod.quantity * (prod.variationPrice || prod.price),
+        0
+      )
       .toFixed(2);
 
     setOrderDetail((prev) => ({
       ...prev,
-      products: updatedProducts,
-      totalAmount,
+      totalAmount: Number.parseFloat(total),
     }));
   };
 
@@ -158,11 +191,28 @@ export default function HandleOrderModal({ setIsShow, fetchOrders }) {
     }
   };
 
+  const removeProduct = (index) => {
+    const updatedProducts = orderDetail.products.filter((_, i) => i !== index);
+    calculateTotal(updatedProducts);
+    setOrderDetail((prev) => ({
+      ...prev,
+      products: updatedProducts,
+    }));
+  };
+
   // Handle Submit Order
   const handleSubmitOrder = async () => {
+    if (!orderDetail.user) {
+      toast.error("Please select a user");
+      return;
+    }
+    if (orderDetail.products.length === 0) {
+      toast.error("Please add at least one product");
+      return;
+    }
+
     try {
       setLoading(true);
-      console.log("orderDetail:", orderDetail);
       const response = await axios.post(
         `${process.env.NEXT_PUBLIC_SERVER_URI}/api/v1/order/admin/create-order`,
         orderDetail
@@ -180,30 +230,37 @@ export default function HandleOrderModal({ setIsShow, fetchOrders }) {
     }
   };
 
+  const subtotal = orderDetail.totalAmount;
+  const shipping = orderDetail.shippingFee;
+  const total = subtotal + shipping;
+
   return (
-    <div className="w-full bg-white rounded-md overflow-hidden min-h-[70vh] max-h-[99vh] flex flex-col">
-      <div className="flex items-center justify-between bg-customRed px-4 py-2 sm:py-4">
-        <h3 className="text-lg font-medium text-white">Add Order</h3>
-        <span
+    <div className="w-full bg-gradient-to-br from-slate-50 to-slate-100 rounded-xl overflow-hidden min-h-[70vh] max-h-[99vh] flex flex-col shadow-2xl">
+      {/* Header */}
+      <div className="flex items-center justify-between bg-gradient-to-r from-red-600 to-red-700 px-6 py-4 shadow-lg">
+        <div>
+          <h3 className="text-xl font-bold text-white">Create Manual Order</h3>
+          <p className="text-red-100 text-sm mt-1">
+            Add products and customer details
+          </p>
+        </div>
+        <button
           onClick={() => setIsShow(false)}
-          className="p-1 rounded-full bg-black/20 hover:bg-black/40 text-white"
+          className="p-2 rounded-full bg-white/20 hover:bg-white/30 text-white transition-all duration-200"
         >
-          <CgClose className="text-[18px]" />
-        </span>
+          <CgClose className="text-xl" />
+        </button>
       </div>
-      <div className="w-full max-h-[99%] overflow-y-auto ">
-        <form
-          className="w-full p-4 flex  flex-col gap-4"
-          onSubmit={(e) => {
-            e.preventDefault();
-            handleSubmitOrder();
-          }}
-        >
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+
+      {/* Main Content */}
+      <div className="w-full flex-1 overflow-y-auto">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 p-6">
+          {/* Left Column - Form */}
+          <div className="lg:col-span-2 space-y-6">
             {/* User Selection */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700">
-                User <span className="text-red-500">*</span>
+            <div className="bg-white rounded-lg p-5 shadow-sm border border-slate-200">
+              <label className="block text-sm font-semibold text-slate-700 mb-3">
+                Select Customer <span className="text-red-500">*</span>
               </label>
               <Select
                 options={userOptions}
@@ -214,234 +271,365 @@ export default function HandleOrderModal({ setIsShow, fetchOrders }) {
                   }));
                   updateShippingAddress(selectedUser?.value);
                 }}
-                placeholder="Select User"
+                placeholder="Search and select customer..."
+                className="text-sm"
+                styles={{
+                  control: (base) => ({
+                    ...base,
+                    borderColor: "#e2e8f0",
+                    boxShadow: "none",
+                    "&:hover": { borderColor: "#cbd5e1" },
+                  }),
+                }}
               />
             </div>
 
             {/* Product Selection */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700">
-                Products <span className="text-red-500">*</span>
+            <div className="bg-white rounded-lg p-5 shadow-sm border border-slate-200">
+              <label className="block text-sm font-semibold text-slate-700 mb-3">
+                Add Products <span className="text-red-500">*</span>
               </label>
               <Select
                 options={productOptions}
                 isMulti
                 onChange={handleAddProduct}
-                placeholder="Select Products"
+                placeholder="Search and select products..."
+                className="text-sm"
+                styles={{
+                  control: (base) => ({
+                    ...base,
+                    borderColor: "#e2e8f0",
+                    boxShadow: "none",
+                    "&:hover": { borderColor: "#cbd5e1" },
+                  }),
+                }}
               />
             </div>
-          </div>
 
-          {/* Product Details */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-            {orderDetail.products.map((product, index) => (
-              <div
-                key={product.product}
-                className="border rounded-lg px-2 sm:px-4 py-2 transition-shadow duration-300 bg-gradient-to-br from-gray-50 to-gray-100"
-              >
-                {/* Product Name */}
-                <h4 className="text-lg font-bold text-gray-700 truncate">
-                  {productsData.find((p) => p._id === product.product)?.name}
+            {/* Products Details */}
+            {orderDetail.products.length > 0 && (
+              <div className="space-y-4">
+                <h4 className="text-sm font-semibold text-slate-700">
+                  Order Items
                 </h4>
+                {orderDetail.products.map((product, index) => {
+                  const productData = productsData.find(
+                    (p) => p._id === product.product
+                  );
+                  const variations = productData?.variations || [];
+                  const sizes = productData?.sizes || [];
 
-                {/* Quantity Section */}
-                <div className="mt-6">
-                  <label className="block text-sm font-medium text-gray-600">
-                    Quantity
-                  </label>
-                  <div className="flex items-center gap-4 mt-2">
-                    <button
-                      type="button"
-                      className="px-4 py-2 bg-red-600 text-white rounded-lg shadow hover:bg-red-700 hover:shadow-lg transition duration-300"
-                      onClick={() =>
-                        updateProductDetail(
-                          index,
-                          "quantity",
-                          Math.max(product.quantity - 1, 1)
-                        )
-                      }
+                  return (
+                    <div
+                      key={`${product.product}-${index}`}
+                      className="bg-white rounded-lg p-5 shadow-sm border border-slate-200 hover:shadow-md transition-shadow"
                     >
-                      -
-                    </button>
-                    <input
-                      type="number"
-                      value={product.quantity}
-                      readOnly
-                      className="w-14  h-[2.5rem] text-center border border-gray-300 rounded-lg shadow focus:ring-2 focus:ring-blue-500"
-                    />
-                    <button
-                      type="button"
-                      className="px-4 py-2 bg-green-600 text-white rounded-lg shadow hover:bg-green-700 hover:shadow-lg transition duration-300"
-                      onClick={() =>
-                        updateProductDetail(
-                          index,
-                          "quantity",
-                          product.quantity + 1
-                        )
-                      }
-                    >
-                      +
-                    </button>
-                  </div>
-                </div>
+                      <div className="flex items-start justify-between mb-4">
+                        <div className="flex items-start gap-3 flex-1">
+                          <div className="w-16 h-16 rounded-lg relative overflow-hidden flex-shrink-0 bg-slate-100">
+                            <Image
+                              src={
+                                productData?.thumbnails &&
+                                productData?.thumbnails !== "N/A" &&
+                                productData?.thumbnails.startsWith("http")
+                                  ? productData?.thumbnails
+                                  : "/placeholder.svg?height=64&width=64&query=product"
+                              }
+                              width={64}
+                              height={64}
+                              alt={productData?.name || "Product"}
+                              className="w-16 h-16 object-cover"
+                            />
+                          </div>
+                          <div className="flex-1">
+                            <h5 className="font-semibold text-slate-900 line-clamp-2">
+                              {productData?.name}
+                            </h5>
+                            <p className="text-sm text-slate-500 mt-1">
+                              Base Price: ${productData?.price.toFixed(2)}
+                            </p>
+                          </div>
+                        </div>
+                        <button
+                          onClick={() => removeProduct(index)}
+                          className="p-2 text-red-500 hover:bg-red-50 rounded-lg transition-colors"
+                        >
+                          <FaTrash className="text-sm" />
+                        </button>
+                      </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-6">
-                  {/* Color Selector */}
-                  {product.colors?.length > 0 && (
-                    <div>
-                      <label className="block text-sm font-medium text-gray-600">
-                        Color
-                      </label>
-                      <Select
-                        options={product.colors.map((color) => ({
-                          value: color.code,
-                          label: (
-                            <div className="flex items-center gap-2">
-                              <div
-                                style={{
-                                  backgroundColor: color.code,
-                                  width: "15px",
-                                  height: "15px",
-                                  borderRadius: "50%",
-                                }}
-                              />
-                              <span>{color.name}</span>
-                            </div>
-                          ),
-                        }))}
-                        onChange={(selected) =>
-                          updateProductDetail(
-                            index,
-                            "selectedColor",
-                            selected.value
-                          )
-                        }
-                        placeholder="Select Color"
-                        className="border border-gray-300 rounded-lg shadow focus:ring-2 focus:ring-blue-500"
-                      />
-                    </div>
-                  )}
+                      {/* Variations Selection */}
+                      {variations.length > 0 && (
+                        <div className="mb-4 p-4 bg-red-50 rounded-lg border border-red-200">
+                          <label className="block text-sm font-medium text-slate-700 mb-3">
+                            Select Variation
+                          </label>
+                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                            {variations.slice(0, 6).map((variation) => (
+                              <button
+                                key={variation._id}
+                                onClick={() =>
+                                  updateProductDetail(
+                                    index,
+                                    "selectedVariation",
+                                    variation._id
+                                  )
+                                }
+                                className={`p-3 rounded-lg border-2 transition-all text-left ${
+                                  product.selectedVariation === variation._id
+                                    ? "border-red-600 bg-red-100"
+                                    : "border-slate-200 bg-white hover:border-red-300"
+                                }`}
+                              >
+                                <div className="flex items-center gap-2">
+                                  <div
+                                    className="w-5 h-5 rounded-full border-2 flex-shrink-0"
+                                    style={{
+                                      backgroundColor: variation?.color,
+                                      borderColor: variation?.color,
+                                    }}
+                                  />
+                                  <div className="flex-1 min-w-0">
+                                    <p className="text-xs font-medium text-slate-700 truncate">
+                                      {variation?.title}
+                                    </p>
+                                    <p className="text-sm font-bold text-red-600">
+                                      $
+                                      {variation?.price?.toFixed(2) ??
+                                        productData?.price.toFixed(2)}
+                                    </p>
+                                  </div>
+                                </div>
+                              </button>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                      {/* sizes */}
+                      {sizes?.length > 0 && (
+                        <div className="mb-4 p-4 bg-red-50 rounded-lg border border-red-200">
+                          <label className="block text-sm font-medium text-slate-700 mb-3">
+                            Select Size
+                          </label>
+                          <div className="flex items-center gap-4 flex-wrap ">
+                            {sizes?.map((size, i) => (
+                              <button
+                                key={size + i}
+                                onClick={() =>
+                                  updateProductDetail(index, "sizes", size)
+                                }
+                                className={`p-3 rounded-lg border-2 transition-all text-left ${
+                                  product.sizes === size
+                                    ? "border-red-600 bg-red-100"
+                                    : "border-slate-200 bg-white hover:border-red-300"
+                                }`}
+                              >
+                                <div className="flex items-center gap-2">
+                                  <div className="w-5 h-5 rounded-full border-2 flex-shrink-0" />
+                                  <div className="flex-1 min-w-0">
+                                    <p className="text-xs font-medium text-slate-700 truncate">
+                                      {size}
+                                    </p>
+                                  </div>
+                                </div>
+                              </button>
+                            ))}
+                          </div>
+                        </div>
+                      )}
 
-                  {/* Size Selector */}
-                  {product.sizes?.length > 0 && (
-                    <div>
-                      <label className="block text-sm font-medium text-gray-600">
-                        Size
-                      </label>
-                      <Select
-                        options={product.sizes.map((size) => ({
-                          value: size,
-                          label: size,
-                        }))}
-                        onChange={(selected) =>
-                          updateProductDetail(
-                            index,
-                            "selectedSize",
-                            selected.value
-                          )
-                        }
-                        placeholder="Select Size"
-                        className="border border-gray-300 rounded-lg shadow focus:ring-2 focus:ring-blue-500"
-                      />
+                      {/* Quantity */}
+                      <div className="flex items-center gap-3">
+                        <label className="text-sm font-medium text-slate-700 min-w-fit">
+                          Quantity:
+                        </label>
+                        <div className="flex items-center gap-2 bg-slate-100 rounded-lg p-1">
+                          <button
+                            type="button"
+                            onClick={() =>
+                              updateProductDetail(
+                                index,
+                                "quantity",
+                                Math.max(product.quantity - 1, 1)
+                              )
+                            }
+                            className="px-3 py-1 text-slate-600 hover:bg-slate-200 rounded transition-colors"
+                          >
+                            −
+                          </button>
+                          <input
+                            type="number"
+                            value={product.quantity}
+                            readOnly
+                            className="w-12 text-center bg-white border border-slate-300 rounded py-1 font-semibold"
+                          />
+                          <button
+                            type="button"
+                            onClick={() =>
+                              updateProductDetail(
+                                index,
+                                "quantity",
+                                product.quantity + 1
+                              )
+                            }
+                            className="px-3 py-1 text-slate-600 hover:bg-slate-200 rounded transition-colors"
+                          >
+                            +
+                          </button>
+                        </div>
+                        <div className="ml-auto text-right">
+                          <p className="text-xs text-slate-500">Item Total</p>
+                          <p className="text-lg font-bold text-red-600">
+                            $
+                            {(
+                              product.quantity *
+                              (product.variationPrice || product.price)
+                            ).toFixed(2)}
+                          </p>
+                        </div>
+                      </div>
                     </div>
-                  )}
-                </div>
+                  );
+                })}
               </div>
-            ))}
-          </div>
+            )}
 
-          {/* Total Amount */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             {/* Shipping Address */}
-            <div className="border rounded-lg px-2 sm:px-4 py-2 transition-shadow duration-300 bg-gradient-to-br from-gray-50 to-gray-100">
-              <div className="flex items-center gap-2 w-full">
-                <label className="block text-sm font-medium text-gray-700">
-                  Shipping Address:
-                </label>
-                <span>{orderDetail.shippingAddress?.address}</span>
+            {orderDetail.user && (
+              <div className="bg-white rounded-lg p-5 shadow-sm border border-slate-200">
+                <h4 className="text-sm font-semibold text-slate-700 mb-4">
+                  Shipping Address
+                </h4>
+                <div className="space-y-2 text-sm">
+                  <p className="text-slate-700">
+                    <span className="font-medium text-slate-600">Address:</span>{" "}
+                    {orderDetail.shippingAddress.address || "N/A"}
+                  </p>
+                  <p className="text-slate-700">
+                    <span className="font-medium text-slate-600">City:</span>{" "}
+                    {orderDetail.shippingAddress.city || "N/A"}
+                  </p>
+                  <p className="text-slate-700">
+                    <span className="font-medium text-slate-600">State:</span>{" "}
+                    {orderDetail.shippingAddress.state || "N/A"}
+                  </p>
+                  <p className="text-slate-700">
+                    <span className="font-medium text-slate-600">
+                      Postal Code:
+                    </span>{" "}
+                    {orderDetail.shippingAddress.postalCode || "N/A"}
+                  </p>
+                  <p className="text-slate-700">
+                    <span className="font-medium text-slate-600">Country:</span>{" "}
+                    {orderDetail.shippingAddress.country || "N/A"}
+                  </p>
+                </div>
               </div>
-              <div className="flex items-center gap-2 w-full">
-                <label className="block text-sm font-medium text-gray-700">
-                  City:
-                </label>
-                <span>{orderDetail.shippingAddress.city}</span>
-              </div>
-              <div className="flex items-center gap-2 w-full">
-                <label className="block text-sm font-medium text-gray-700">
-                  State:
-                </label>
-                <span>{orderDetail.shippingAddress.state}</span>
-              </div>
-              <div className="flex items-center gap-2 w-full">
-                <label className="block text-sm font-medium text-gray-700">
-                  Postal Code:
-                </label>
-                <span>{orderDetail.shippingAddress.postalCode}</span>
-              </div>
-              <div className="flex items-center gap-2 w-full">
-                <label className="block text-sm font-medium text-gray-700">
-                  Country:
-                </label>
-                <span>{orderDetail.shippingAddress.country}</span>
-              </div>
-            </div>{" "}
-            {/*  */}
-            <div className="border rounded-lg px-2 sm:px-4 py-2 transition-shadow duration-300 bg-gradient-to-br from-gray-50 to-gray-100">
-              <div className="flex items-center gap-2 w-full">
-                <label className="block text-sm font-medium text-gray-700">
-                  Subtotal:
-                </label>
-                <span className="text-black">
-                  ${parseFloat(orderDetail.totalAmount).toFixed(2)}
-                </span>
-              </div>
-              <div className="flex items-center gap-2 w-full">
-                <label className="block text-sm font-medium text-gray-700">
-                  Shipping:
-                </label>
-                <span className="text-black">
-                  ${parseFloat(orderDetail.shippingFee).toFixed(2)}
-                </span>
-              </div>
-              <hr className="w-full h-[2px] bg-gray-500 my-2" />
-              <div className="flex items-center gap-2 w-full">
-                <label className="block text-sm font-medium text-gray-700">
-                  Total Amount:
-                </label>
-                <span className="text-black">
-                  $
-                  {(
-                    parseFloat(orderDetail.totalAmount) +
-                    parseFloat(orderDetail.shippingFee)
-                  ).toFixed(2)}
-                </span>
-              </div>
-            </div>
+            )}
           </div>
 
-          {/* Submit Button */}
-          <div className="flex items-center justify-end w-full pb-3">
-            <div className="flex items-center gap-4">
-              <button
-                onClick={() => {
-                  setIsShow(false);
-                }}
-                className="w-[6rem] py-[.3rem] text-[14px] rounded-sm border-2 border-customRed text-red-700 hover:bg-gray-100 hover:shadow-md hover:scale-[1.03] transition-all duration-300 "
-              >
-                CANCEL
-              </button>
-              <button className="w-[6rem] py-[.4rem] text-[14px] flex items-center justify-center rounded-sm bg-customRed hover:bg-red-700 hover:shadow-md hover:scale-[1.03] transition-all duration-300 text-white">
-                {loading ? (
-                  <span>
-                    <FaSpinner className="h-5 w-5 text-white animate-spin" />
-                  </span>
+          {/* Right Column - Order Summary */}
+          <div className="lg:col-span-1">
+            <div className="bg-white rounded-lg p-6 shadow-sm border border-slate-200 sticky top-6">
+              <h4 className="text-lg font-bold text-slate-900 mb-6">
+                Order Summary
+              </h4>
+
+              {/* Items List */}
+              <div className="space-y-3 mb-6 pb-6 border-b border-slate-200 max-h-64 overflow-y-auto">
+                {orderDetail.products.length === 0 ? (
+                  <p className="text-sm text-slate-500 text-center py-4">
+                    No items added yet
+                  </p>
                 ) : (
-                  <span>{"Create"}</span>
+                  orderDetail.products.map((product, index) => {
+                    const productData = productsData.find(
+                      (p) => p._id === product.product
+                    );
+                    return (
+                      <div
+                        key={`summary-${product.product}-${index}`}
+                        className="flex items-start justify-between text-sm"
+                      >
+                        <div className="flex-1">
+                          <p className="font-medium text-slate-900 line-clamp-1">
+                            {productData?.name}
+                          </p>
+                          <p className="text-xs text-slate-500">
+                            {product.quantity}x $
+                            {(product.variationPrice || product.price).toFixed(
+                              2
+                            )}
+                          </p>
+                        </div>
+                        <p className="font-semibold text-slate-900 ml-2">
+                          $
+                          {(
+                            product.quantity *
+                            (product.variationPrice || product.price)
+                          ).toFixed(2)}
+                        </p>
+                      </div>
+                    );
+                  })
                 )}
-              </button>
+              </div>
+
+              {/* Pricing Breakdown */}
+              <div className="space-y-3 mb-6">
+                <div className="flex justify-between text-sm">
+                  <span className="text-slate-600">Subtotal</span>
+                  <span className="font-semibold text-slate-900">
+                    ${subtotal.toFixed(2)}
+                  </span>
+                </div>
+                <div className="flex justify-between text-sm">
+                  <span className="text-slate-600">Shipping</span>
+                  <span className="font-semibold text-slate-900">
+                    ${shipping.toFixed(2)}
+                  </span>
+                </div>
+                <div className="flex justify-between pt-3 border-t border-slate-200">
+                  <span className="font-bold text-slate-900">Total</span>
+                  <span className="text-xl font-bold text-red-600">
+                    ${total.toFixed(2)}
+                  </span>
+                </div>
+              </div>
+
+              {/* Action Buttons */}
+              <div className="flex gap-3">
+                <button
+                  onClick={() => setIsShow(false)}
+                  className="flex-1 px-4 py-2.5 text-sm font-semibold text-slate-700 bg-slate-100 hover:bg-slate-200 rounded-lg transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleSubmitOrder}
+                  disabled={
+                    loading ||
+                    orderDetail.products.length === 0 ||
+                    !orderDetail.user
+                  }
+                  className="flex-1 px-4 py-2.5 text-sm font-semibold text-white bg-red-600 hover:bg-red-700 disabled:bg-slate-300 disabled:cursor-not-allowed rounded-lg transition-colors flex items-center justify-center gap-2"
+                >
+                  {loading ? (
+                    <>
+                      <FaSpinner className="animate-spin" />
+                      Creating...
+                    </>
+                  ) : (
+                    <>
+                      <MdAdd className="text-lg" />
+                      Create Order
+                    </>
+                  )}
+                </button>
+              </div>
             </div>
           </div>
-        </form>
+        </div>
       </div>
     </div>
   );

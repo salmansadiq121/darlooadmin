@@ -3,7 +3,7 @@ import dynamic from "next/dynamic";
 import Image from "next/image";
 import { useEffect, useRef, useState } from "react";
 import { TbShoppingCartCopy } from "react-icons/tb";
-import { AiOutlineSync } from "react-icons/ai";
+import { AiOutlineSync, AiTwotoneDelete } from "react-icons/ai";
 import { BiPackage } from "react-icons/bi";
 import { FaSpinner, FaTruck } from "react-icons/fa";
 import { MdOutlineDoneAll } from "react-icons/md";
@@ -24,6 +24,8 @@ import { ImSpinner9 } from "react-icons/im";
 import { Style } from "@/app/utils/CommonStyle";
 import { uploadImage } from "@/app/utils/CommonFunction";
 import OrderTimeline from "@/app/components/order/Timeline";
+import { IoIosAdd } from "react-icons/io";
+import { LuDelete } from "react-icons/lu";
 const MainLayout = dynamic(
   () => import("./../../../../../components/layout/MainLayout"),
   {
@@ -77,12 +79,18 @@ export default function OrderDetail({ params }) {
   const slipRef = useRef();
   const [showSlipDetail, setShowSlipDetail] = useState(false);
   const [loadDownload, setLoadDownload] = useState(false);
-  const [trackingId, setTrackingId] = useState("");
-  const [shippingCarrier, setShippingCarrier] = useState("");
+  const [tracking, setTracking] = useState([
+    { trackingId: "", shippingCarrier: "" },
+  ]);
   const [loading, setLoading] = useState(false);
   const [comment, setComment] = useState("");
   const [image, setImage] = useState("");
   const [uploading, setUploading] = useState(false);
+  const [delivery, setDelivery] = useState({
+    prepare: "3-5 Days",
+    deliver: "4-7 Days",
+  });
+  const [isDelivery, setIsDelivery] = useState(false);
 
   // console.log("orderDetail:", orderDetail);
 
@@ -107,6 +115,13 @@ export default function OrderDetail({ params }) {
       );
       if (data) {
         setOrderDetail(data.order);
+        setTracking(
+          data.order.tracking || {
+            trackingId: "",
+            shippingCarrier: "",
+          }
+        );
+        setDelivery(data.order.delivery);
       }
     } catch (error) {
       console.log(error);
@@ -123,12 +138,12 @@ export default function OrderDetail({ params }) {
     // eslint-disable-next-line
   }, []);
 
-  useEffect(() => {
-    if (orderDetail) {
-      setTrackingId(orderDetail.trackingId);
-      setShippingCarrier(orderDetail.shippingCarrier);
-    }
-  }, [orderDetail]);
+  // useEffect(() => {
+  //   if (orderDetail) {
+  //     setTrackingId(orderDetail.trackingId);
+  //     setShippingCarrier(orderDetail.shippingCarrier);
+  //   }
+  // }, [orderDetail]);
 
   const generatePDF = () => {
     const slipContent = slipRef.current;
@@ -209,8 +224,7 @@ export default function OrderDetail({ params }) {
       const { data } = await axios.put(
         `${process.env.NEXT_PUBLIC_SERVER_URI}/api/v1/order/update/status/${orderDetail._id}`,
         {
-          trackingId: trackingId,
-          shippingCarrier: shippingCarrier,
+          tracking,
         }
       );
       if (data) {
@@ -255,6 +269,78 @@ export default function OrderDetail({ params }) {
     } catch (error) {
       console.log("Error adding comment:", error);
       toast.error(error?.response?.data?.message || "An error occurred.");
+    }
+  };
+
+  // Delete Comment
+  const handleDeleteComment = async (commentId) => {
+    try {
+      const { data } = await axios.delete(
+        `${process.env.NEXT_PUBLIC_SERVER_URI}/api/v1/order/comment/${orderDetail._id}?commentId=${commentId}`
+      );
+      if (data) {
+        setOrderDetail((prevState) => ({
+          ...prevState,
+          comments: prevState.comments.filter(
+            (comment) => comment._id !== commentId
+          ),
+        }));
+        toast.success("Comment Deleted Successfully");
+        fetchOrderDetail();
+      }
+    } catch (error) {
+      console.log("Error deleting comment:", error);
+      toast.error(error?.response?.data?.message || "An error occurred.");
+    }
+  };
+
+  // Add Tracking
+  const addTracking = async () => {
+    setTracking([...tracking, { trackingId: "", shippingCarrier: "" }]);
+  };
+
+  // handel Change Tracking
+  const handleTrackingChange = (index, field, value) => {
+    const newTracking = [...tracking];
+    newTracking[index][field] = value;
+    setTracking(newTracking);
+  };
+
+  // Remoe Tracking
+  const removeTracking = (index) => {
+    const newTracking = [...tracking];
+    newTracking.splice(index, 1);
+    setTracking(newTracking);
+  };
+
+  // Handle Change Delivery
+  const handleChangeDelivery = (e) => {
+    const { name, value } = e.target;
+    setDelivery((prevState) => ({
+      ...prevState,
+      [name]: value,
+    }));
+  };
+  // Handle Update Delivery
+  const handleUpdateDelivery = async (e) => {
+    e.preventDefault();
+    setIsDelivery(true);
+    try {
+      const { data } = await axios.put(
+        `${process.env.NEXT_PUBLIC_SERVER_URI}/api/v1/order/update/status/${orderDetail._id}`,
+        {
+          delivery,
+        }
+      );
+      if (data) {
+        toast.success("Delivery time updated successfully!");
+        fetchOrderDetail();
+      }
+    } catch (error) {
+      console.log("Error updating delivery:", error);
+      toast.error(error?.response?.data?.message || "An error occurred.");
+    } finally {
+      setIsDelivery(false);
     }
   };
   return (
@@ -513,33 +599,66 @@ export default function OrderDetail({ params }) {
                       </div>
                       {/* Shipping */}
                       <h3 className="text-[15px] font-medium text-black">
-                        Shipping Details
+                        Tracking Details
                       </h3>
                       <form
                         onSubmit={handleOrder}
-                        className="grid grid-cols-1 sm:grid-cols-2 gap-4 w-full"
+                        className="flex flex-col gap-4 w-full"
                       >
-                        <div className="inputBox">
-                          <input
-                            type="text"
-                            value={trackingId}
-                            onChange={(e) => setTrackingId(e.target.value)}
-                            className={`${Style.input} w-full `}
-                            placeholder="Enter Tracking ID"
-                          />
-                          <span>Tracking ID</span>
-                        </div>
-                        <div className="inputBox">
-                          <input
-                            type="text"
-                            value={shippingCarrier}
-                            onChange={(e) => setShippingCarrier(e.target.value)}
-                            className={`${Style.input} w-full `}
-                            placeholder="Enter Shipping Carrier"
-                          />
-                          <span>Shipping Carrier</span>
-                        </div>
-                        <div className="w-full flex items-center justify-end col-span-2">
+                        {tracking.map((item, index) => (
+                          <div
+                            key={index}
+                            className="grid grid-cols-1 sm:grid-cols-2 gap-4 w-full "
+                          >
+                            <div className="inputBox">
+                              <input
+                                type="text"
+                                value={item.trackingId}
+                                onChange={(e) =>
+                                  handleTrackingChange(
+                                    index,
+                                    "trackingId",
+                                    e.target.value
+                                  )
+                                }
+                                className={`${Style.input} w-full `}
+                              />
+                              <span>Tracking ID</span>
+                            </div>
+                            <div className="flex items-center gap-3">
+                              <div className="inputBox">
+                                <input
+                                  type="text"
+                                  value={item.shippingCarrier}
+                                  onChange={(e) =>
+                                    handleTrackingChange(
+                                      index,
+                                      "shippingCarrier",
+                                      e.target.value
+                                    )
+                                  }
+                                  className={`${Style.input} w-full `}
+                                />
+                                <span>Shipping Carrier</span>
+                              </div>
+                              <span
+                                className="text-red-600 min-w-[1.5rem] hover:text-red-800 size-5 cursor-pointer"
+                                onClick={() => removeTracking(index)}
+                              >
+                                <LuDelete />
+                              </span>
+                            </div>
+                          </div>
+                        ))}
+                        <div className="w-full flex items-center justify-between col-span-2">
+                          <button
+                            onClick={addTracking}
+                            type="button"
+                            className="w-[6rem] py-[.4rem] text-[14px] flex items-center justify-center group bg-transparent text-gray-800 hover:text-red-700  hover:scale-[1.03] transition-all duration-300 "
+                          >
+                            <IoIosAdd className="size-4 text-gray-800 group-hover:text-red-600" />
+                            Add New
+                          </button>
                           <button
                             disabled={loading}
                             className="w-[6rem] py-[.4rem] text-[14px] flex items-center justify-center rounded-sm bg-customRed hover:bg-red-700 hover:shadow-md hover:scale-[1.03] transition-all duration-300 text-white"
@@ -554,7 +673,56 @@ export default function OrderDetail({ params }) {
                           </button>
                         </div>
                       </form>
+
+                      {/* Delivery */}
+                      <h3 className="text-[15px] font-medium text-black">
+                        Delivery
+                      </h3>
+                      <form
+                        onSubmit={handleUpdateDelivery}
+                        className="flex flex-col gap-4 w-full"
+                      >
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 w-full ">
+                          <div className="inputBox">
+                            <input
+                              type="text"
+                              name="prepare"
+                              value={delivery.prepare}
+                              onChange={handleChangeDelivery}
+                              className={`${Style.input} w-full `}
+                            />
+                            <span>Order Prepare</span>
+                          </div>
+                          <div className="flex items-center gap-3">
+                            <div className="inputBox">
+                              <input
+                                type="text"
+                                name="deliver"
+                                value={delivery.deliver}
+                                onChange={handleChangeDelivery}
+                                className={`${Style.input} w-full `}
+                              />
+                              <span>Order Deliver</span>
+                            </div>
+                          </div>
+                        </div>
+                        <div className="w-full flex items-center justify-end col-span-2">
+                          <button
+                            disabled={isDelivery}
+                            className="w-[6rem] py-[.4rem] text-[14px] flex items-center justify-center rounded-sm bg-customRed hover:bg-red-700 hover:shadow-md hover:scale-[1.03] transition-all duration-300 text-white"
+                          >
+                            {isDelivery ? (
+                              <span>
+                                <FaSpinner className="h-5 w-5 text-white animate-spin" />
+                              </span>
+                            ) : (
+                              <span>Save</span>
+                            )}
+                          </button>
+                        </div>
+                      </form>
                     </div>
+
                     {/*  */}
                   </div>
 
@@ -796,15 +964,14 @@ export default function OrderDetail({ params }) {
                               </button>
                             </div>
                           )}
-
-                          <button
-                            type="submit"
-                            disabled={!comment.trim() && !image}
-                            className="ml-auto px-4 py-2 bg-customRed hover:bg-red-700 text-white rounded-md transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
-                          >
-                            Add Comment
-                          </button>
                         </div>
+                        <button
+                          type="submit"
+                          disabled={!comment.trim() && !image}
+                          className="ml-auto self-end px-4 py-2 bg-customRed hover:bg-red-700 text-white rounded-md transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
+                          Add Comment
+                        </button>
                       </form>
 
                       {/* Comments List */}
@@ -825,7 +992,7 @@ export default function OrderDetail({ params }) {
                                     width={40}
                                     height={40}
                                     alt="Comment attachment"
-                                    className="object-fill w-full h-full"
+                                    className="object-fill w-full h-full rounded-full"
                                   />
                                 </div>
                                 <div className="flex-1">
@@ -833,7 +1000,10 @@ export default function OrderDetail({ params }) {
                                     <h4 className="text-sm font-medium text-gray-800">
                                       {item.user?.name || "Admin"}
                                     </h4>
-                                    <span className="text-xs text-gray-500">
+                                    <span
+                                      className="text-xs text-gray-500"
+                                      handleDeleteComment
+                                    >
                                       {item?.createdAt
                                         ? format(
                                             new Date(item?.createdAt),
@@ -841,9 +1011,31 @@ export default function OrderDetail({ params }) {
                                           )
                                         : "N/A"}
                                     </span>
+                                    <button
+                                      onClick={() =>
+                                        handleDeleteComment(item._id)
+                                      }
+                                      className="text-xs text-red-500 hover:text-red-600 ml-2 min-w-[1.5]  cursor-pointer"
+                                    >
+                                      <AiTwotoneDelete
+                                        size={5}
+                                        className="text-red-500 h-[1rem] w-[1rem]"
+                                      />
+                                    </button>
                                   </div>
                                   <p className="text-sm text-gray-600 mt-1">
-                                    {item?.question}
+                                    {/^https?:\/\/\S+$/.test(item?.question) ? (
+                                      <a
+                                        href={item.question}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        className="text-blue-600 hover:underline"
+                                      >
+                                        {item.question}
+                                      </a>
+                                    ) : (
+                                      item.question
+                                    )}
                                   </p>
 
                                   {item?.image && (
