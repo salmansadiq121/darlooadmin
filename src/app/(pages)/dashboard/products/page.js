@@ -686,30 +686,35 @@ export default function Products() {
           );
         },
         Cell: ({ cell, row }) => {
-          const colors = row.original.colors;
-          const color = colors[0];
+          const colors = Array.isArray(row?.original?.colors)
+            ? row.original.colors
+            : [];
+          const color = colors[0] || {};
 
           return (
             <div className="cursor-pointer text-[12px] flex items-center justify-start text-black w-full h-full">
               <select
-                value={color}
+                value={color?.name || ""}
                 className="w-full h-[2rem] rounded-md outline-none border border-gray-700 cursor-pointer p-1"
               >
                 <option value="">Colors</option>
-                {colors.map((color, i) => (
-                  <option
-                    value={color.name}
-                    key={i}
-                    className="flex items-center gap-1"
-                    // style={{ backgroundColor: color }}
-                  >
-                    <div
-                      style={{ backgroundColor: color.code }}
-                      className="w-3 h-3 rounded-full"
-                    ></div>
-                    {color.name || "Unknown"}
-                  </option>
-                ))}
+                {colors.length > 0 ? (
+                  colors.map((color, i) => (
+                    <option
+                      value={color?.name}
+                      key={i}
+                      className="flex items-center gap-1"
+                    >
+                      <div
+                        style={{ backgroundColor: color?.code || "#ccc" }}
+                        className="w-3 h-3 rounded-full inline-block mr-1"
+                      ></div>
+                      {color?.name || "Unknown"}
+                    </option>
+                  ))
+                ) : (
+                  <option value="">No colors</option>
+                )}
               </select>
             </div>
           );
@@ -730,7 +735,7 @@ export default function Products() {
           );
         },
         Cell: ({ cell, row }) => {
-          const trending = row.original.trending;
+          const trending = row?.original?.trending || false;
 
           return (
             <div
@@ -760,7 +765,7 @@ export default function Products() {
           );
         },
         Cell: ({ cell, row }) => {
-          const sale = row.original.sale.isActive;
+          const sale = row?.original?.sale?.isActive || false;
 
           return (
             <div
