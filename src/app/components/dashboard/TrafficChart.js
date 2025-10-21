@@ -31,14 +31,14 @@ const TrafficChart = ({ usersAnalytics }) => {
     return date.toLocaleDateString("en-US", { month: "short", day: "numeric" });
   });
 
-  const chartData = usersAnalytics?.map((item) => item.count);
+  const chartData = usersAnalytics?.map((item) => item.count) || [];
 
   const totalVisits = chartData?.reduce((sum, count) => sum + count, 0);
-  const averageVisits = Math.round(totalVisits / chartData.length);
+  const averageVisits = Math?.round(totalVisits / chartData?.length);
 
   // Calculate percentage change (comparing last vs first non-zero value)
   const firstNonZero = chartData?.find((count) => count > 0) || 0;
-  const lastValue = chartData[chartData.length - 1];
+  const lastValue = chartData[chartData?.length - 1];
   const percentageChange =
     firstNonZero > 0
       ? Math.round(((lastValue - firstNonZero) / firstNonZero) * 100)
