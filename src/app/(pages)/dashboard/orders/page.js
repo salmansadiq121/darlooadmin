@@ -515,6 +515,15 @@ export default function Orders() {
   const columns = useMemo(
     () => [
       {
+        header: "#",
+        accessorKey: "orderNumber",
+        Cell: ({ row, table }) => {
+          const totalRows = row.original.orderNumber;
+          return totalRows;
+        },
+        size: 50,
+      },
+      {
         accessorKey: "products",
         minSize: 100,
         maxSize: 320,
@@ -1079,7 +1088,7 @@ export default function Orders() {
     enableColumnFilters: false,
     enableSorting: false,
     enableGlobalFilter: true,
-    enableRowNumbers: true,
+    enableRowNumbers: false,
     enableColumnResizing: true,
     enableTopToolbar: true,
     enableBottomToolbar: false,
