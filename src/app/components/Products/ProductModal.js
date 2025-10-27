@@ -23,6 +23,7 @@ import {
   Euro,
   Palette,
   TagIcon,
+  EuroIcon,
 } from "lucide-react";
 import { uploadProductImage } from "@/app/utils/CommonFunction";
 import { RichTextEditor } from "@/components/ui/rich-text-editor";
@@ -82,6 +83,8 @@ export default function ProductModal({
     3: false,
     4: false,
   });
+  const [samePrice, setSamePrice] = useState(false);
+
   // Get Product Detail
   const getProductInfo = async () => {
     try {
@@ -180,12 +183,14 @@ export default function ProductModal({
       toast.error("Failed to load product data");
     }
   };
+
   useEffect(() => {
     if (productId) {
       getProductInfo();
     }
     // eslint-disable-next-line
   }, [productId]);
+
   // Get Categories
   const getCategories = async () => {
     try {
@@ -200,6 +205,7 @@ export default function ProductModal({
       toast.error("Failed to load categories");
     }
   };
+
   // Get SubCategories
   const getSubCategories = async (id) => {
     try {
@@ -214,10 +220,12 @@ export default function ProductModal({
       toast.error("Failed to load sub categories");
     }
   };
+
   useEffect(() => {
     getCategories();
     // eslint-disable-next-line
   }, []);
+
   // Handle Size Chart Image Upload
   const handleSizeChartUpload = async (e) => {
     const file = e.target.files[0];
@@ -226,6 +234,7 @@ export default function ProductModal({
       setSize_chart(imageURL);
     }
   };
+
   // Handle Thumbnail Upload (single image)
   const handleThumbnailUpload = async (e) => {
     const file = e.target.files[0];
@@ -250,6 +259,7 @@ export default function ProductModal({
     ]);
     validateStep(2);
   };
+
   // Handle variation color change
   const handleVariationColorChange = (index, selectedColor) => {
     setVariations((prev) => {
@@ -277,6 +287,18 @@ export default function ProductModal({
     setVariations((prev) => {
       const updated = [...prev];
       updated[index] = { ...updated[index], price: newPrice };
+      return updated;
+    });
+    validateStep(2);
+  };
+
+  // Set Same Varient Price like Main
+  const handleSamePrice = () => {
+    setVariations((prev) => {
+      const updated = prev.map((v) => ({
+        ...v,
+        price: price,
+      }));
       return updated;
     });
     validateStep(2);
@@ -556,6 +578,7 @@ export default function ProductModal({
         return null;
     }
   };
+
   // Step 1: Basic Information
   const renderBasicInfoStep = () => {
     return (
@@ -683,8 +706,8 @@ export default function ProductModal({
                       : "/placeholder.png"
                   }
                   layout="fill"
-                  objectFit="cover"
-                  alt="Main product image"
+                  objectFit="min-cover"
+                  alt="Size chart"
                   className="w-full h-full group-hover:scale-105 transition-transform duration-300"
                 />
                 <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors duration-200"></div>
@@ -705,6 +728,7 @@ export default function ProductModal({
       </div>
     );
   };
+
   // Step 2: Media
   const renderMediaStep = () => {
     return (
@@ -803,6 +827,62 @@ export default function ProductModal({
               />
             </label>
           </div>
+          {/* Add Variation Price Same */}
+          <div className="border rounded-md p-4 bg-gradient-to-r from-gray-50 to-red-50/30 shadow-sm">
+            <div className="flex items-center justify-between">
+              <label className="flex items-center gap-2 text-sm font-medium text-gray-700">
+                <div className="w-6 h-6 rounded-full bg-red-100 flex items-center justify-center">
+                  <EuroIcon size={14} className="text-customRed" />
+                </div>
+                Same Price as Main
+              </label>
+              <label className="relative inline-flex items-center cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={samePrice}
+                  onChange={(e) => {
+                    setSamePrice(e.target.checked);
+                    handleSamePrice();
+                  }}
+                  className="sr-only peer"
+                />
+                <div
+                  className="w-11 h-6 bg-gray-200 rounded-full peer peer-focus:ring-4 peer-focus:ring-red-100
+                        peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full
+                        peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px]
+                        after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full
+                        after:h-5 after:w-5 after:transition-all peer-checked:bg-customRed"
+                ></div>
+              </label>
+            </div>
+            <div className=" mt-2">
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Price (€)
+              </label>
+              <div className="relative">
+                <div className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500">
+                  <Euro size={16} />
+                </div>
+                <input
+                  type="number"
+                  value={price}
+                  onChange={(e) => {
+                    setPrice(e.target.value);
+                    validateStep(3);
+                  }}
+                  className={`${Style.input} w-full pl-8`}
+                  placeholder="Enter price in Euro"
+                  required
+                  step="0.01"
+                  min="0"
+                />
+              </div>
+            </div>
+            <p className="text-xs text-gray-500 mt-2">
+              Set the same price for all variations
+            </p>
+          </div>
+
           {/* Variations Preview */}
           {variations && variations.some((v) => v.imageURL) ? (
             <div className="space-y-4">
@@ -871,7 +951,7 @@ export default function ProductModal({
                           onChange={(e) =>
                             handleVariationTitleChange(index, e.target.value)
                           }
-                          className={`${Style.input} w-full`}
+                          className={`${Style.input} w-full capitalize`}
                           placeholder="Enter title for this variation"
                         />
                       </div>
