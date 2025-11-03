@@ -26,6 +26,7 @@ import { uploadImage } from "@/app/utils/CommonFunction";
 import OrderTimeline from "@/app/components/order/Timeline";
 import { IoIosAdd } from "react-icons/io";
 import { LuDelete } from "react-icons/lu";
+import Link from "next/link";
 const MainLayout = dynamic(
   () => import("./../../../../../components/layout/MainLayout"),
   {
@@ -405,11 +406,18 @@ export default function OrderDetail({ params }) {
                           key={product._id}
                           className="w-full flex items-center  justify-between gap-2 "
                         >
-                          <div className="w-full flex flex-col sm:flex-row items-start sm:items-center gap-1">
-                            <div className="w-[3rem] h-[3rem] rounded-full">
-                              <div className="w-[2.9rem] h-[2.9rem] relative rounded-md overflow-hidden flex items-center justify-center">
+                          <Link
+                            href={
+                              product?.image || product?.product?.thumbnails
+                            }
+                            target="_blank"
+                            className="w-full flex flex-col sm:flex-row items-start sm:items-center gap-1"
+                          >
+                            <div className="w-[3.5rem] h-[4rem] rounded-full">
+                              <div className="w-[3.5rem] h-[4rem] relative rounded-md overflow-hidden flex items-center justify-center">
                                 <Image
                                   src={
+                                    product?.image ||
                                     product?.product?.thumbnails ||
                                     "/placeholder.svg"
                                   }
@@ -419,10 +427,13 @@ export default function OrderDetail({ params }) {
                                 />
                               </div>
                             </div>
-                            <p className="text-[13px] sm:text-[14px] text-start text-gray-700 font-medium">
-                              {"Designer Silk Saree "}
+                            <p
+                              className="text-[13px] sm:text-[14px] text-start text-gray-700 font-medium line-clamp-2"
+                              title={product?.product?.name}
+                            >
+                              {product?.product?.name}
                             </p>
-                          </div>
+                          </Link>
                           <div className="flex items-center justify-between w-full">
                             <span className="text-[13px] sm:text-[14px] font-normal text-gray-600 ">
                               {product?.quantity}
