@@ -18,6 +18,7 @@ import { useAuth } from "@/app/context/authContext";
 import { FaRegQuestionCircle } from "react-icons/fa";
 import { LuContact } from "react-icons/lu";
 import { TbTruckReturn } from "react-icons/tb";
+import { HiOutlineUserGroup } from "react-icons/hi2";
 
 import { LuPackageSearch } from "react-icons/lu";
 
@@ -31,6 +32,7 @@ const rolePermissions = {
     "card",
     "categories",
     "orders",
+    "affiliates",
     "chat",
     "notifications",
     "return",
@@ -48,6 +50,7 @@ const rolePermissions = {
     "card",
     "categories",
     "orders",
+    "affiliates",
     "return",
     "chat",
     "notifications",
@@ -117,6 +120,12 @@ export default function Sidebar({ hide, setHide }) {
       label: "Orders",
       icon: BsBoxSeam,
       path: "/dashboard/orders",
+    },
+    {
+      id: "affiliates",
+      label: "Affiliates",
+      icon: HiOutlineUserGroup,
+      path: "/dashboard/affiliates",
     },
     {
       id: "return",
