@@ -15,6 +15,7 @@ import toast from "react-hot-toast";
 import { ImSpinner4 } from "react-icons/im";
 import { useAuth } from "@/app/context/authContext";
 import { FaCheckCircle, FaTimesCircle, FaClock, FaRetry } from "react-icons/fa";
+import { MdOutlineEuro } from "react-icons/md";
 
 const MainLayout = dynamic(
   () => import("./../../../components/layout/MainLayout"),
@@ -173,8 +174,9 @@ export default function Affiliates() {
         header: "Amount",
         size: 120,
         Cell: ({ cell }) => (
-          <span className="font-semibold text-green-600">
-            ${parseFloat(cell.getValue() || 0).toFixed(2)}
+          <span className="font-semibold text-green-600 flex items-center gap-1">
+            <MdOutlineEuro />
+            {parseFloat(cell.getValue() || 0).toFixed(2)}
           </span>
         ),
       },
@@ -249,8 +251,9 @@ export default function Affiliates() {
         header: "Commission",
         size: 120,
         Cell: ({ cell }) => (
-          <span className="font-semibold text-purple-600">
-            ${parseFloat(cell.getValue() || 0).toFixed(2)}
+          <span className="font-semibold text-purple-600 flex items-center gap-1">
+            <MdOutlineEuro />
+            {parseFloat(cell.getValue() || 0).toFixed(2)}
           </span>
         ),
       },
@@ -369,8 +372,9 @@ export default function Affiliates() {
             </div>
             <div className="bg-white rounded-lg shadow-md p-4 border-l-4 border-indigo-500">
               <div className="text-sm text-gray-600">Total Revenue</div>
-              <div className="text-2xl font-bold text-indigo-600">
-                ${stats.totalRevenue?.toFixed(2) || "0.00"}
+              <div className="text-2xl font-bold text-indigo-600 flex itecms-center gap-1">
+                <MdOutlineEuro />
+                {stats.totalRevenue?.toFixed(2) || "0.00"}
               </div>
             </div>
           </div>
