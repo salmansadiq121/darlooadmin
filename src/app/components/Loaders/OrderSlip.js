@@ -178,14 +178,14 @@ const OrderSlip = ({ orderDetail, generatePDF }) => {
                   </div>
                   <div className="flex justify-between text-gray-600">
                     <span>Shipping</span>
-                    <span>{formatCurrency(orderDetail?.shippingFee || 0)}</span>
+                    <span>{formatCurrency(parseFloat(orderDetail?.shippingFee || 0))}</span>
                   </div>
-                  {orderDetail?.discount && (
-                    <div className="flex justify-between text-gray-600">
-                      <span>Discount</span>
-                      <span>-{formatCurrency(orderDetail?.discount || 0)}</span>
-                    </div>
-                  )}
+                  <div className="flex justify-between text-gray-600">
+                    <span>Discount</span>
+                    <span className={parseFloat(orderDetail?.discount || 0) > 0 ? "text-green-600" : ""}>
+                      {parseFloat(orderDetail?.discount || 0) > 0 ? "-" : ""}{formatCurrency(parseFloat(orderDetail?.discount || 0))}
+                    </span>
+                  </div>
                   <div className="border-t border-gray-200 my-2 pt-2 flex justify-between font-medium">
                     <span className="text-gray-900">Total</span>
                     <span className="text-lg text-red-700">

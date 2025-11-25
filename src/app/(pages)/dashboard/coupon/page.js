@@ -359,7 +359,7 @@ export default function Coupon() {
             <div
               className={`text-[13px] flex items-center justify-center w-full `}
             >
-              ${minPurchase}
+              €{minPurchase}
             </div>
           );
         },

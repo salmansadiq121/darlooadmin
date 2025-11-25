@@ -494,10 +494,10 @@ export default function OrderDetail({ params }) {
                       <div className="flex flex-col gap-2">
                         <div className="flex items-center justify-between">
                           <strong className="text-[13px] sm:text-[14px] font-medium text-gray-700">
-                            Discount Coupon
+                            Discount
                           </strong>
                           <span className="text-[13px] text-gray-600 font-normal">
-                            0%
+                            €{parseFloat(orderDetail?.discount || 0).toFixed(2)}
                           </span>
                         </div>
                         {/*  */}
@@ -506,16 +506,16 @@ export default function OrderDetail({ params }) {
                             Shipping Charges
                           </strong>
                           <span className="text-[13px] text-gray-600 font-normal">
-                            €{orderDetail?.shippingFee}
+                            €{orderDetail?.shippingFee || 0}
                           </span>
                         </div>
                         {/*  */}
                         <div className="flex items-center justify-between">
                           <strong className="text-[13px] sm:text-[14px] font-medium text-gray-700">
-                            Totol Price
+                            Total Price
                           </strong>
                           <span className="text-[13px] text-gray-600 font-normal">
-                            €{orderDetail?.totalAmount}
+                            €{orderDetail?.totalAmount || 0}
                           </span>
                         </div>
                       </div>

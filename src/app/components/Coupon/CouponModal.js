@@ -244,6 +244,7 @@ export default function CouponModal({
                     className={`${Style.input} w-full`}
                     placeholder="e.g., SAVE20"
                     required
+                    maxLength={10}
                   />
                 </div>
 

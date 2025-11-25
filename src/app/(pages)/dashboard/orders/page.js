@@ -179,6 +179,7 @@ export default function Orders() {
           productNames.includes(lowercasedSearch) ||
           shippingFee.toString().toLowerCase().includes(lowercasedSearch) ||
           totalAmount.toString().toLowerCase().includes(lowercasedSearch) ||
+          (order.discount || 0).toString().toLowerCase().includes(lowercasedSearch) ||
           orderStatus.toLowerCase().includes(lowercasedSearch) ||
           paymentMethod.toLowerCase().includes(lowercasedSearch) ||
           paymentStatus.toLowerCase().includes(lowercasedSearch) ||
@@ -334,11 +335,12 @@ export default function Orders() {
       "Price",
       "color",
       "size",
+      "Discount",
+      "Shipping Fee",
       "Total Amount",
       "Payment Method",
       "Payment Status",
       "Order Status",
-      "Shipping Fee",
       "Shipping Address",
       "Tracking ID",
       "Shipping Carrier",
@@ -374,11 +376,12 @@ export default function Orders() {
               `"${p.price || 0}"`,
               `"${p.colors?.join(",") || "N/A"}"`,
               `"${p.sizes?.join(",") || "N/A"}"`,
-              `"$${order.totalAmount || "0"}"`,
+              `"€${order.discount || "0"}"`,
+              `"€${order.shippingFee || "0"}"`,
+              `"€${order.totalAmount || "0"}"`,
               `"${order.paymentMethod || "N/A"}"`,
               `"${order.paymentStatus || "N/A"}"`,
               `"${order.orderStatus || "N/A"}"`,
-              `"$${order.shippingFee || "0"}"`,
               shippingAddress,
               `"${order.trackingId || "N/A"}"`,
               `"${order.shippingCarrier || "N/A"}"`,
@@ -417,11 +420,12 @@ export default function Orders() {
               `"${price}"`,
               `"${color}"`,
               `"${size}"`,
-              `"$${order.totalAmount || "0"}"`,
+              `"€${order.discount || "0"}"`,
+              `"€${order.shippingFee || "0"}"`,
+              `"€${order.totalAmount || "0"}"`,
               `"${order.paymentMethod || "N/A"}"`,
               `"${order.paymentStatus || "N/A"}"`,
               `"${order.orderStatus || "N/A"}"`,
-              `"$${order.shippingFee || "0"}"`,
               shippingAddress,
               `"${order.trackingId || "N/A"}"`,
               `"${order.shippingCarrier || "N/A"}"`,
@@ -441,11 +445,12 @@ export default function Orders() {
             `"0"`,
             `"${"N/A"}"`,
             `"${"N/A"}"`,
-            `"$${order.totalAmount || "0"}"`,
+            `"€${order.discount || "0"}"`,
+            `"€${order.shippingFee || "0"}"`,
+            `"€${order.totalAmount || "0"}"`,
             `"${order.paymentMethod || "N/A"}"`,
             `"${order.paymentStatus || "N/A"}"`,
             `"${order.orderStatus || "N/A"}"`,
-            `"$${order.shippingFee || "0"}"`,
             shippingAddress,
             `"${order.trackingId || "N/A"}"`,
             `"${order.shippingCarrier || "N/A"}"`,
@@ -686,6 +691,29 @@ export default function Orders() {
           return (
             <div className="cursor-pointer text-[12px] flex items-center justify-start text-black w-full h-full">
               €{shippingFee}
+            </div>
+          );
+        },
+      },
+      {
+        accessorKey: "discount",
+        minSize: 70,
+        maxSize: 140,
+        size: 100,
+        grow: false,
+        Header: ({ column }) => {
+          return (
+            <div className=" flex flex-col gap-[2px]">
+              <span className="ml-1 cursor-pointer">DISCOUNT</span>
+            </div>
+          );
+        },
+        Cell: ({ cell, row }) => {
+          const discount = row.original.discount || 0;
+
+          return (
+            <div className="cursor-pointer text-[12px] flex items-center justify-start text-black w-full h-full">
+              €{parseFloat(discount).toFixed(2)}
             </div>
           );
         },
