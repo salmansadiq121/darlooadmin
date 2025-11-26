@@ -146,6 +146,40 @@ export default function OrderDetail({ params }) {
   //   }
   // }, [orderDetail]);
 
+  // Copy to clipboard function with fallback
+  const copyToClipboard = async (text) => {
+    if (!text) return false;
+
+    // Try modern clipboard API first
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      try {
+        await navigator.clipboard.writeText(text);
+        return true;
+      } catch (err) {
+        console.error("Clipboard API failed:", err);
+        // Fall through to fallback method
+      }
+    }
+
+    // Fallback method for older browsers or insecure contexts
+    try {
+      const textArea = document.createElement("textarea");
+      textArea.value = text;
+      textArea.style.position = "fixed";
+      textArea.style.left = "-999999px";
+      textArea.style.top = "-999999px";
+      document.body.appendChild(textArea);
+      textArea.focus();
+      textArea.select();
+      const successful = document.execCommand("copy");
+      document.body.removeChild(textArea);
+      return successful;
+    } catch (err) {
+      console.error("Fallback copy method failed:", err);
+      return false;
+    }
+  };
+
   const generatePDF = () => {
     const slipContent = slipRef.current;
     setLoadDownload(true);
@@ -435,15 +469,14 @@ export default function OrderDetail({ params }) {
                                 e.stopPropagation();
                                 const textToCopy = product?.product?.name || "";
                                 if (textToCopy) {
-                                  try {
-                                    await navigator.clipboard.writeText(
-                                      textToCopy
-                                    );
+                                  const success = await copyToClipboard(
+                                    textToCopy
+                                  );
+                                  if (success) {
                                     toast.success(
                                       "Product name copied to clipboard!"
                                     );
-                                  } catch (err) {
-                                    console.error("Failed to copy text: ", err);
+                                  } else {
                                     toast.error("Failed to copy product name");
                                   }
                                 }
