@@ -311,10 +311,11 @@ export default function Users() {
         },
         Cell: ({ cell, row }) => {
           const name = cell.getValue();
+          const lastName = row.original?.lastName || "";
 
           return (
             <div className="cursor-pointer text-[12px] flex items-center justify-start text-black w-full h-full">
-              {name}
+              {name} {lastName}
             </div>
           );
         },

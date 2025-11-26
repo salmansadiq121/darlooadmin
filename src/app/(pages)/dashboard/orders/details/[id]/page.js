@@ -428,8 +428,26 @@ export default function OrderDetail({ params }) {
                               </div>
                             </div>
                             <p
-                              className="text-[13px] sm:text-[14px] text-start text-gray-700 font-medium line-clamp-2"
-                              title={product?.product?.name}
+                              className="text-[13px] sm:text-[14px] text-start text-gray-700 font-medium line-clamp-2 cursor-pointer hover:text-gray-900 hover:underline transition-all duration-200"
+                              title={`${product?.product?.name} - Click to copy`}
+                              onClick={async (e) => {
+                                e.preventDefault();
+                                e.stopPropagation();
+                                const textToCopy = product?.product?.name || "";
+                                if (textToCopy) {
+                                  try {
+                                    await navigator.clipboard.writeText(
+                                      textToCopy
+                                    );
+                                    toast.success(
+                                      "Product name copied to clipboard!"
+                                    );
+                                  } catch (err) {
+                                    console.error("Failed to copy text: ", err);
+                                    toast.error("Failed to copy product name");
+                                  }
+                                }
+                              }}
                             >
                               {product?.product?.name}
                             </p>
@@ -530,10 +548,18 @@ export default function OrderDetail({ params }) {
                       <div className="flex flex-col gap-3">
                         <div className="flex items-start gap-4">
                           <strong className="text-[13px] sm:text-[14px] font-medium text-gray-700 w-[9rem]">
-                            Buyer Name
+                            First Name
                           </strong>
                           <span className="text-[12px] sm:text-[13px] text-gray-600 font-normal">
                             {orderDetail?.user?.name || "N/A"}
+                          </span>
+                        </div>
+                        <div className="flex items-start gap-4">
+                          <strong className="text-[13px] sm:text-[14px] font-medium text-gray-700 w-[9rem]">
+                            Last Name
+                          </strong>
+                          <span className="text-[12px] sm:text-[13px] text-gray-600 font-normal">
+                            {orderDetail?.user?.lastName || ""}
                           </span>
                         </div>
                         <div className="flex items-start gap-4">

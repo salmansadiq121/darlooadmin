@@ -113,7 +113,8 @@ const OrderSlip = ({ orderDetail, generatePDF }) => {
                 </div>
                 <div className="text-sm text-gray-600 space-y-1">
                   <p className="font-medium text-gray-900">
-                    {orderDetail?.user?.name || "N/A"}
+                    {orderDetail?.user?.name || "N/A"}{" "}
+                    {orderDetail?.user?.lastName || ""}
                   </p>
                   <p>{orderDetail?.user?.addressDetails?.address || "N/A"}</p>
                   <p>
@@ -178,12 +179,23 @@ const OrderSlip = ({ orderDetail, generatePDF }) => {
                   </div>
                   <div className="flex justify-between text-gray-600">
                     <span>Shipping</span>
-                    <span>{formatCurrency(parseFloat(orderDetail?.shippingFee || 0))}</span>
+                    <span>
+                      {formatCurrency(
+                        parseFloat(orderDetail?.shippingFee || 0)
+                      )}
+                    </span>
                   </div>
                   <div className="flex justify-between text-gray-600">
                     <span>Discount</span>
-                    <span className={parseFloat(orderDetail?.discount || 0) > 0 ? "text-green-600" : ""}>
-                      {parseFloat(orderDetail?.discount || 0) > 0 ? "-" : ""}{formatCurrency(parseFloat(orderDetail?.discount || 0))}
+                    <span
+                      className={
+                        parseFloat(orderDetail?.discount || 0) > 0
+                          ? "text-green-600"
+                          : ""
+                      }
+                    >
+                      {parseFloat(orderDetail?.discount || 0) > 0 ? "-" : ""}
+                      {formatCurrency(parseFloat(orderDetail?.discount || 0))}
                     </span>
                   </div>
                   <div className="border-t border-gray-200 my-2 pt-2 flex justify-between font-medium">
