@@ -32,6 +32,18 @@ export default function RootLayout({ children }) {
           httpEquiv="Cross-Origin-Opener-Policy"
           content="same-origin-allow-popups"
         />
+
+        {/* Owner Information */}
+        <meta name="owner" content="Salman Sadiq" />
+        <meta
+          name="github"
+          content="https://github.com/salmansadiq1015?tab=repositories"
+        />
+        <meta
+          name="linkedin"
+          content="https://www.linkedin.com/in/salman-sadiq-679296266/"
+        />
+
         <title>Darloo - Admin Panel</title>
       </head>
       <body

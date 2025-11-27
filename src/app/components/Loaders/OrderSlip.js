@@ -5,8 +5,10 @@ import { Check, MapPin, Package, Truck } from "lucide-react";
 
 const OrderSlip = ({ orderDetail, generatePDF }) => {
   const subtotal = orderDetail?.products?.reduce((acc, product) => {
-    const price = product?.product?.price || 0;
-    const quantity = product?.quantity || 0;
+    // Use the price from the order (product.price) or fallback to product.product.price
+    // Parse as float to ensure proper numeric calculation
+    const price = parseFloat(product?.price || product?.product?.price || 0);
+    const quantity = parseFloat(product?.quantity || 0);
     return acc + price * quantity;
   }, 0);
 
@@ -99,37 +101,88 @@ const OrderSlip = ({ orderDetail, generatePDF }) => {
           </div>
         </div>
 
+        {/* Payment Info and Shipping Address Section */}
+        <div className="grid md:grid-cols-2 gap-6 p-6 border-b border-gray-200">
+          {/* Payment Info */}
+          <div className="bg-white border border-gray-200 rounded-lg p-4 shadow-sm">
+            <h3 className="text-sm font-semibold text-gray-800 mb-3">
+              PAYMENT INFO
+            </h3>
+            <div className="space-y-2 text-sm">
+              <div className="flex justify-between">
+                <span className="text-gray-600">Method:</span>
+                <span className="font-medium text-gray-900">
+                  {orderDetail?.paymentMethod || "Online"}
+                </span>
+              </div>
+              <div className="flex flex-col items-center justify-center mt-4">
+                <span className="text-gray-600 mb-2">Status:</span>
+                <span
+                  className={`inline-flex items-center justify-center px-4 py-2 rounded-full text-sm font-medium ${
+                    orderDetail?.paymentStatus === "Completed" ||
+                    orderDetail?.paymentStatus === "Paid"
+                      ? "bg-green-500 text-white"
+                      : orderDetail?.paymentStatus === "Pending"
+                      ? "bg-yellow-500 text-white"
+                      : orderDetail?.paymentStatus === "Failed"
+                      ? "bg-red-500 text-white"
+                      : "bg-gray-500 text-white"
+                  }`}
+                >
+                  {orderDetail?.paymentStatus === "Completed"
+                    ? "Paid"
+                    : orderDetail?.paymentStatus || "Paid"}
+                </span>
+              </div>
+            </div>
+          </div>
+
+          {/* Shipping Address */}
+          <div className="bg-white border border-gray-200 rounded-lg p-4 shadow-sm">
+            <h3 className="text-sm font-semibold text-gray-800 mb-3">
+              SHIPPING ADDRESS
+            </h3>
+            <div className="text-sm text-gray-600 space-y-1">
+              <p className="font-medium text-gray-900">
+                {orderDetail?.user?.name || "N/A"}{" "}
+                {orderDetail?.user?.lastName || ""}
+              </p>
+              <p>{orderDetail?.user?.addressDetails?.address || "N/A"}</p>
+              <p>
+                {orderDetail?.user?.addressDetails?.city}
+                {orderDetail?.user?.addressDetails?.state &&
+                  `, ${orderDetail?.user?.addressDetails?.state}`}
+              </p>
+              <p>
+                {orderDetail?.user?.addressDetails?.country}{" "}
+                {orderDetail?.user?.addressDetails?.pincode}
+              </p>
+            </div>
+          </div>
+        </div>
+
+        {/* Total Section */}
+        <div className="px-6 py-4 bg-red-600 text-white">
+          <div className="flex justify-end">
+            <div className="text-right">
+              <div className="text-sm opacity-90 mb-1">SUBTOTAL</div>
+              <div className="text-2xl font-bold">
+                {formatCurrency(subtotal || 0)}
+              </div>
+            </div>
+            <div className="ml-8 text-right">
+              <div className="text-sm opacity-90 mb-1">TOTAL</div>
+              <div className="text-2xl font-bold">
+                {formatCurrency(orderDetail?.totalAmount || 0)}
+              </div>
+            </div>
+          </div>
+        </div>
+
         <div className="grid md:grid-cols-3 gap-6 p-6">
           {/* Customer Information */}
           <div className="md:col-span-1">
             <div className="space-y-6">
-              {/* Shipping Address */}
-              <div className="bg-white border border-gray-200 rounded-lg p-4 shadow-sm">
-                <div className="flex items-center mb-3">
-                  <MapPin className="h-5 w-5 text-gray-400 mr-2" />
-                  <h3 className="text-sm font-semibold text-gray-800">
-                    Shipping Address
-                  </h3>
-                </div>
-                <div className="text-sm text-gray-600 space-y-1">
-                  <p className="font-medium text-gray-900">
-                    {orderDetail?.user?.name || "N/A"}{" "}
-                    {orderDetail?.user?.lastName || ""}
-                  </p>
-                  <p>{orderDetail?.user?.addressDetails?.address || "N/A"}</p>
-                  <p>
-                    {orderDetail?.user?.addressDetails?.city}
-                    {orderDetail?.user?.addressDetails?.state &&
-                      `, ${orderDetail?.user?.addressDetails?.state}`}
-                  </p>
-                  <p>
-                    {orderDetail?.user?.addressDetails?.country}{" "}
-                    {orderDetail?.user?.addressDetails?.pincode}
-                  </p>
-                  <p className="pt-1">{orderDetail?.user?.number || "N/A"}</p>
-                </div>
-              </div>
-
               {/* Shipping Information */}
               <div className="bg-white border border-gray-200 rounded-lg p-4 shadow-sm">
                 <div className="flex items-center mb-3">
@@ -174,7 +227,7 @@ const OrderSlip = ({ orderDetail, generatePDF }) => {
                 </div>
                 <div className="text-sm space-y-2">
                   <div className="flex justify-between text-gray-600">
-                    <span>Subtotal</span>
+                    <span>Items Subtotal</span>
                     <span>{formatCurrency(subtotal || 0)}</span>
                   </div>
                   <div className="flex justify-between text-gray-600">

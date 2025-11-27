@@ -54,6 +54,27 @@ export default function Orders() {
   const [isShow, setIsShow] = useState(false);
   // Export
   const [showExportModal, setShowExportModal] = useState(false);
+  // Pagination & Filters
+  const [pagination, setPagination] = useState({
+    total: 0,
+    totalPages: 0,
+    currentPage: 1,
+    pageSize: 20,
+    hasNextPage: false,
+    hasPrevPage: false,
+  });
+  const [counts, setCounts] = useState({
+    All: 0,
+    Pending: 0,
+    Processing: 0,
+    Shipped: 0,
+    Delivered: 0,
+    Cancelled: 0,
+    Returned: 0,
+  });
+  const [sortBy, setSortBy] = useState("createdAt_desc");
+  const [paymentStatusFilter, setPaymentStatusFilter] = useState("");
+  const [paymentMethodFilter, setPaymentMethodFilter] = useState("");
 
   console.log("rowSelection:", Object.keys(rowSelection));
 
@@ -67,21 +88,48 @@ export default function Orders() {
   }, []);
 
   // <---------Fetch All Orders-------->
-  const fetchOrders = async () => {
-    if (isInitialRender.current) {
+  const fetchOrders = async (page = currentPage, reset = false) => {
+    if (isInitialRender.current || reset) {
       setIsloading(true);
     }
     try {
+      const params = new URLSearchParams({
+        page: page.toString(),
+        limit: itemsPerPage.toString(),
+        sortBy,
+        ...(activeTab !== "All" && { orderStatus: activeTab }),
+        ...(paymentStatusFilter && { paymentStatus: paymentStatusFilter }),
+        ...(paymentMethodFilter && { paymentMethod: paymentMethodFilter }),
+        ...(searchQuery && { search: searchQuery }),
+      });
+
       const { data } = await axios.get(
-        `${process.env.NEXT_PUBLIC_SERVER_URI}/api/v1/order/all/orders`
+        `${
+          process.env.NEXT_PUBLIC_SERVER_URI
+        }/api/v1/order/all/orders?${params.toString()}`
       );
       if (data) {
         setOrderData(data.orders);
+        setFilterOrders(data.orders);
+        if (data.pagination) {
+          setPagination(data.pagination);
+          setCurrentPage(data.pagination.currentPage);
+        }
+        if (data.counts) {
+          setCounts(data.counts);
+          setPendingOrder(data.counts.Pending || 0);
+          setProcessingOrder(data.counts.Processing || 0);
+          setShippedorder(data.counts.Shipped || 0);
+          setDeliveredorder(data.counts.Delivered || 0);
+          setCancelledOrder(data.counts.Cancelled || 0);
+          setRefundOrder(data.counts.Returned || 0);
+        }
       }
     } catch (error) {
       console.log(error);
+      toast.error("Failed to fetch orders");
     } finally {
-      if (isInitialRender.current) {
+      if (isInitialRender.current || reset) {
         setIsloading(false);
         isInitialRender.current = false;
       }
@@ -89,111 +137,28 @@ export default function Orders() {
   };
 
   useEffect(() => {
-    fetchOrders();
+    fetchOrders(1, true);
     // eslint-disable-next-line
-  }, []);
+  }, [activeTab, sortBy, paymentStatusFilter, paymentMethodFilter]);
 
   useEffect(() => {
-    setFilterOrders(orderData);
-  }, [orderData]);
-
-  // Get Product Length(Enable & Disable)
-  useEffect(() => {
-    const pendingCount = orderData.filter(
-      (order) => order.orderStatus === "Pending"
-    ).length;
-    const processingCount = orderData.filter(
-      (order) => order.orderStatus === "Processing"
-    ).length;
-    const shippedCount = orderData.filter(
-      (order) => order.orderStatus === "Shipped"
-    ).length;
-    const deliveredCount = orderData.filter(
-      (order) => order.orderStatus === "Delivered"
-    ).length;
-    const cancelCount = orderData.filter(
-      (order) => order.orderStatus === "Cancelled"
-    ).length;
-    const returnCount = orderData.filter(
-      (order) => order.orderStatus === "Returned"
-    ).length;
-
-    setPendingOrder(pendingCount);
-    setProcessingOrder(processingCount);
-    setShippedorder(shippedCount);
-    setDeliveredorder(deliveredCount);
-    setCancelledOrder(cancelCount);
-    setRefundOrder(returnCount);
-  }, [orderData]);
+    const debounceTimer = setTimeout(() => {
+      if (searchQuery !== undefined) {
+        fetchOrders(1, true);
+      }
+    }, 500);
+    return () => clearTimeout(debounceTimer);
+    // eslint-disable-next-line
+  }, [searchQuery]);
 
   //----------- Handle search--------->
   const handleSearch = (value) => {
     setSearchQuery(value);
-    filterData(value, activeTab);
-  };
-
-  // -------------Handle filtering by tabs and search---------------
-  const filterData = (search = searchQuery, statusFilter = activeTab) => {
-    let filtered = orderData;
-
-    if (statusFilter === "All" && !search) {
-      setFilterOrders(orderData);
-      return;
-    }
-
-    if (statusFilter === "Pending") {
-      filtered = filtered.filter((order) => order.orderStatus === "Pending");
-    } else if (statusFilter === "Processing") {
-      filtered = filtered.filter((order) => order.orderStatus === "Processing");
-    } else if (statusFilter === "Shipped") {
-      filtered = filtered.filter((order) => order.orderStatus === "Shipped");
-    } else if (statusFilter === "Delivered") {
-      filtered = filtered.filter((order) => order.orderStatus === "Delivered");
-    } else if (statusFilter === "Cancelled") {
-      filtered = filtered.filter((order) => order.orderStatus === "Cancelled");
-    } else if (statusFilter === "Returned") {
-      filtered = filtered.filter((order) => order.orderStatus === "Returned");
-    }
-
-    if (search) {
-      const lowercasedSearch = search.toLowerCase();
-      filtered = filtered.filter((order) => {
-        const {
-          _id,
-          products = [],
-          shippingFee = "",
-          totalAmount = "",
-          orderStatus = "",
-          paymentMethod = "",
-          paymentStatus = "",
-          createdAt = "",
-        } = order;
-
-        const productNames = products
-          .map((product) => product.product?.name || "")
-          .join(" ")
-          .toLowerCase();
-
-        return (
-          _id.toLowerCase().includes(lowercasedSearch) ||
-          productNames.includes(lowercasedSearch) ||
-          shippingFee.toString().toLowerCase().includes(lowercasedSearch) ||
-          totalAmount.toString().toLowerCase().includes(lowercasedSearch) ||
-          (order.discount || 0).toString().toLowerCase().includes(lowercasedSearch) ||
-          orderStatus.toLowerCase().includes(lowercasedSearch) ||
-          paymentMethod.toLowerCase().includes(lowercasedSearch) ||
-          paymentStatus.toLowerCase().includes(lowercasedSearch) ||
-          createdAt.toLowerCase().includes(lowercasedSearch)
-        );
-      });
-    }
-
-    setFilterOrders(filtered);
   };
 
   const handleTabClick = (tab) => {
     setActiveTab(tab);
-    filterData(searchQuery, tab);
+    setCurrentPage(1);
   };
   // -----------------handle Delete --------------->
   const handleDeleteConfirmation = (orderId) => {
@@ -262,22 +227,17 @@ export default function Orders() {
       toast.error(error?.response?.data?.message || "An error occurred.");
     }
   };
-  // ----------------Pegination----------->
-  const totalPages = Math.ceil(filterOrders.length / itemsPerPage);
-
+  // ----------------Pagination----------->
   const handlePageChange = (direction) => {
-    if (direction === "next" && currentPage < totalPages) {
-      setCurrentPage((prev) => prev + 1);
-    } else if (direction === "prev" && currentPage > 1) {
-      setCurrentPage((prev) => prev - 1);
+    if (direction === "next" && pagination.hasNextPage) {
+      fetchOrders(currentPage + 1);
+    } else if (direction === "prev" && pagination.hasPrevPage) {
+      fetchOrders(currentPage - 1);
     }
   };
 
-  // Get the current page data
-  const paginatedData = filterOrders.slice(
-    (currentPage - 1) * itemsPerPage,
-    currentPage * itemsPerPage
-  );
+  // Get the current page data (already paginated from backend)
+  const paginatedData = filterOrders;
 
   // -----------Delete All Order------------
   const handleDeleteConfirmationOrder = () => {
@@ -342,6 +302,10 @@ export default function Orders() {
       "Payment Status",
       "Order Status",
       "Shipping Address",
+      "Country",
+      "City",
+      "State",
+      "Postcode",
       "Tracking ID",
       "Shipping Carrier",
       "Order Date",
@@ -350,16 +314,25 @@ export default function Orders() {
     const rows = [];
 
     data.forEach((order) => {
+      const fullName =
+        `${order.user?.name || ""} ${order.user?.lastName || ""}`.trim() ||
+        "N/A";
+
       const base = [
         `"${order._id || ""}"`,
-        `"${order.user?.name || "N/A"}"`,
+        `"${fullName}"`,
         `"${order.user?.email || "N/A"}"`,
         `"${order.user?.number || "N/A"}"`,
       ];
 
       const shippingAddress = order.shippingAddress
-        ? `"${order.shippingAddress.address}, ${order.shippingAddress.city}, ${order.shippingAddress.state} ${order.shippingAddress.postalCode}, ${order.shippingAddress.country}"`
+        ? `"${order.shippingAddress.address} "`
         : `"N/A"`;
+
+      const country = order.shippingAddress?.country || "N/A";
+      const city = order.shippingAddress?.city || "N/A";
+      const state = order.shippingAddress?.state || "N/A";
+      const postcode = order.shippingAddress?.postalCode || "N/A";
 
       const dateFormatted = order.createdAt
         ? `"${format(new Date(order.createdAt), "yyyy-MM-dd HH:mm:ss")}"`
@@ -383,6 +356,10 @@ export default function Orders() {
               `"${order.paymentStatus || "N/A"}"`,
               `"${order.orderStatus || "N/A"}"`,
               shippingAddress,
+              `"${country}"`,
+              `"${city}"`,
+              `"${state}"`,
+              `"${postcode}"`,
               `"${order.trackingId || "N/A"}"`,
               `"${order.shippingCarrier || "N/A"}"`,
               dateFormatted,
@@ -391,7 +368,7 @@ export default function Orders() {
         });
       }
 
-      // 🔹 CASE 2: Combined product string like “A (Qty: 1, Price: $20); B (Qty: 1, Price: $25)”
+      // 🔹 CASE 2: Combined product string like "A (Qty: 1, Price: $20); B (Qty: 1, Price: $25)"
       else if (
         typeof order.products === "string" &&
         order.products.includes(";")
@@ -409,8 +386,8 @@ export default function Orders() {
           const name = match ? match[1].trim() : item;
           const qty = match ? match[2] : "1";
           const price = match ? match[3] : "0";
-          const color = p.colors?.join(",") || "N/A";
-          const size = p.sizes?.join(",") || "N/A";
+          const color = "N/A";
+          const size = "N/A";
 
           rows.push(
             [
@@ -427,6 +404,10 @@ export default function Orders() {
               `"${order.paymentStatus || "N/A"}"`,
               `"${order.orderStatus || "N/A"}"`,
               shippingAddress,
+              `"${country}"`,
+              `"${city}"`,
+              `"${state}"`,
+              `"${postcode}"`,
               `"${order.trackingId || "N/A"}"`,
               `"${order.shippingCarrier || "N/A"}"`,
               dateFormatted,
@@ -452,6 +433,10 @@ export default function Orders() {
             `"${order.paymentStatus || "N/A"}"`,
             `"${order.orderStatus || "N/A"}"`,
             shippingAddress,
+            `"${country}"`,
+            `"${city}"`,
+            `"${state}"`,
+            `"${postcode}"`,
             `"${order.trackingId || "N/A"}"`,
             `"${order.shippingCarrier || "N/A"}"`,
             dateFormatted,
@@ -865,7 +850,7 @@ export default function Orders() {
           );
         },
         Cell: ({ cell, row }) => {
-          const orderStatus = row.original.orderStatus;
+          const orderStatus = row.original.orderStatus || "Pending";
           const [orderStat, setOrderStat] = useState(orderStatus);
           const [showUpdate, setShowUpdate] = useState(false);
           const status = [
@@ -884,6 +869,8 @@ export default function Orders() {
                 "border-orange-600 bg-orange-200 hover:bg-orange-300 text-orange-900",
               Processing:
                 "border-blue-600 bg-blue-200 hover:bg-blue-300 text-blue-900",
+              Packing:
+                "border-purple-600 bg-purple-200 hover:bg-purple-300 text-purple-900",
               Shipped:
                 "border-yellow-600 bg-yellow-200 hover:bg-yellow-300 text-yellow-900",
               Delivered:
@@ -906,6 +893,11 @@ export default function Orders() {
             setShowUpdate(false);
           };
 
+          // Update local state when orderStatus changes
+          React.useEffect(() => {
+            setOrderStat(orderStatus);
+          }, [orderStatus]);
+
           return (
             <div className="flex items-center justify-start cursor-pointer text-[12px] text-black w-full h-full">
               {!showUpdate ? (
@@ -915,11 +907,11 @@ export default function Orders() {
                   )}`}
                   onDoubleClick={() => setShowUpdate(true)}
                 >
-                  {orderStatus}
+                  {orderStatus || "N/A"}
                 </button>
               ) : (
                 <select
-                  value={orderStat}
+                  value={orderStat || ""}
                   onChange={(e) =>
                     updateStatus(row.original._id, e.target.value)
                   }
@@ -958,7 +950,7 @@ export default function Orders() {
           );
         },
         Cell: ({ cell, row }) => {
-          const paymentStatus = row.original.paymentStatus;
+          const paymentStatus = row.original.paymentStatus || "Pending";
           const [paymentStat, setPaymentStat] = useState(paymentStatus);
           const [showUpdate, setShowUpdate] = useState(false);
           const status = ["Pending", "Completed", "Failed", "Refunded"];
@@ -987,10 +979,15 @@ export default function Orders() {
                   "border-gray-600 bg-gray-200 text-gray-900"
                 }`}
               >
-                {status}
+                {status || "N/A"}
               </button>
             );
           };
+
+          // Update local state when paymentStatus changes
+          React.useEffect(() => {
+            setPaymentStat(paymentStatus);
+          }, [paymentStatus]);
 
           return (
             <div className="flex items-center justify-start cursor-pointer text-[12px] text-black w-full h-full">
@@ -1003,7 +1000,7 @@ export default function Orders() {
                 </div>
               ) : (
                 <select
-                  value={paymentStat}
+                  value={paymentStat || ""}
                   onChange={(e) =>
                     updateStatus(row.original._id, e.target.value)
                   }
@@ -1150,77 +1147,139 @@ export default function Orders() {
           <Breadcrumb path={currentUrl} />
           <div className="flex flex-col gap-5 mt-4">
             {/* Tabs */}
-            <div className="w-full overflow-x-scroll scroll-smooth shidden px-4 rounded-md bg-white flex items-center gap-4">
+            <div className="w-full overflow-x-scroll scroll-smooth shidden px-4 py-2 rounded-lg bg-gradient-to-r from-white to-gray-50 shadow-sm border border-gray-100 flex items-center gap-2">
               <button
-                className={`border-b-[3px] flex items-center gap-1 py-3 text-[14px] px-2 font-medium cursor-pointer ${
+                className={`relative flex items-center gap-2 py-2.5 px-4 text-[13px] font-semibold rounded-lg cursor-pointer transition-all duration-300 ${
                   activeTab === "All"
-                    ? " border-red-600 text-red-600"
-                    : "text-gray-700 hover:text-gray-800 border-white"
+                    ? "bg-red-600 text-white shadow-md shadow-red-200 scale-105"
+                    : "text-gray-700 hover:bg-gray-100 hover:text-gray-900"
                 }`}
                 onClick={() => handleTabClick("All")}
               >
-                All <span>({orderData.length})</span>
+                All
+                <span
+                  className={`px-2 py-0.5 rounded-full text-[11px] font-bold ${
+                    activeTab === "All"
+                      ? "bg-white text-red-600"
+                      : "bg-gray-200 text-gray-700"
+                  }`}
+                >
+                  {counts.All || 0}
+                </span>
               </button>
               <button
-                className={` border-b-[3px] flex items-center gap-1 py-3 text-[13px] px-2 font-medium cursor-pointer ${
+                className={`relative flex items-center gap-2 py-2.5 px-4 text-[13px] font-semibold rounded-lg cursor-pointer transition-all duration-300 ${
                   activeTab === "Pending"
-                    ? "border-b-[3px] border-red-600 text-red-600"
-                    : "text-gray-700 hover:text-gray-800 border-white"
+                    ? "bg-orange-500 text-white shadow-md shadow-orange-200 scale-105"
+                    : "text-gray-700 hover:bg-gray-100 hover:text-gray-900"
                 }`}
                 onClick={() => handleTabClick("Pending")}
               >
-                Pending <span>({pendingOrder})</span>
+                Pending
+                <span
+                  className={`px-2 py-0.5 rounded-full text-[11px] font-bold ${
+                    activeTab === "Pending"
+                      ? "bg-white text-orange-600"
+                      : "bg-gray-200 text-gray-700"
+                  }`}
+                >
+                  {counts.Pending || 0}
+                </span>
               </button>
               <button
-                className={` border-b-[3px] flex items-center gap-1 py-3 text-[13px] px-2 font-medium cursor-pointer ${
+                className={`relative flex items-center gap-2 py-2.5 px-4 text-[13px] font-semibold rounded-lg cursor-pointer transition-all duration-300 ${
                   activeTab === "Processing"
-                    ? "border-b-[3px] border-red-600 text-red-600"
-                    : "text-gray-700 hover:text-gray-800 border-white"
+                    ? "bg-blue-500 text-white shadow-md shadow-blue-200 scale-105"
+                    : "text-gray-700 hover:bg-gray-100 hover:text-gray-900"
                 }`}
                 onClick={() => handleTabClick("Processing")}
               >
-                Processing <span>({processingOrder})</span>
+                Processing
+                <span
+                  className={`px-2 py-0.5 rounded-full text-[11px] font-bold ${
+                    activeTab === "Processing"
+                      ? "bg-white text-blue-600"
+                      : "bg-gray-200 text-gray-700"
+                  }`}
+                >
+                  {counts.Processing || 0}
+                </span>
               </button>
               <button
-                className={` border-b-[3px] flex items-center gap-1 py-3 text-[13px] px-2 font-medium cursor-pointer ${
+                className={`relative flex items-center gap-2 py-2.5 px-4 text-[13px] font-semibold rounded-lg cursor-pointer transition-all duration-300 ${
                   activeTab === "Shipped"
-                    ? "border-b-[3px] border-red-600 text-red-600"
-                    : "text-gray-700 hover:text-gray-800 border-white"
+                    ? "bg-yellow-500 text-white shadow-md shadow-yellow-200 scale-105"
+                    : "text-gray-700 hover:bg-gray-100 hover:text-gray-900"
                 }`}
                 onClick={() => handleTabClick("Shipped")}
               >
-                Shipped <span>({shippedorder})</span>
+                Shipped
+                <span
+                  className={`px-2 py-0.5 rounded-full text-[11px] font-bold ${
+                    activeTab === "Shipped"
+                      ? "bg-white text-yellow-600"
+                      : "bg-gray-200 text-gray-700"
+                  }`}
+                >
+                  {counts.Shipped || 0}
+                </span>
               </button>
               <button
-                className={`border-b-[3px] flex items-center gap-1 py-3 text-[13px] px-2 font-medium cursor-pointer ${
+                className={`relative flex items-center gap-2 py-2.5 px-4 text-[13px] font-semibold rounded-lg cursor-pointer transition-all duration-300 ${
                   activeTab === "Delivered"
-                    ? "border-b-[3px] border-red-600 text-red-600"
-                    : "text-gray-700 hover:text-gray-800 border-white"
+                    ? "bg-green-500 text-white shadow-md shadow-green-200 scale-105"
+                    : "text-gray-700 hover:bg-gray-100 hover:text-gray-900"
                 }`}
                 onClick={() => handleTabClick("Delivered")}
               >
-                Delivered <span>({deliveredorder})</span>
+                Delivered
+                <span
+                  className={`px-2 py-0.5 rounded-full text-[11px] font-bold ${
+                    activeTab === "Delivered"
+                      ? "bg-white text-green-600"
+                      : "bg-gray-200 text-gray-700"
+                  }`}
+                >
+                  {counts.Delivered || 0}
+                </span>
               </button>
-
               <button
-                className={` border-b-[3px] flex items-center gap-1 py-3 text-[13px] px-2 font-medium cursor-pointer ${
+                className={`relative flex items-center gap-2 py-2.5 px-4 text-[13px] font-semibold rounded-lg cursor-pointer transition-all duration-300 ${
                   activeTab === "Cancelled"
-                    ? "border-b-[3px] border-red-600 text-red-600"
-                    : "text-gray-700 hover:text-gray-800 border-white"
+                    ? "bg-pink-500 text-white shadow-md shadow-pink-200 scale-105"
+                    : "text-gray-700 hover:bg-gray-100 hover:text-gray-900"
                 }`}
                 onClick={() => handleTabClick("Cancelled")}
               >
-                Cancelled <span>({cancelledOrder})</span>
+                Cancelled
+                <span
+                  className={`px-2 py-0.5 rounded-full text-[11px] font-bold ${
+                    activeTab === "Cancelled"
+                      ? "bg-white text-pink-600"
+                      : "bg-gray-200 text-gray-700"
+                  }`}
+                >
+                  {counts.Cancelled || 0}
+                </span>
               </button>
               <button
-                className={` border-b-[3px] flex items-center gap-1 py-3 text-[13px] px-2 font-medium cursor-pointer ${
+                className={`relative flex items-center gap-2 py-2.5 px-4 text-[13px] font-semibold rounded-lg cursor-pointer transition-all duration-300 ${
                   activeTab === "Returned"
-                    ? "border-b-[3px] border-red-600 text-red-600"
-                    : "text-gray-700 hover:text-gray-800 border-white"
+                    ? "bg-red-500 text-white shadow-md shadow-red-200 scale-105"
+                    : "text-gray-700 hover:bg-gray-100 hover:text-gray-900"
                 }`}
                 onClick={() => handleTabClick("Returned")}
               >
-                Returned <span>({refundOrder})</span>
+                Returned
+                <span
+                  className={`px-2 py-0.5 rounded-full text-[11px] font-bold ${
+                    activeTab === "Returned"
+                      ? "bg-white text-red-600"
+                      : "bg-gray-200 text-gray-700"
+                  }`}
+                >
+                  {counts.Returned || 0}
+                </span>
               </button>
             </div>
             {/* Actions */}
@@ -1228,6 +1287,53 @@ export default function Orders() {
               <h1 className="text-2xl font-sans font-semibold text-black">
                 Latest Orders
               </h1>
+              <div className="flex items-center gap-3 flex-wrap">
+                {/* Sort By */}
+                <select
+                  value={sortBy}
+                  onChange={(e) => {
+                    setSortBy(e.target.value);
+                    setCurrentPage(1);
+                  }}
+                  className="text-[13px] px-3 py-2 rounded-lg border border-gray-300 focus:border-red-600 focus:outline-none focus:ring-2 focus:ring-red-200 transition-all duration-200 bg-white"
+                >
+                  <option value="createdAt_desc">Newest First</option>
+                  <option value="createdAt_asc">Oldest First</option>
+                  <option value="totalAmount_desc">Amount: High to Low</option>
+                  <option value="totalAmount_asc">Amount: Low to High</option>
+                  <option value="orderNumber_desc">Order #: High to Low</option>
+                  <option value="orderNumber_asc">Order #: Low to High</option>
+                </select>
+                {/* Payment Status Filter */}
+                <select
+                  value={paymentStatusFilter}
+                  onChange={(e) => {
+                    setPaymentStatusFilter(e.target.value);
+                    setCurrentPage(1);
+                  }}
+                  className="text-[13px] px-3 py-2 rounded-lg border border-gray-300 focus:border-red-600 focus:outline-none focus:ring-2 focus:ring-red-200 transition-all duration-200 bg-white"
+                >
+                  <option value="">All Payment Status</option>
+                  <option value="Pending">Pending</option>
+                  <option value="Completed">Completed</option>
+                  <option value="Failed">Failed</option>
+                  <option value="Refunded">Refunded</option>
+                </select>
+                {/* Payment Method Filter */}
+                <select
+                  value={paymentMethodFilter}
+                  onChange={(e) => {
+                    setPaymentMethodFilter(e.target.value);
+                    setCurrentPage(1);
+                  }}
+                  className="text-[13px] px-3 py-2 rounded-lg border border-gray-300 focus:border-red-600 focus:outline-none focus:ring-2 focus:ring-red-200 transition-all duration-200 bg-white"
+                >
+                  <option value="">All Payment Methods</option>
+                  <option value="Credit Card">Credit Card</option>
+                  <option value="PayPal">PayPal</option>
+                  <option value="Bank Transfer">Bank Transfer</option>
+                </select>
+              </div>
               <div className="flex items-center gap-4">
                 <button
                   onClick={() => setShowExportModal(true)}
@@ -1258,7 +1364,7 @@ export default function Orders() {
           </div>
           {/*  */}
 
-          <div className=" relative overflow-hidden w-full h-[93%] py-3 sm:py-4 bg-white rounded-md shadow  px-2 sm:px-4 mt-4  ">
+          <div className="relative overflow-hidden w-full h-[93%] py-4 sm:py-5 bg-white rounded-xl shadow-lg border border-gray-100 px-3 sm:px-5 mt-4 transition-all duration-300 hover:shadow-xl">
             <div className="flex items-center justify-between flex-wrap gap-3">
               <div className="relative">
                 <span className="absolute top-2 left-[.4rem] z-10">
@@ -1268,30 +1374,31 @@ export default function Orders() {
                   type="search"
                   value={searchQuery}
                   onChange={(e) => handleSearch(e.target.value)}
-                  placeholder="Search"
-                  className="w-[17rem] h-[2.2rem] rounded-md border border-gray-400 focus:border-red-600 outline-none px-2 pl-[1.8rem] text-[12px]"
+                  placeholder="Search orders, customers, products..."
+                  className="w-[17rem] h-[2.5rem] rounded-lg border-2 border-gray-300 focus:border-red-500 focus:ring-2 focus:ring-red-200 outline-none px-4 pl-[2.5rem] text-[13px] transition-all duration-200 shadow-sm hover:shadow-md"
                 />
               </div>
-              {/* Pegination */}
+              {/* Pagination */}
               <div className="flex items-center gap-3 justify-end sm:justify-normal w-full sm:w-fit">
-                <span>
-                  {currentPage} of {totalPages}
+                <span className="text-sm text-gray-600 font-medium">
+                  Page {pagination.currentPage} of {pagination.totalPages} (
+                  {pagination.total} total)
                 </span>
                 <div className="flex items-center gap-2">
                   <CiCircleChevLeft
                     onClick={() => handlePageChange("prev")}
-                    className={`text-[27px] text-green-500 hover:text-green-600 ${
-                      currentPage === 1
-                        ? "opacity-50 cursor-not-allowed"
-                        : "cursor-pointer"
+                    className={`text-[27px] transition-all duration-200 ${
+                      !pagination.hasPrevPage
+                        ? "opacity-50 cursor-not-allowed text-gray-400"
+                        : "text-green-500 hover:text-green-600 cursor-pointer hover:scale-110"
                     }`}
                   />
                   <CiCircleChevRight
                     onClick={() => handlePageChange("next")}
-                    className={`text-[27px] text-green-500 hover:text-green-600 ${
-                      currentPage === totalPages
-                        ? "opacity-50 cursor-not-allowed"
-                        : "cursor-pointer"
+                    className={`text-[27px] transition-all duration-200 ${
+                      !pagination.hasNextPage
+                        ? "opacity-50 cursor-not-allowed text-gray-400"
+                        : "text-green-500 hover:text-green-600 cursor-pointer hover:scale-110"
                     }`}
                   />
                 </div>
