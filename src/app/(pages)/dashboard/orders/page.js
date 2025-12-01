@@ -344,7 +344,9 @@ export default function Orders() {
           rows.push(
             [
               ...base,
-              `"${p.product?.name || "N/A"}"`,
+              `"${p.product?.name || "N/A"}" + ${
+                p.colors?.join(",") || "N/A"
+              } + ${p.sizes?.join(",") || "N/A"}`,
               `"${p.quantity || 0}"`,
               `"${p.price || 0}"`,
               `"${p.colors?.join(",") || "N/A"}"`,
