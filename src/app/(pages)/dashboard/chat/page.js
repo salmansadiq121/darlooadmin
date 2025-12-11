@@ -33,11 +33,10 @@ import { RiDoorClosedLine } from "react-icons/ri";
 import Swal from "sweetalert2";
 
 import socketIO from "socket.io-client";
-const ENDPOINT = process.env.NEXT_PUBLIC_SOCKET_SERVER_URI || "";
-const socketId = socketIO(ENDPOINT, { transports: ["websocket"] });
 
 export default function Chat() {
   const { auth } = useAuth();
+  const [socketId, setSocketId] = useState(null);
   const [show, setShow] = useState(false);
   const [users, setUsers] = useState([]);
   const [chats, setChats] = useState([]);
@@ -66,20 +65,62 @@ export default function Chat() {
     setMessage((prevContent) => prevContent + event.emoji);
   };
 
-  // Socket.io
+  // Initialize Socket Connection
   useEffect(() => {
-    socketId.on("typing", (data) => {
-      setIsTyping(true);
+    const ENDPOINT = process.env.NEXT_PUBLIC_SOCKET_SERVER_URI || "";
+
+    if (!auth?.user?._id || !ENDPOINT) {
+      console.warn("Socket: Missing user ID or endpoint");
+      return;
+    }
+
+    const socket = socketIO(ENDPOINT, {
+      transports: ["websocket", "polling"],
+      reconnection: true,
+      reconnectionDelay: 1000,
+      reconnectionDelayMax: 5000,
+      reconnectionAttempts: 5,
+      query: { userID: auth.user._id },
     });
 
-    socketId.on("stopTyping", (data) => {
-      setIsTyping(false);
+    socket.on("connect", () => {
+      console.log("Socket connected!", socket.id);
     });
+
+    socket.on("disconnect", (reason) => {
+      console.log("Socket disconnected:", reason);
+    });
+
+    socket.on("connect_error", (error) => {
+      console.error("Socket connection error:", error);
+    });
+
+    setSocketId(socket);
+
+    return () => {
+      socket.disconnect();
+    };
+  }, [auth?.user?._id]);
+
+  // Socket.io event listeners
+  useEffect(() => {
+    if (!socketId) return;
+
+    const handleTyping = () => {
+      setIsTyping(true);
+    };
+
+    const handleStopTyping = () => {
+      setIsTyping(false);
+    };
+
+    socketId.on("typing", handleTyping);
+    socketId.on("stopTyping", handleStopTyping);
 
     // Cleanup on component unmount
     return () => {
-      socketId.off("typing");
-      socketId.off("stopTyping");
+      socketId.off("typing", handleTyping);
+      socketId.off("stopTyping", handleStopTyping);
     };
   }, [socketId]);
 
@@ -148,7 +189,9 @@ export default function Chat() {
       );
       setChatMessages(data.messages);
 
-      socketId.emit("join chat", selectedChat._id);
+      if (socketId && selectedChat?._id) {
+        socketId.emit("join chat", selectedChat._id);
+      }
     } catch (error) {
       console.log(error);
       toast.error(error?.response?.data?.message);
@@ -166,9 +209,20 @@ export default function Chat() {
     // eslint-disable-next-line
   }, [selectedChat]);
 
+  // Join chat room when socket and chat are available
   useEffect(() => {
+    if (socketId && selectedChat?._id) {
+      socketId.emit("join chat", selectedChat._id);
+    }
+  }, [socketId, selectedChat?._id]);
+
+  useEffect(() => {
+    if (!socketId) return;
+
     const handleFetchMessages = (data) => {
-      fetchMessages();
+      if (data?.chatId && data.chatId === selectedChat?._id) {
+        fetchMessages();
+      }
     };
 
     socketId.on("fetchMessages", handleFetchMessages);
@@ -177,7 +231,7 @@ export default function Chat() {
       socketId.off("fetchMessages", handleFetchMessages);
     };
     // eslint-disable-next-line
-  }, [selectedChat]);
+  }, [socketId, selectedChat?._id]);
 
   // Get Chat from Local Storage
   useEffect(() => {
@@ -252,12 +306,14 @@ export default function Chat() {
 
       if (data) {
         fetchMessages();
-        socketId.emit("NewMessageAdded", {
-          content: message || "👍",
-          contentType: type,
-          chatId: selectedChat._id,
-          messageId: data._id,
-        });
+        if (socketId) {
+          socketId.emit("NewMessageAdded", {
+            content: message || "👍",
+            contentType: type,
+            chatId: selectedChat._id,
+            messageId: data._id,
+          });
+        }
         setMessage("");
       }
     } catch (error) {
@@ -279,12 +335,14 @@ export default function Chat() {
 
       if (data) {
         fetchMessages();
-        socketId.emit("NewMessageAdded", {
-          content: "👍",
-          contentType: "like",
-          chatId: selectedChat._id,
-          messageId: data._id,
-        });
+        if (socketId) {
+          socketId.emit("NewMessageAdded", {
+            content: "👍",
+            contentType: "like",
+            chatId: selectedChat._id,
+            messageId: data._id,
+          });
+        }
         setMessage("");
       }
     } catch (error) {
@@ -308,12 +366,14 @@ export default function Chat() {
 
       if (data) {
         fetchMessages();
-        socketId.emit("NewMessageAdded", {
-          content: content,
-          contentType: mediaType,
-          chatId: selectedChat._id,
-          messageId: data._id,
-        });
+        if (socketId) {
+          socketId.emit("NewMessageAdded", {
+            content: content,
+            contentType: mediaType,
+            chatId: selectedChat._id,
+            messageId: data._id,
+          });
+        }
         setMessage("");
         setLoading(false);
       }
@@ -330,7 +390,7 @@ export default function Chat() {
     setMessage(e.target.value);
 
     // Typing Indicator login
-    if (!typing) {
+    if (!typing && socketId && selectedChat?._id) {
       setTyping(true);
       socketId.emit("typing", selectedChat._id);
     }
@@ -339,7 +399,7 @@ export default function Chat() {
     setTimeout(() => {
       var timeNow = new Date().getTime();
       var timeDiff = timeNow - lastTypingTime;
-      if (timeDiff >= timerLenght && typing) {
+      if (timeDiff >= timerLenght && typing && socketId && selectedChat?._id) {
         socketId.emit("stopTyping", selectedChat._id);
         setTyping(false);
       }
