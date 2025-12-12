@@ -30,7 +30,7 @@ export const rolePermissions = {
   agent: ["orders"],
 };
 
-export function middleware(req) {
+export function proxy(req) {
   //   const token = req.cookies.get("auth_token");
   const url = req.nextUrl.clone();
   const pathname = url.pathname.split("/")[2];
