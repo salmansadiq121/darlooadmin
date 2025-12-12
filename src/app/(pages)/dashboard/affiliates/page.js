@@ -14,7 +14,7 @@ import axios from "axios";
 import toast from "react-hot-toast";
 import { ImSpinner4 } from "react-icons/im";
 import { useAuth } from "@/app/context/authContext";
-import { FaCheckCircle, FaTimesCircle, FaClock, FaRetry } from "react-icons/fa";
+import { FaCheckCircle, FaTimesCircle, FaClock, FaRedo } from "react-icons/fa";
 import { MdOutlineEuro } from "react-icons/md";
 
 const MainLayout = dynamic(
@@ -228,7 +228,7 @@ export default function Affiliates() {
                   {retryingId === row.original._id ? (
                     <ImSpinner4 className="text-xs text-blue-600 animate-spin" />
                   ) : (
-                    <FaRetry className="text-xs text-blue-600" />
+                    <FaRedo className="text-xs text-blue-600" />
                   )}
                 </button>
               )}

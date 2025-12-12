@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 import { CgClose } from "react-icons/cg";
 import { FaSpinner } from "react-icons/fa";
 import countries from "world-countries";
-import "/node_modules/flag-icons/css/flag-icons.min.css";
+import "flag-icons/css/flag-icons.min.css";
 import Select from "react-select";
 import toast from "react-hot-toast";
 import axios from "axios";
