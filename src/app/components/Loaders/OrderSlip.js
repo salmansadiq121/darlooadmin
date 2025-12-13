@@ -5,8 +5,6 @@ import { Check, MapPin, Package, Truck } from "lucide-react";
 
 const OrderSlip = ({ orderDetail, generatePDF }) => {
   const subtotal = orderDetail?.products?.reduce((acc, product) => {
-    // Use the price from the order (product.price) or fallback to product.product.price
-    // Parse as float to ensure proper numeric calculation
     const price = parseFloat(product?.price || product?.product?.price || 0);
     const quantity = parseFloat(product?.quantity || 0);
     return acc + price * quantity;
@@ -67,7 +65,7 @@ const OrderSlip = ({ orderDetail, generatePDF }) => {
                   Order ID
                 </div>
                 <div className="font-mono text-sm font-medium">
-                  #{orderDetail?._id}
+                  #{orderDetail?.uid}
                 </div>
               </div>
               <div>

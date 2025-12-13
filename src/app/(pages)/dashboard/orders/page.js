@@ -319,7 +319,7 @@ export default function Orders() {
         "N/A";
 
       const base = [
-        `"${order._id || ""}"`,
+        `"${order.uid || ""}"`,
         `"${fullName}"`,
         `"${order.user?.email || "N/A"}"`,
         `"${order.user?.number || "N/A"}"`,

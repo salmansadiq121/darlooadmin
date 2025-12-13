@@ -93,8 +93,6 @@ export default function OrderDetail({ params }) {
   });
   const [isDelivery, setIsDelivery] = useState(false);
 
-  // console.log("orderDetail:", orderDetail);
-
   //   Get Page URL
   useEffect(() => {
     if (typeof window !== "undefined") {
@@ -745,7 +743,7 @@ export default function OrderDetail({ params }) {
                       </form>
 
                       {/* Delivery */}
-                      <h3 className="text-[15px] font-medium text-black">
+                      {/* <h3 className="text-[15px] font-medium text-black">
                         Delivery
                       </h3>
                       <form
@@ -790,7 +788,7 @@ export default function OrderDetail({ params }) {
                             )}
                           </button>
                         </div>
-                      </form>
+                      </form> */}
                     </div>
 
                     {/*  */}
