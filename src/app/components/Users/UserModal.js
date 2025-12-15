@@ -1,14 +1,26 @@
 "use client";
 import { Style } from "@/app/utils/CommonStyle";
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { CgClose } from "react-icons/cg";
 import toast from "react-hot-toast";
 import axios from "axios";
 import { FaSpinner } from "react-icons/fa6";
+import {
+  FiUser,
+  FiMail,
+  FiLock,
+  FiPhone,
+  FiMapPin,
+  FiHome,
+  FiFlag,
+  FiHash,
+  FiCreditCard,
+  FiUserCheck,
+} from "react-icons/fi";
 
 export default function UserModal({
   closeModal,
-  setShowaddUser,
+  setShowAddUser,
   userId,
   setUserId,
   fetchUsers,
@@ -26,6 +38,7 @@ export default function UserModal({
   const [accountHolder, setAccountHolder] = useState("");
   const [ifscCode, setIFSCCode] = useState("");
   const [loading, setLoading] = useState(false);
+  const [errors, setErrors] = useState({});
 
   // -------Get User Info--------->
   const getUserInfo = async () => {
@@ -59,6 +72,27 @@ export default function UserModal({
   // -----------handle User--------
   const handleUser = async (e) => {
     e.preventDefault();
+    const validationErrors = {};
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!name.trim()) validationErrors.name = "Name is required";
+    if (!email.trim() || !emailRegex.test(email))
+      validationErrors.email = "Valid email is required";
+    if (!number.trim()) validationErrors.number = "Contact number is required";
+    if (!country.trim()) validationErrors.country = "Country is required";
+    if (!address.trim()) validationErrors.address = "Address is required";
+
+    // For new user ensure password
+    if (!userId && !password.trim()) {
+      validationErrors.password = "Password is required for new users";
+    }
+
+    if (Object.keys(validationErrors).length) {
+      setErrors(validationErrors);
+      toast.error("Please fix validation errors");
+      return;
+    }
+
+    setErrors({});
     setLoading(true);
     try {
       if (userId) {
@@ -77,7 +111,7 @@ export default function UserModal({
         if (data) {
           fetchUsers();
           toast.success(data?.message || "User info updated successfully");
-          setShowaddUser(false);
+          setShowAddUser(false);
         }
       } else {
         const { data } = await axios.post(
@@ -95,7 +129,7 @@ export default function UserModal({
         if (data) {
           fetchUsers();
           toast.success(data?.message || "User added successfully");
-          setShowaddUser(false);
+          setShowAddUser(false);
         }
       }
     } catch (error) {
@@ -105,6 +139,17 @@ export default function UserModal({
       setLoading(false);
     }
   };
+
+  const helperText = useMemo(
+    () => ({
+      name: "Enter full name",
+      email: "We will never share your email",
+      number: "Include country code if applicable",
+      password: userId ? "Leave blank to keep current password" : "At least 6 characters",
+      address: "Street and house number",
+    }),
+    [userId]
+  );
 
   return (
     <div
@@ -118,7 +163,7 @@ export default function UserModal({
         <span
           onClick={() => {
             setUserId("");
-            setShowaddUser(false);
+            setShowAddUser(false);
           }}
           className="p-1 rounded-full bg-black/20 hover:bg-black/40 text-white "
         >
@@ -131,7 +176,7 @@ export default function UserModal({
           className=" flex flex-col gap-4 px-4 py-2 mt-4 h-full w-full "
         >
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 ">
-            <div className="inputBox">
+            <div className="inputBox relative">
               <input
                 type="text"
                 value={name}
@@ -140,8 +185,15 @@ export default function UserModal({
                 required
               />
               <span>Name</span>
+              <FiUser className="absolute right-3 top-3 text-gray-400" />
+              {errors.name && (
+                <p className="text-xs text-red-500 mt-1">{errors.name}</p>
+              )}
+              <p className="text-[11px] text-gray-500 mt-1">
+                {helperText.name}
+              </p>
             </div>
-            <div className="inputBox">
+            <div className="inputBox relative">
               <input
                 type="email"
                 value={email}
@@ -150,8 +202,15 @@ export default function UserModal({
                 required
               />
               <span>Email</span>
+              <FiMail className="absolute right-3 top-3 text-gray-400" />
+              {errors.email && (
+                <p className="text-xs text-red-500 mt-1">{errors.email}</p>
+              )}
+              <p className="text-[11px] text-gray-500 mt-1">
+                {helperText.email}
+              </p>
             </div>
-            <div className="inputBox">
+            <div className="inputBox relative">
               <input
                 type="text"
                 value={password}
@@ -159,8 +218,15 @@ export default function UserModal({
                 className={`${Style.input} w-full`}
               />
               <span>Password</span>
+              <FiLock className="absolute right-3 top-3 text-gray-400" />
+              {errors.password && (
+                <p className="text-xs text-red-500 mt-1">{errors.password}</p>
+              )}
+              <p className="text-[11px] text-gray-500 mt-1">
+                {helperText.password}
+              </p>
             </div>
-            <div className="inputBox">
+            <div className="inputBox relative">
               <input
                 type="text"
                 value={number}
@@ -169,8 +235,12 @@ export default function UserModal({
                 required
               />
               <span>Contact Number</span>
+              <FiPhone className="absolute right-3 top-3 text-gray-400" />
+              {errors.number && (
+                <p className="text-xs text-red-500 mt-1">{errors.number}</p>
+              )}
             </div>
-            <div className="inputBox">
+            <div className="inputBox relative">
               <input
                 type="text"
                 value={city}
@@ -178,8 +248,9 @@ export default function UserModal({
                 className={`${Style.input} w-full `}
               />
               <span>City</span>
+              <FiMapPin className="absolute right-3 top-3 text-gray-400" />
             </div>
-            <div className="inputBox">
+            <div className="inputBox relative">
               <input
                 type="text"
                 value={state}
@@ -187,8 +258,9 @@ export default function UserModal({
                 className={`${Style.input} w-full `}
               />
               <span>State</span>
+              <FiMapPin className="absolute right-3 top-3 text-gray-400" />
             </div>
-            <div className="inputBox">
+            <div className="inputBox relative">
               <input
                 type="text"
                 value={country}
@@ -196,8 +268,12 @@ export default function UserModal({
                 className={`${Style.input} w-full `}
               />
               <span>Country</span>
+              <FiFlag className="absolute right-3 top-3 text-gray-400" />
+              {errors.country && (
+                <p className="text-xs text-red-500 mt-1">{errors.country}</p>
+              )}
             </div>
-            <div className="inputBox">
+            <div className="inputBox relative">
               <input
                 type="text"
                 value={address}
@@ -205,11 +281,18 @@ export default function UserModal({
                 className={`${Style.input} w-full `}
               />
               <span>Address</span>
+              <FiHome className="absolute right-3 top-3 text-gray-400" />
+              {errors.address && (
+                <p className="text-xs text-red-500 mt-1">{errors.address}</p>
+              )}
+              <p className="text-[11px] text-gray-500 mt-1">
+                {helperText.address}
+              </p>
             </div>
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 ">
-            <div className="inputBox">
+            <div className="inputBox relative">
               <input
                 type="text"
                 value={pincode}
@@ -217,8 +300,9 @@ export default function UserModal({
                 className={`${Style.input} w-full `}
               />
               <span>Pin Code</span>
+              <FiHash className="absolute right-3 top-3 text-gray-400" />
             </div>
-            <div className="inputBox">
+            <div className="inputBox relative">
               <input
                 type="text"
                 value={accountNumber}
@@ -226,8 +310,9 @@ export default function UserModal({
                 className={`${Style.input} w-full `}
               />
               <span>Account Number</span>
+              <FiCreditCard className="absolute right-3 top-3 text-gray-400" />
             </div>
-            <div className="inputBox">
+            <div className="inputBox relative">
               <input
                 type="text"
                 value={accountHolder}
@@ -235,9 +320,10 @@ export default function UserModal({
                 className={`${Style.input} w-full `}
               />
               <span>Account Holder</span>
+              <FiUserCheck className="absolute right-3 top-3 text-gray-400" />
             </div>
 
-            <div className="inputBox">
+            <div className="inputBox relative">
               <input
                 type="text"
                 value={ifscCode}
@@ -245,6 +331,7 @@ export default function UserModal({
                 className={`${Style.input} w-full `}
               />
               <span>IFSC Code</span>
+              <FiHash className="absolute right-3 top-3 text-gray-400" />
             </div>
           </div>
           <div className="flex items-center justify-end w-full pb-3">

@@ -42,6 +42,8 @@ export default function ProductModal({
   const [description, setDescription] = useState("");
   const [category, setCategory] = useState("");
   const [subCategoryId, setSubCategoryId] = useState("");
+  const [extraCategories, setExtraCategories] = useState([]);
+  const [extraSubCategories, setExtraSubCategories] = useState([]);
   const [price, setPrice] = useState("");
   const [estimatedPrice, setEstimatedPrice] = useState("");
   const [thumbnail, setThumbnail] = useState("");
@@ -494,8 +496,34 @@ export default function ProductModal({
     productData.append("name", name);
     productData.append("description", description);
     productData.append("shipping", shipping);
-    productData.append("category", category.value);
-    productData.append("subCategoryId", subCategoryId.value);
+
+    const primaryCategoryId = category?.value;
+    const categoryIds = [
+      primaryCategoryId,
+      ...extraCategories.map((c) => c.value),
+    ].filter(Boolean);
+
+    const primarySubCategoryId = subCategoryId?.value;
+    const subCategoryIds = [
+      primarySubCategoryId,
+      ...extraSubCategories.map((c) => c.value),
+    ].filter(Boolean);
+
+    if (!primaryCategoryId) {
+      toast.error("Please select at least one category");
+      setIsloading(false);
+      return;
+    }
+
+    productData.append("category", primaryCategoryId);
+    if (primarySubCategoryId) {
+      productData.append("subCategoryId", primarySubCategoryId);
+    }
+    productData.append("categories", JSON.stringify([...new Set(categoryIds)]));
+    productData.append(
+      "subCategories",
+      JSON.stringify([...new Set(subCategoryIds)])
+    );
     productData.append("price", price);
     productData.append("estimatedPrice", estimatedPrice);
     productData.append("tags", tags);
@@ -606,29 +634,45 @@ export default function ProductModal({
             required
           />
         </div>
-        {/* Category */}
+        {/* Primary Category */}
         <div className="">
           <label className="block text-sm font-medium text-gray-700 mb-1">
-            Category<span className="text-red-700">*</span>
+            Primary Category<span className="text-red-700">*</span>
           </label>
           <Select
             options={categoryOptions}
             value={category}
             onChange={(val) => {
               setCategory(val);
-              getSubCategories(val.value);
+              if (val?.value) getSubCategories(val.value);
               validateStep(1);
             }}
-            placeholder="Select category"
+            placeholder="Select main category"
             required
             className="basic-single "
             classNamePrefix="select "
           />
         </div>
+        {/* Additional Categories */}
+        <div className="">
+          <label className="block text-sm font-medium text-gray-700 mb-1">
+            Additional Categories
+            <span className="text-xs text-gray-400 ml-1">(optional)</span>
+          </label>
+          <Select
+            options={categoryOptions}
+            value={extraCategories}
+            onChange={(val) => setExtraCategories(val || [])}
+            isMulti
+            placeholder="Select additional categories"
+            className="basic-multi-select"
+            classNamePrefix="select"
+          />
+        </div>
         {/* Sub Category */}
         <div className="">
           <label className="block text-sm font-medium text-gray-700 mb-1">
-            Sub Category
+            Primary Sub Category
           </label>
           <Select
             options={subCategoryOptions}
@@ -637,9 +681,24 @@ export default function ProductModal({
               setSubCategoryId(val);
               validateStep(1);
             }}
-            placeholder="Select sub category"
-            required
+            placeholder="Select primary sub category"
             className="basic-single "
+            classNamePrefix="select"
+          />
+        </div>
+        {/* Additional Sub Categories */}
+        <div className="">
+          <label className="block text-sm font-medium text-gray-700 mb-1">
+            Additional Sub Categories
+            <span className="text-xs text-gray-400 ml-1">(optional)</span>
+          </label>
+          <Select
+            options={subCategoryOptions}
+            value={extraSubCategories}
+            onChange={(val) => setExtraSubCategories(val || [])}
+            isMulti
+            placeholder="Select additional sub categories"
+            className="basic-multi-select "
             classNamePrefix="select"
           />
         </div>

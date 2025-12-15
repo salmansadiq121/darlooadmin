@@ -20,6 +20,7 @@ import CheckoutTest from "@/app/components/Products/CheckoutTest";
 import PaypalCheckout from "@/app/components/Checkout/PaypalCheckout";
 import { FcImport } from "react-icons/fc";
 import { TbLoader } from "react-icons/tb";
+import { useAuth } from "@/app/context/authContext";
 const MainLayout = dynamic(
   () => import("./../../../components/layout/MainLayout"),
   {
@@ -67,16 +68,19 @@ const carts = {
 };
 
 export default function Products() {
+  const { auth } = useAuth();
   const [currentUrl, setCurrentUrl] = useState("");
   const [productData, setProductData] = useState([]);
   const [filterProducts, setFilterProducts] = useState([]);
   const [isLoading, setIsloading] = useState(false);
   const [rowSelection, setRowSelection] = useState({});
   const [activeTab, setActiveTab] = useState("All");
+  const [searchInput, setSearchInput] = useState("");
   const [searchQuery, setSearchQuery] = useState("");
   const [enableProduct, setEnableProduct] = useState(0);
   const [disableProduct, setDisableProduct] = useState(0);
   const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
   const itemsPerPage = 20;
   const [showaddProduct, setShowaddProduct] = useState(false);
   const [productId, setProductId] = useState("");
@@ -90,32 +94,59 @@ export default function Products() {
 
   console.log("productData:", productData);
 
-  // <---------Fetch All Products-------->
-  const fetchProducts = async () => {
-    if (isInitialRender.current) {
-      setIsloading(true);
-    }
+  // <---------Fetch Products with backend pagination & filters--------->
+  const fetchProducts = async (
+    page = 1,
+    tab = activeTab,
+    search = searchQuery
+  ) => {
+    setIsloading(true);
+
     try {
+      const params = new URLSearchParams({
+        page: page.toString(),
+        limit: itemsPerPage.toString(),
+      });
+
+      if (tab === "Enabled") params.append("status", "true");
+      else if (tab === "Disabled") params.append("status", "false");
+
+      if (search) params.append("search", search);
+
       const { data } = await axios.get(
-        `${process.env.NEXT_PUBLIC_SERVER_URI}/api/v1/products/all/admin/products`
+        `${
+          process.env.NEXT_PUBLIC_SERVER_URI
+        }/api/v1/products/all/admin/products?${params.toString()}`,
+        {
+          headers: {
+            Authorization: auth?.token,
+          },
+        }
       );
-      if (data) {
-        setProductData(data.products);
+
+      if (data?.success) {
+        setProductData(data.products || []);
+        setFilterProducts(data.products || []);
+        setEnableProduct(data.stats?.enabled || 0);
+        setDisableProduct(data.stats?.disabled || 0);
+        setCurrentPage(data.pagination?.page || 1);
+        setTotalPages(data.pagination?.pages || 1);
       }
     } catch (error) {
-      console.log(error);
+      console.error("Error fetching products:", error);
+      toast.error(
+        error?.response?.data?.message || "Failed to fetch products list"
+      );
     } finally {
-      if (isInitialRender.current) {
-        setIsloading(false);
-        isInitialRender.current = false;
-      }
+      setIsloading(false);
     }
   };
 
   useEffect(() => {
-    fetchProducts();
+    if (!auth?.token) return;
+    fetchProducts(currentPage, activeTab, searchQuery);
     // eslint-disable-next-line
-  }, []);
+  }, [auth?.token, currentPage, activeTab, searchQuery]);
 
   // ------Current Page URL-----
   useEffect(() => {
@@ -130,73 +161,23 @@ export default function Products() {
     setFilterProducts(productData);
   }, [productData]);
 
-  // Get Product Length(Enable & Disable)
+  //----------- Handle search with debounce --------->
   useEffect(() => {
-    const enableCount = productData.filter((product) => product.status).length;
-    const disableCount = productData.filter(
-      (product) => !product.status
-    ).length;
+    const handler = setTimeout(() => {
+      setSearchQuery(searchInput.trim());
+      setCurrentPage(1);
+    }, 400);
+    return () => clearTimeout(handler);
+  }, [searchInput]);
 
-    setEnableProduct(enableCount);
-    setDisableProduct(disableCount);
-  }, [productData]);
-
-  //----------- Handle search--------->
   const handleSearch = (value) => {
-    setSearchQuery(value);
-    filterData(value, activeTab);
-  };
-
-  // -------------Handle filtering by tabs and search---------------
-  const filterData = (search = searchQuery, statusFilter = activeTab) => {
-    let filtered = productData;
-
-    if (statusFilter === "All" && !search) {
-      setFilterProducts(productData);
-      return;
-    }
-
-    if (statusFilter === "Enabled") {
-      filtered = filtered.filter((product) => product.status === true);
-    } else if (statusFilter === "Disabled") {
-      filtered = filtered.filter((product) => product.status === false);
-    }
-
-    if (search) {
-      const lowercasedSearch = search.toLowerCase();
-      filtered = filtered.filter((product) => {
-        const {
-          name = "",
-          price = "",
-          estimatedPrice = "",
-          quantity = "",
-          category = {
-            name: "",
-          },
-          ratings = 0,
-        } = product;
-
-        return (
-          name.toLowerCase().includes(lowercasedSearch) ||
-          (category?.name?.toLowerCase() || "").includes(lowercasedSearch) ||
-          price.toString().toLowerCase().includes(lowercasedSearch) ||
-          estimatedPrice.toString().toLowerCase().includes(lowercasedSearch) ||
-          quantity.toString().toLowerCase().includes(lowercasedSearch) ||
-          ratings.toString().includes(lowercasedSearch)
-        );
-      });
-    }
-
-    setFilterProducts(filtered);
+    setSearchInput(value);
   };
 
   const handleTabClick = (tab) => {
     setActiveTab(tab);
-    filterData(searchQuery, tab);
+    setCurrentPage(1);
   };
-
-  // ----------------Pegination----------->
-  const totalPages = Math.ceil(filterProducts.length / itemsPerPage);
 
   const handlePageChange = (direction) => {
     if (direction === "next" && currentPage < totalPages) {
@@ -207,10 +188,7 @@ export default function Products() {
   };
 
   // Get the current page data
-  const paginatedData = filterProducts.slice(
-    (currentPage - 1) * itemsPerPage,
-    currentPage * itemsPerPage
-  );
+  const paginatedData = filterProducts;
 
   // -----------------handle Delete --------------->
 
@@ -273,10 +251,15 @@ export default function Products() {
     try {
       const { data } = await axios.put(
         `${process.env.NEXT_PUBLIC_SERVER_URI}/api/v1/products/update/status/${productId}`,
-        { status }
+        { status },
+        {
+          headers: {
+            Authorization: auth?.token,
+          },
+        }
       );
       if (data) {
-        fetchProducts();
+        fetchProducts(currentPage, activeTab, searchQuery);
         toast.success("Product status updated!");
       }
     } catch (error) {
@@ -315,11 +298,16 @@ export default function Products() {
     try {
       const { data } = await axios.put(
         `${process.env.NEXT_PUBLIC_SERVER_URI}/api/v1/products/delete/multiple`,
-        { productIds: productIdsArray }
+        { productIds: productIdsArray },
+        {
+          headers: {
+            Authorization: auth?.token,
+          },
+        }
       );
 
       if (data) {
-        fetchProducts();
+        fetchProducts(currentPage, activeTab, searchQuery);
         toast.success("All selected products deleted successfully.");
         setRowSelection({});
       }
@@ -471,6 +459,47 @@ export default function Products() {
             row.original[columnId]?.toString().toLowerCase() || "";
 
           return cellValue.includes(filterValue.toLowerCase());
+        },
+      },
+      {
+        accessorKey: "seller.storeName",
+        minSize: 120,
+        maxSize: 220,
+        size: 150,
+        grow: false,
+        Header: () => {
+          return (
+            <div className="flex flex-col gap-[2px]">
+              <span className="ml-1 cursor-pointer">SELLER / STORE</span>
+            </div>
+          );
+        },
+        Cell: ({ cell, row }) => {
+          const seller = row?.original?.seller;
+          const isMarketplaceOwned = !seller;
+
+          if (isMarketplaceOwned) {
+            return (
+              <div className="cursor-pointer text-[12px] flex items-center justify-start text-black w-full h-full">
+                <span className="px-2 py-1 rounded-full bg-gray-100 text-gray-700 border border-gray-200">
+                  Marketplace
+                </span>
+              </div>
+            );
+          }
+
+          return (
+            <div className="cursor-pointer text-[12px] flex flex-col justify-start text-black w-full h-full">
+              <span className="font-medium text-gray-900 truncate">
+                {seller?.storeName || "Unknown Store"}
+              </span>
+              {seller?.storeSlug && (
+                <span className="text-[11px] text-gray-500 truncate">
+                  @{seller.storeSlug}
+                </span>
+              )}
+            </div>
+          );
         },
       },
       {
@@ -651,13 +680,15 @@ export default function Products() {
           );
         },
         Cell: ({ cell, row }) => {
-          const sizes = row.original.sizes;
-          const size = sizes[0];
+          const sizes = Array.isArray(row.original.sizes)
+            ? row.original.sizes
+            : [];
+          const size = sizes[0] || "";
 
           return (
             <div className="cursor-pointer text-[12px] flex items-center justify-start text-black w-full h-full">
               <select
-                value={size}
+                defaultValue={size}
                 className="w-full h-[2rem] rounded-md outline-none border border-gray-700 cursor-pointer p-1"
               >
                 <option value="">Sizes</option>
@@ -694,7 +725,7 @@ export default function Products() {
           return (
             <div className="cursor-pointer text-[12px] flex items-center justify-start text-black w-full h-full">
               <select
-                value={color?.name || ""}
+                defaultValue={color?.name || ""}
                 className="w-full h-[2rem] rounded-md outline-none border border-gray-700 cursor-pointer p-1"
               >
                 <option value="">Colors</option>
@@ -1040,36 +1071,45 @@ export default function Products() {
           <Breadcrumb path={currentUrl} />
           <div className="flex flex-col gap-5 mt-4">
             {/* Tabs */}
-            <div className="w-full px-4 rounded-md bg-white flex items-center gap-4">
+            <div className="w-full px-4 rounded-xl bg-white flex items-center gap-4 shadow-sm border border-gray-100">
               <button
-                className={`border-b-[3px] py-3 text-[14px] px-2 font-medium cursor-pointer ${
+                className={`relative py-3 text-[14px] px-3 font-medium cursor-pointer transition-all duration-200 ${
                   activeTab === "All"
-                    ? " border-red-600 text-red-600"
-                    : "text-gray-700 hover:text-gray-800 border-white"
+                    ? "text-[#c6080a]"
+                    : "text-gray-600 hover:text-gray-800"
                 }`}
                 onClick={() => handleTabClick("All")}
               >
-                All ({productData.length})
+                All ({enableProduct + disableProduct})
+                {activeTab === "All" && (
+                  <span className="absolute inset-x-0 -bottom-[2px] h-[3px] rounded-full bg-gradient-to-r from-[#c6080a] to-[#e63946]" />
+                )}
               </button>
               <button
-                className={`border-b-[3px] py-3 text-[14px] px-2 font-medium cursor-pointer ${
+                className={`relative py-3 text-[14px] px-3 font-medium cursor-pointer transition-all duration-200 ${
                   activeTab === "Enabled"
-                    ? "border-b-[3px] border-red-600 text-red-600"
-                    : "text-gray-700 hover:text-gray-800 border-white"
+                    ? "text-[#22c55e]"
+                    : "text-gray-600 hover:text-gray-800"
                 }`}
                 onClick={() => handleTabClick("Enabled")}
               >
                 Enabled ({enableProduct})
+                {activeTab === "Enabled" && (
+                  <span className="absolute inset-x-0 -bottom-[2px] h-[3px] rounded-full bg-gradient-to-r from-emerald-400 to-green-600" />
+                )}
               </button>
               <button
-                className={` border-b-[3px] py-3 text-[14px] px-2 font-medium cursor-pointer ${
+                className={`relative py-3 text-[14px] px-3 font-medium cursor-pointer transition-all duration-200 ${
                   activeTab === "Disabled"
-                    ? "border-b-[3px] border-red-600 text-red-600"
-                    : "text-gray-700 hover:text-gray-800 border-white"
+                    ? "text-[#ef4444]"
+                    : "text-gray-600 hover:text-gray-800"
                 }`}
                 onClick={() => handleTabClick("Disabled")}
               >
                 Disabled ({disableProduct})
+                {activeTab === "Disabled" && (
+                  <span className="absolute inset-x-0 -bottom-[2px] h-[3px] rounded-full bg-gradient-to-r from-red-500 to-orange-500" />
+                )}
               </button>
             </div>
             {/* Actions */}
@@ -1078,12 +1118,15 @@ export default function Products() {
                 Products
               </h1>
               <div className="flex items-center gap-4">
-                <button
-                  onClick={() => handleDeleteConfirmationProducts()}
-                  className="text-[14px] py-2 px-4 hover:border-2 hover:rounded-md hover:shadow-md hover:scale-[1.03] text-gray-600 hover:text-gray-800 border-b-2 border-gray-600 transition-all duration-300 "
-                >
-                  Delete All
-                </button>
+                {Object.keys(rowSelection).length > 0 && (
+                  <button
+                    onClick={() => handleDeleteConfirmationProducts()}
+                    className="text-[14px] py-2 px-4 rounded-lg bg-red-50 text-red-700 border border-red-200 hover:bg-red-100 hover:shadow-md hover:scale-[1.03] transition-all duration-300 flex items-center gap-2"
+                  >
+                    <MdDelete className="text-[16px]" />
+                    Delete Selected ({Object.keys(rowSelection).length})
+                  </button>
+                )}
 
                 <form>
                   <input
@@ -1163,8 +1206,24 @@ export default function Products() {
             {/* -----------Table Data------------- */}
             <div className="overflow-x-auto w-full scroll-smooth shidden h-[90%] overflow-y-auto mt-3 pb-4 ">
               {isLoading ? (
-                <div className="flex items-center justify-center w-full h-screen px-4 py-4">
-                  <Loader />
+                <div className="w-full min-h-[20vh] space-y-3">
+                  {[...Array(8)].map((_, idx) => (
+                    <div
+                      key={idx}
+                      className="animate-pulse rounded-lg border border-gray-100 bg-gray-50 px-4 py-3 flex items-center gap-4"
+                    >
+                      <div className="h-10 w-10 rounded-md bg-gray-200" />
+                      <div className="flex-1 space-y-2">
+                        <div className="h-3 w-1/3 rounded bg-gray-200" />
+                        <div className="h-3 w-1/4 rounded bg-gray-100" />
+                      </div>
+                      <div className="hidden sm:flex gap-2 ml-auto">
+                        <div className="h-3 w-12 rounded-full bg-gray-200" />
+                        <div className="h-3 w-16 rounded-full bg-gray-200" />
+                        <div className="h-3 w-10 rounded-full bg-gray-200" />
+                      </div>
+                    </div>
+                  ))}
                 </div>
               ) : (
                 <div className="w-full min-h-[20vh] relative">

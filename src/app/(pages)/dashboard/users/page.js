@@ -1,39 +1,49 @@
 "use client";
-import React, { useEffect, useMemo, useRef, useState } from "react";
+import React, {
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  useCallback,
+} from "react";
+import { motion, AnimatePresence } from "framer-motion";
 import axios from "axios";
 import Loader from "@/app/utils/Loader";
 import dynamic from "next/dynamic";
-import { IoClose, IoSearch } from "react-icons/io5";
-import { CiCircleChevLeft } from "react-icons/ci";
-import { CiCircleChevRight } from "react-icons/ci";
-import {
-  MaterialReactTable,
-  useMaterialReactTable,
-} from "material-react-table";
-import { format, set } from "date-fns";
+import { IoSearch } from "react-icons/io5";
+import { CiCircleChevLeft, CiCircleChevRight } from "react-icons/ci";
+import { format } from "date-fns";
 import Image from "next/image";
-import { MdModeEditOutline } from "react-icons/md";
-import { MdDelete } from "react-icons/md";
-import { MdNotInterested } from "react-icons/md";
-import { Style } from "@/app/utils/CommonStyle";
+import {
+  MdModeEditOutline,
+  MdDelete,
+  MdCheckCircle,
+  MdCancel,
+} from "react-icons/md";
 import toast from "react-hot-toast";
 import Swal from "sweetalert2";
-import { FaCheckDouble } from "react-icons/fa";
 import { useAuth } from "@/app/context/authContext";
+import { HiSwitchHorizontal } from "react-icons/hi";
+import { FaUserCheck, FaUserSlash } from "react-icons/fa";
+import {
+  Table,
+  TableHeader,
+  TableRow,
+  TableHead,
+  TableBody,
+  TableCell,
+} from "@/components/ui/table";
+
 const MainLayout = dynamic(
   () => import("./../../../components/layout/MainLayout"),
-  {
-    ssr: false,
-  }
+  { ssr: false }
 );
 const Breadcrumb = dynamic(() => import("./../../../utils/Breadcrumb"), {
   ssr: false,
 });
 const UserModal = dynamic(
   () => import("./../../../components/Users/UserModal"),
-  {
-    ssr: false,
-  }
+  { ssr: false }
 );
 
 export default function Users() {
@@ -41,123 +51,100 @@ export default function Users() {
   const [currentUrl, setCurrentUrl] = useState("");
   const [userData, setUserData] = useState([]);
   const [filterUser, setFilterUsers] = useState([]);
-  const [isLoading, setIsloading] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
   const [rowSelection, setRowSelection] = useState({});
   const [activeTab, setActiveTab] = useState("All");
+  const [searchInput, setSearchInput] = useState("");
   const [searchQuery, setSearchQuery] = useState("");
   const [activeUsers, setActiveUsers] = useState(0);
   const [blockUsers, setBlockUsers] = useState(0);
   const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [stats, setStats] = useState({
+    total: 0,
+    active: 0,
+    blocked: 0,
+    byRole: {},
+  });
   const itemsPerPage = 20;
-  const [showAddUser, setShowaddUser] = useState(false);
+  const [showAddUser, setShowAddUser] = useState(false);
   const closeModal = useRef(null);
   const [userId, setUserId] = useState("");
-  const isInitialRender = useRef(true);
-  const [role, setRole] = useState("user");
+  const [role, setRole] = useState("");
 
-  const fetchUsers = async () => {
-    if (isInitialRender.current) {
-      setIsloading(true);
-    }
+  const fetchUsers = async (page = 1, filters = {}) => {
+    setIsLoading(true);
     try {
+      const params = new URLSearchParams({
+        page: page.toString(),
+        limit: itemsPerPage.toString(),
+        ...filters,
+      });
+
       const { data } = await axios.get(
-        `${process.env.NEXT_PUBLIC_SERVER_URI}/api/v1/auth/allUsers?role=${role}`
+        `${process.env.NEXT_PUBLIC_SERVER_URI}/api/v1/auth/allUsers?${params}`,
+        {
+          headers: {
+            Authorization: auth?.token,
+          },
+        }
       );
-      if (data) {
-        setUserData(data.users);
+
+      if (data?.success) {
+        setUserData(data.users || []);
+        setFilterUsers(data.users || []);
+        setTotalPages(data.pagination?.pages || 1);
+        setStats({
+          total: data.pagination?.total || 0,
+          active: data.stats?.active || 0,
+          blocked: data.stats?.blocked || 0,
+          byRole: data.stats?.byRole || {},
+        });
+        setActiveUsers(data.stats?.active || 0);
+        setBlockUsers(data.stats?.blocked || 0);
       }
     } catch (error) {
-      console.log(error);
+      console.error("Error fetching users:", error);
+      toast.error(error.response?.data?.message || "Failed to fetch users");
     } finally {
-      if (isInitialRender.current) {
-        setIsloading(false);
-        isInitialRender.current = false;
-      }
+      setIsLoading(false);
     }
   };
 
   useEffect(() => {
-    fetchUsers();
-    // eslint-disable-next-line
-  }, [role]);
+    if (auth?.token) {
+      const filters = {};
+      if (role) filters.role = role;
+      if (activeTab === "Active") filters.status = "true";
+      if (activeTab === "Blocked") filters.status = "false";
+      if (searchQuery) filters.search = searchQuery;
+      fetchUsers(currentPage, filters);
+    }
+  }, [auth?.token, currentPage, activeTab, searchQuery, role]);
 
+  // Debounce search input -> query (500ms)
   useEffect(() => {
-    setFilterUsers(userData);
-  }, [userData]);
+    const handler = setTimeout(() => {
+      setSearchQuery(searchInput.trim());
+      setCurrentPage(1);
+    }, 500);
+    return () => clearTimeout(handler);
+  }, [searchInput]);
 
   useEffect(() => {
     if (typeof window !== "undefined") {
-      const pathArray = window.location.pathname;
-      setCurrentUrl(pathArray);
+      setCurrentUrl(window.location.pathname);
     }
-    // exlint-disable-next-line
   }, []);
 
-  // Get User Length(Active & Blocked)
-  useEffect(() => {
-    const activeCount = userData.filter((user) => user.status).length;
-    const blockedCount = userData.filter((user) => !user.status).length;
-
-    setActiveUsers(activeCount);
-    setBlockUsers(blockedCount);
-  }, [userData]);
-
-  // Handle search
   const handleSearch = (value) => {
-    setSearchQuery(value);
-    filterData(value, activeTab);
-  };
-
-  // -------------Handle filtering by tabs and search---------------
-  const filterData = (search = searchQuery, statusFilter = activeTab) => {
-    let filtered = userData;
-
-    if (statusFilter === "All" && !search) {
-      setFilterUsers(userData);
-      return;
-    }
-
-    if (statusFilter === "Active") {
-      filtered = filtered.filter((user) => user.status === true);
-    } else if (statusFilter === "Blocked") {
-      filtered = filtered.filter((user) => user.status === false);
-    }
-
-    if (search) {
-      const lowercasedSearch = search.toLowerCase();
-      filtered = filtered.filter((user) => {
-        const {
-          name = "",
-          email = "",
-          addressDetails: {
-            address = "",
-            city = "",
-            state = "",
-            country = "",
-          } = {},
-        } = user;
-
-        return (
-          name.toLowerCase().includes(lowercasedSearch) ||
-          email.toLowerCase().includes(lowercasedSearch) ||
-          address.toLowerCase().includes(lowercasedSearch) ||
-          city.toLowerCase().includes(lowercasedSearch) ||
-          state.toLowerCase().includes(lowercasedSearch) ||
-          country.toLowerCase().includes(lowercasedSearch)
-        );
-      });
-    }
-
-    setFilterUsers(filtered);
+    setSearchInput(value);
   };
 
   const handleTabClick = (tab) => {
     setActiveTab(tab);
-    filterData(searchQuery, tab);
+    setCurrentPage(1);
   };
-
-  // ----------------Pegination----------->
-  const totalPages = Math.ceil(filterUser.length / itemsPerPage);
 
   const handlePageChange = (direction) => {
     if (direction === "next" && currentPage < totalPages) {
@@ -167,26 +154,18 @@ export default function Users() {
     }
   };
 
-  // Get the current page data
-  const paginatedData = filterUser.slice(
-    (currentPage - 1) * itemsPerPage,
-    currentPage * itemsPerPage
-  );
-
-  // ------Delete User------>
   const handleDeleteConfirmation = (userId) => {
     Swal.fire({
       title: "Are you sure?",
       text: "You won't be able to revert this user!",
       icon: "warning",
       showCancelButton: true,
-      confirmButtonColor: "#3085d6",
+      confirmButtonColor: "#c6080a",
       cancelButtonColor: "#d33",
       confirmButtonText: "Yes, delete it!",
     }).then((result) => {
       if (result.isConfirmed) {
         handleDelete(userId);
-        Swal.fire("Deleted!", "User has been deleted.", "success");
       }
     });
   };
@@ -194,651 +173,414 @@ export default function Users() {
   const handleDelete = async (id) => {
     try {
       const { data } = await axios.delete(
-        `${process.env.NEXT_PUBLIC_SERVER_URI}/api/v1/auth/delete/user/${id}`
+        `${process.env.NEXT_PUBLIC_SERVER_URI}/api/v1/auth/delete/user/${id}`,
+        {
+          headers: {
+            Authorization: auth?.token,
+          },
+        }
       );
-      if (data) {
-        fetchUsers();
+      if (data?.success) {
+        toast.success("User deleted successfully");
+        fetchUsers(currentPage);
       }
     } catch (error) {
-      console.log(error);
-      toast.error(error.response?.data?.message);
+      console.error(error);
+      toast.error(error.response?.data?.message || "Failed to delete user");
     }
   };
 
-  // -----------Delete All Notifications------------
-  const handleDeleteConfirmationUsers = () => {
+  const handleBulkDelete = () => {
+    const selectedIds = Object.keys(rowSelection);
+    if (selectedIds.length === 0) {
+      toast.error("Please select at least one user");
+      return;
+    }
+
     Swal.fire({
       title: "Are you sure?",
-      text: "You won't be able to revert this user!",
+      text: `You are about to delete ${selectedIds.length} user(s)!`,
       icon: "warning",
       showCancelButton: true,
-      confirmButtonColor: "#3085d6",
+      confirmButtonColor: "#c6080a",
       cancelButtonColor: "#d33",
-      confirmButtonText: "Yes, delete it!",
-    }).then((result) => {
+      confirmButtonText: "Yes, delete them!",
+    }).then(async (result) => {
       if (result.isConfirmed) {
-        deleteAllUsers();
-        Swal.fire("Deleted!", "Users has been deleted.", "success");
+        try {
+          const { data } = await axios.put(
+            `${process.env.NEXT_PUBLIC_SERVER_URI}/api/v1/auth/delete/multiple`,
+            { userIds: selectedIds },
+            {
+              headers: {
+                Authorization: auth?.token,
+              },
+            }
+          );
+          if (data?.success) {
+            toast.success(`${selectedIds.length} user(s) deleted successfully`);
+            setRowSelection({});
+            fetchUsers(currentPage);
+          }
+        } catch (error) {
+          console.error(error);
+          toast.error(
+            error.response?.data?.message || "Failed to delete users"
+          );
+        }
       }
     });
   };
 
-  const deleteAllUsers = async () => {
-    if (!rowSelection) {
-      return toast.error("Please select at least one user to delete.");
+  const handleBulkStatusUpdate = async (status) => {
+    const selectedIds = Object.keys(rowSelection);
+    if (selectedIds.length === 0) {
+      toast.error("Please select at least one user");
+      return;
     }
-
-    const productIdsArray = Object.keys(rowSelection);
 
     try {
       const { data } = await axios.put(
-        `${process.env.NEXT_PUBLIC_SERVER_URI}/api/v1/auth/delete/multiple`,
-        { userIds: productIdsArray }
+        `${process.env.NEXT_PUBLIC_SERVER_URI}/api/v1/auth/bulk/status`,
+        { userIds: selectedIds, status },
+        {
+          headers: {
+            Authorization: auth?.token,
+          },
+        }
       );
-
-      if (data) {
-        fetchUsers();
-        toast.success("All selected users deleted successfully.");
+      if (data?.success) {
+        toast.success(`${data.modifiedCount} user(s) status updated`);
         setRowSelection({});
+        fetchUsers(currentPage);
       }
     } catch (error) {
       console.error(error);
-      toast.error("Failed to delete users. Please try again later.");
+      toast.error(error.response?.data?.message || "Failed to update status");
     }
   };
+
+  const handleStatusToggle = useCallback(
+    async (userId, currentStatus) => {
+      try {
+        const newStatus = !currentStatus;
+        const { data } = await axios.put(
+          `${process.env.NEXT_PUBLIC_SERVER_URI}/api/v1/auth/update/role/${userId}`,
+          { status: newStatus },
+          {
+            headers: {
+              Authorization: auth?.token,
+            },
+          }
+        );
+        if (data?.success) {
+          toast.success(
+            `User ${newStatus ? "activated" : "blocked"} successfully`
+          );
+          fetchUsers(currentPage);
+        }
+      } catch (error) {
+        console.error(error);
+        toast.error(error.response?.data?.message || "Failed to update status");
+      }
+    },
+    [auth?.token, currentPage]
+  );
 
   const columns = useMemo(
     () => [
       {
         accessorKey: "avatar",
-        minSize: 50,
-        maxSize: 120,
-        size: 60,
+        minSize: 60,
+        maxSize: 100,
+        size: 70,
         grow: false,
-        Header: ({ column }) => {
-          return (
-            <div className=" flex flex-col gap-[2px]">
-              <span className="ml-1 cursor-pointer">AVATAR</span>
-            </div>
-          );
-        },
+        Header: "AVATAR",
         Cell: ({ cell, row }) => {
           const avatar = cell.getValue();
+          const name = row.original?.name || "";
 
           return (
-            <div className="cursor-pointer text-[12px] text-black w-full h-full">
-              <div className=" w-[2rem] h-[2rem] relative rounded-full bg-sky-600 overflow-hidden flex items-center justify-center">
-                {avatar ? (
-                  <Image
-                    src={
-                      avatar && avatar !== "N/A" && avatar.startsWith("http")
-                        ? avatar
-                        : "/profile.png"
-                    }
-                    alt={"Avatar"}
-                    width={50}
-                    height={50}
-                    className="w-[2rem] h-[2rem] rounded-full"
-                  />
-                ) : (
-                  <h3 className="text-[18px] font-medium text-white uppercase">
-                    {row.original?.name?.slice(0, 1)}
-                  </h3>
-                )}
-              </div>
-            </div>
-          );
-        },
-        filterFn: (row, columnId, filterValue) => {
-          const cellValue =
-            row.original[columnId]?.toString().toLowerCase() || "";
-
-          return cellValue.includes(filterValue.toLowerCase());
-        },
-      },
-      {
-        accessorKey: "name",
-        minSize: 100,
-        maxSize: 200,
-        size: 150,
-        grow: false,
-        Header: ({ column }) => {
-          return (
-            <div className=" flex flex-col gap-[2px]">
-              <span className="ml-1 cursor-pointer">USER NAME</span>
-            </div>
-          );
-        },
-        Cell: ({ cell, row }) => {
-          const name = cell.getValue();
-          const lastName = row.original?.lastName || "";
-
-          return (
-            <div className="cursor-pointer text-[12px] flex items-center justify-start text-black w-full h-full">
-              {name} {lastName}
-            </div>
-          );
-        },
-        filterFn: (row, columnId, filterValue) => {
-          const cellValue =
-            row.original[columnId]?.toString().toLowerCase() || "";
-
-          return cellValue.includes(filterValue.toLowerCase());
-        },
-      },
-      {
-        accessorKey: "email",
-        minSize: 100,
-        maxSize: 250,
-        size: 220,
-        grow: false,
-        Header: ({ column }) => {
-          return (
-            <div className=" flex flex-col gap-[2px]">
-              <span className="ml-1 cursor-pointer">USER EMAIL</span>
-            </div>
-          );
-        },
-        Cell: ({ cell, row }) => {
-          const email = cell.getValue();
-
-          return (
-            <div className="flex items-center justify-start cursor-pointer text-[12px] text-black w-full h-full">
-              {email}
-            </div>
-          );
-        },
-        filterFn: (row, columnId, filterValue) => {
-          const cellValue =
-            row.original[columnId]?.toString().toLowerCase() || "";
-
-          return cellValue.includes(filterValue.toLowerCase());
-        },
-      },
-      {
-        accessorKey: "bankDetails.accountHolder",
-        minSize: 100,
-        maxSize: 250,
-        size: 150,
-        grow: false,
-        Header: ({ column }) => {
-          return (
-            <div className=" flex flex-col gap-[2px]">
-              <span className="ml-1 cursor-pointer">ACCOUNT Holder</span>
-            </div>
-          );
-        },
-        Cell: ({ cell, row }) => {
-          const accountHolder = cell.getValue();
-
-          return (
-            <div className="flex items-center justify-start cursor-pointer text-[12px] text-black w-full h-full">
-              {accountHolder ? accountHolder : ""}
-            </div>
-          );
-        },
-        filterFn: (row, columnId, filterValue) => {
-          const cellValue =
-            row.original[columnId]?.toString().toLowerCase() || "";
-
-          return cellValue.includes(filterValue.toLowerCase());
-        },
-      },
-      {
-        accessorKey: "bankDetails.accountNumber",
-        minSize: 100,
-        maxSize: 250,
-        size: 130,
-        grow: false,
-        Header: ({ column }) => {
-          return (
-            <div className=" flex flex-col gap-[2px]">
-              <span className="ml-1 cursor-pointer">BANK ACCOUNT</span>
-            </div>
-          );
-        },
-        Cell: ({ cell, row }) => {
-          const accountNumber = cell.getValue();
-
-          return (
-            <div className=" flex items-center justify-start cursor-pointer text-[12px] text-black w-full h-full">
-              {accountNumber ? accountNumber : ""}
-            </div>
-          );
-        },
-        filterFn: (row, columnId, filterValue) => {
-          const cellValue =
-            row.original[columnId]?.toString().toLowerCase() || "";
-
-          return cellValue.includes(filterValue.toLowerCase());
-        },
-      },
-      {
-        accessorKey: "bankDetails.ifscCode",
-        minSize: 80,
-        maxSize: 120,
-        size: 80,
-        grow: false,
-        Header: ({ column }) => {
-          return (
-            <div className=" flex flex-col gap-[2px]">
-              <span className="ml-1 cursor-pointer">IFSC Code</span>
-            </div>
-          );
-        },
-        Cell: ({ cell, row }) => {
-          const ifscCode = cell.getValue();
-
-          return (
-            <div className=" flex items-center justify-start cursor-pointer text-[12px] text-black w-full h-full">
-              {ifscCode ? ifscCode : ""}
-            </div>
-          );
-        },
-        filterFn: (row, columnId, filterValue) => {
-          const cellValue =
-            row.original[columnId]?.toString().toLowerCase() || "";
-
-          return cellValue.includes(filterValue.toLowerCase());
-        },
-      },
-      {
-        accessorKey: "number",
-        minSize: 100,
-        maxSize: 160,
-        size: 130,
-        grow: false,
-        Header: ({ column }) => {
-          return (
-            <div className=" flex flex-col gap-[2px]">
-              <span className="ml-1 cursor-pointer">CONTACT NUMBER</span>
-            </div>
-          );
-        },
-        Cell: ({ cell, row }) => {
-          const number = cell.getValue();
-
-          return (
-            <div className=" flex items-center justify-start cursor-pointer text-[12px] text-black w-full h-full">
-              {number}
-            </div>
-          );
-        },
-        filterFn: (row, columnId, filterValue) => {
-          const cellValue =
-            row.original[columnId]?.toString().toLowerCase() || "";
-
-          return cellValue.includes(filterValue.toLowerCase());
-        },
-      },
-      {
-        accessorKey: "addressDetails.address",
-        minSize: 100,
-        maxSize: 160,
-        size: 160,
-        grow: false,
-        Header: ({ column }) => {
-          return (
-            <div className=" flex flex-col gap-[2px]">
-              <span className="ml-1 cursor-pointer">LOCATION</span>
-            </div>
-          );
-        },
-        Cell: ({ cell, row }) => {
-          const LOCATION = cell.getValue();
-
-          return (
-            <div className="flex items-center justify-start cursor-pointer text-[12px] text-black w-full h-full">
-              {LOCATION}
-            </div>
-          );
-        },
-        filterFn: (row, columnId, filterValue) => {
-          const cellValue =
-            row.original[columnId]?.toString().toLowerCase() || "";
-
-          return cellValue.includes(filterValue.toLowerCase());
-        },
-      },
-      {
-        accessorKey: "addressDetails.pincode",
-        minSize: 60,
-        maxSize: 120,
-        size: 80,
-        grow: false,
-        Header: ({ column }) => {
-          return (
-            <div className=" flex flex-col gap-[2px]">
-              <span className="ml-1 cursor-pointer">PINCODE</span>
-            </div>
-          );
-        },
-        Cell: ({ cell, row }) => {
-          const pincode = cell.getValue();
-
-          return (
-            <div className="flex items-center justify-start cursor-pointer text-[12px] text-black w-full h-full">
-              {pincode}
-            </div>
-          );
-        },
-        filterFn: (row, columnId, filterValue) => {
-          const cellValue =
-            row.original[columnId]?.toString().toLowerCase() || "";
-
-          return cellValue.includes(filterValue.toLowerCase());
-        },
-      },
-      {
-        accessorKey: "addressDetails.city",
-        minSize: 60,
-        maxSize: 120,
-        size: 120,
-        grow: false,
-        Header: ({ column }) => {
-          return (
-            <div className=" flex flex-col gap-[2px]">
-              <span className="ml-1 cursor-pointer">CITY</span>
-            </div>
-          );
-        },
-        Cell: ({ cell, row }) => {
-          const city = cell.getValue();
-
-          return (
-            <div className="flex items-center justify-start cursor-pointer text-[12px] text-black w-full h-full">
-              {city}
-            </div>
-          );
-        },
-        filterFn: (row, columnId, filterValue) => {
-          const cellValue =
-            row.original[columnId]?.toString().toLowerCase() || "";
-
-          return cellValue.includes(filterValue.toLowerCase());
-        },
-      },
-      {
-        accessorKey: "addressDetails.state",
-        minSize: 60,
-        maxSize: 120,
-        size: 110,
-        grow: false,
-        Header: ({ column }) => {
-          return (
-            <div className=" flex flex-col gap-[2px]">
-              <span className="ml-1 cursor-pointer">STATE</span>
-            </div>
-          );
-        },
-        Cell: ({ cell, row }) => {
-          const state = cell.getValue();
-
-          return (
-            <div className="flex items-center justify-start cursor-pointer text-[12px] text-black w-full h-full">
-              {state}
-            </div>
-          );
-        },
-        filterFn: (row, columnId, filterValue) => {
-          const cellValue =
-            row.original[columnId]?.toString().toLowerCase() || "";
-
-          return cellValue.includes(filterValue.toLowerCase());
-        },
-      },
-      {
-        accessorKey: "addressDetails.country",
-        minSize: 60,
-        maxSize: 120,
-        size: 110,
-        grow: false,
-        Header: ({ column }) => {
-          return (
-            <div className=" flex flex-col gap-[2px]">
-              <span className="ml-1 cursor-pointer">COUNTRY</span>
-            </div>
-          );
-        },
-        Cell: ({ cell, row }) => {
-          const country = cell.getValue();
-
-          return (
-            <div className="flex items-center justify-start cursor-pointer text-[12px] text-black w-full h-full">
-              {country}
-            </div>
-          );
-        },
-        filterFn: (row, columnId, filterValue) => {
-          const cellValue =
-            row.original[columnId]?.toString().toLowerCase() || "";
-
-          return cellValue.includes(filterValue.toLowerCase());
-        },
-      },
-
-      {
-        accessorKey: "status",
-        minSize: 80,
-        maxSize: 140,
-        size: 100,
-        grow: false,
-        Header: ({ column }) => {
-          return (
-            <div className=" flex flex-col gap-[2px]">
-              <span className="ml-1 cursor-pointer">STATUS</span>
-            </div>
-          );
-        },
-        Cell: ({ cell, row }) => {
-          const status = row.original.status;
-          const [userStatus, setUserStatus] = useState(status);
-          const [show, setShow] = useState(false);
-
-          const handleUpdate = async (value) => {
-            setUserStatus(value);
-            try {
-              const { data } = await axios.put(
-                `${process.env.NEXT_PUBLIC_SERVER_URI}/api/v1/auth/update/role/${row.original._id}`,
-                { status: value }
-              );
-              if (data) {
-                fetchUsers();
-                setShow(false);
-              }
-            } catch (error) {
-              console.log(error);
-              toast.error(error.response?.data?.message);
-            }
-          };
-
-          return (
-            <div className="w-full h-full">
-              {!show ? (
-                <div
-                  onDoubleClick={() => setShow(true)}
-                  className="flex items-center justify-start cursor-pointer text-[12px] text-black w-full h-full"
-                >
-                  {status === true ? (
-                    <button className=" py-[.35rem] px-4 rounded-[2rem] border-2 border-green-600 bg-green-200 hover:bg-green-300 text-green-900 hover:shadow-md cursor-pointer transition-all duration-300 hover:scale-[1.03]">
-                      Active
-                    </button>
-                  ) : (
-                    <button className=" py-[.35rem] px-4 rounded-[2rem] border-2 border-red-600 bg-red-200 hover:bg-red-300 text-red-900 hover:shadow-md cursor-pointer transition-all duration-300 hover:scale-[1.03]">
-                      Blocked
-                    </button>
-                  )}
-                </div>
+            <div className="w-12 h-12 relative rounded-full bg-gradient-to-br from-blue-500 to-purple-600 overflow-hidden flex items-center justify-center border-2 border-white shadow-lg">
+              {avatar && avatar !== "N/A" && avatar.startsWith("http") ? (
+                <Image
+                  src={avatar}
+                  alt={name}
+                  fill
+                  className="object-cover"
+                  sizes="48px"
+                />
               ) : (
-                <select
-                  value={userStatus}
-                  onChange={(e) => handleUpdate(e.target.value)}
-                  onBlur={() => setShow(false)}
-                  className="w-full border rounded-md p-1 text-black text-[14px]"
-                >
-                  <option value="true">Active</option>
-                  <option value="false">Blocked</option>
-                </select>
+                <span className="text-white font-bold text-lg">
+                  {name?.charAt(0)?.toUpperCase() || "U"}
+                </span>
               )}
             </div>
           );
         },
-        filterFn: (row, columnId, filterValue) => {
-          const cellValue =
-            row.original[columnId]?.toString().toLowerCase() || "";
+      },
+      {
+        accessorKey: "name",
+        minSize: 150,
+        maxSize: 200,
+        size: 180,
+        Header: "USER NAME",
+        Cell: ({ cell, row }) => {
+          const name = cell.getValue();
+          const lastName = row.original?.lastName || "";
+          const email = row.original?.email || "";
 
-          return cellValue.includes(filterValue.toLowerCase());
+          return (
+            <div className="flex flex-col">
+              <span className="font-semibold text-gray-900">
+                {name} {lastName}
+              </span>
+              <span className="text-xs text-gray-500 truncate max-w-[200px]">
+                {email}
+              </span>
+            </div>
+          );
         },
       },
-      ...(auth.user?.role === "superadmin"
+      {
+        accessorKey: "email",
+        minSize: 180,
+        maxSize: 250,
+        size: 220,
+        Header: "EMAIL",
+        Cell: ({ cell }) => {
+          const email = cell.getValue();
+          return (
+            <span className="text-sm text-gray-700 truncate block max-w-[200px]">
+              {email}
+            </span>
+          );
+        },
+      },
+      {
+        accessorKey: "number",
+        minSize: 120,
+        maxSize: 150,
+        size: 130,
+        Header: "PHONE",
+        Cell: ({ cell, row }) => {
+          const number = cell.getValue();
+          const phoneCode = row.original?.phoneCode || "";
+          return (
+            <span className="text-sm text-gray-700">
+              {phoneCode} {number || "N/A"}
+            </span>
+          );
+        },
+      },
+      {
+        accessorKey: "addressDetails.city",
+        minSize: 100,
+        maxSize: 150,
+        size: 120,
+        Header: "LOCATION",
+        Cell: ({ row }) => {
+          const address = row.original?.addressDetails || {};
+          return (
+            <div className="flex flex-col">
+              <span className="text-sm text-gray-700">
+                {address.city || "N/A"}
+              </span>
+              {address.country && (
+                <span className="text-xs text-gray-500">{address.country}</span>
+              )}
+            </div>
+          );
+        },
+      },
+      {
+        accessorKey: "role",
+        minSize: 100,
+        maxSize: 130,
+        size: 110,
+        Header: "ROLE",
+        Cell: ({ cell, row }) => {
+          const role = cell.getValue() || "user";
+
+          const roleColors = {
+            superadmin: "bg-purple-100 text-purple-800 border-purple-500",
+            admin: "bg-blue-100 text-blue-800 border-blue-500",
+            agent: "bg-green-100 text-green-800 border-green-500",
+            seller: "bg-orange-100 text-orange-800 border-orange-500",
+            user: "bg-gray-100 text-gray-800 border-gray-500",
+          };
+
+          const handleUpdate = async (value) => {
+            try {
+              const { data } = await axios.put(
+                `${process.env.NEXT_PUBLIC_SERVER_URI}/api/v1/auth/update/role/${row.original._id}`,
+                { role: value },
+                {
+                  headers: {
+                    Authorization: auth?.token,
+                  },
+                }
+              );
+              if (data?.success) {
+                toast.success("Role updated successfully");
+                fetchUsers(currentPage);
+              }
+            } catch (error) {
+              console.error(error);
+              toast.error(
+                error.response?.data?.message || "Failed to update role"
+              );
+            }
+          };
+
+          return (
+            <div className="w-full">
+              <select
+                onChange={(e) => handleUpdate(e.target.value)}
+                value={role}
+                disabled={
+                  auth.user?.role !== "superadmin" &&
+                  auth.user?.role !== "admin"
+                }
+                className={`w-full border rounded-md p-1 text-xs font-semibold text-center focus:outline-none focus:ring-2 focus:ring-[#c6080a] ${
+                  roleColors[role] || roleColors.user
+                } ${
+                  auth.user?.role !== "superadmin" &&
+                  auth.user?.role !== "admin"
+                    ? "cursor-not-allowed opacity-75"
+                    : "cursor-pointer"
+                }`}
+              >
+                <option value="user">User</option>
+                <option value="admin">Admin</option>
+                <option value="superadmin">Super Admin</option>
+                <option value="agent">Agent</option>
+              </select>
+            </div>
+          );
+        },
+      },
+      {
+        accessorKey: "status",
+        minSize: 100,
+        maxSize: 130,
+        size: 110,
+        Header: "STATUS",
+        Cell: ({ cell, row }) => {
+          const status = cell.getValue() || false;
+
+          const handleToggle = async () => {
+            const newStatus = !status;
+            await handleStatusToggle(row.original._id, status);
+          };
+
+          return (
+            <div className="flex items-center gap-2">
+              <button
+                onClick={handleToggle}
+                className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-[#c6080a] focus:ring-offset-2 ${
+                  status ? "bg-green-500" : "bg-gray-300"
+                }`}
+              >
+                <span
+                  className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                    status ? "translate-x-6" : "translate-x-1"
+                  }`}
+                />
+              </button>
+              <span className="text-xs text-gray-600">
+                {status ? "Active" : "Blocked"}
+              </span>
+            </div>
+          );
+        },
+      },
+      {
+        accessorKey: "isSeller",
+        minSize: 100,
+        maxSize: 130,
+        size: 110,
+        Header: "SELLER",
+        Cell: ({ cell, row }) => {
+          const isSeller = cell.getValue();
+          const sellerStatus = row.original?.sellerStatus || "none";
+
+          if (!isSeller) {
+            return (
+              <span className="px-2 py-1 rounded text-xs text-gray-500">
+                No
+              </span>
+            );
+          }
+
+          const statusColors = {
+            approved: "bg-green-100 text-green-800",
+            pending: "bg-yellow-100 text-yellow-800",
+            rejected: "bg-red-100 text-red-800",
+            suspended: "bg-gray-100 text-gray-800",
+          };
+
+          return (
+            <div className="flex flex-col gap-1">
+              <span className="px-2 py-1 rounded text-xs font-medium bg-blue-100 text-blue-800">
+                Yes
+              </span>
+              {sellerStatus !== "none" && (
+                <span
+                  className={`px-2 py-0.5 rounded text-xs ${
+                    statusColors[sellerStatus] || statusColors.pending
+                  }`}
+                >
+                  {sellerStatus}
+                </span>
+              )}
+            </div>
+          );
+        },
+      },
+      {
+        accessorKey: "createdAt",
+        minSize: 120,
+        maxSize: 150,
+        size: 130,
+        Header: "JOINED",
+        Cell: ({ cell }) => {
+          const date = cell.getValue();
+          return (
+            <span className="text-sm text-gray-600">
+              {format(new Date(date), "MMM dd, yyyy")}
+            </span>
+          );
+        },
+      },
+      ...(auth.user?.role === "superadmin" || auth.user?.role === "admin"
         ? [
             {
-              accessorKey: "role",
-              minSize: 70,
-              maxSize: 140,
-              size: 120,
-              grow: false,
-              Header: ({ column }) => {
-                return (
-                  <div className=" flex flex-col gap-[2px]">
-                    <span className="ml-1 cursor-pointer">Role</span>
-                  </div>
-                );
-              },
-              Cell: ({ cell, row }) => {
-                const role = cell.getValue();
-                const [userRole, setUserRole] = useState(role);
-                const [show, setShow] = useState(false);
-
-                const handleUpdate = async (value) => {
-                  setUserRole(value);
-                  try {
-                    const { data } = await axios.put(
-                      `${process.env.NEXT_PUBLIC_SERVER_URI}/api/v1/auth/update/role/${row.original._id}`,
-                      { role: value }
-                    );
-                    if (data) {
-                      fetchUsers();
-                      setShow(false);
-                    }
-                  } catch (error) {
-                    console.log(error);
-                    toast.error(error.response?.data?.message);
-                  }
-                };
-
-                return (
-                  <div className="w-full h-full">
-                    {!show ? (
-                      <div
-                        onDoubleClick={() => setShow(true)}
-                        className="flex items-center justify-start cursor-pointer text-[12px] text-black w-full h-full"
-                      >
-                        {role === "admin" ? (
-                          <button className=" py-[.35rem] px-4 rounded-[2rem] border-2 border-sky-600 bg-sky-200 hover:bg-sky-300 text-sky-900 hover:shadow-md cursor-pointer transition-all duration-300 hover:scale-[1.03]">
-                            Admin
-                          </button>
-                        ) : role === "superadmin" ? (
-                          <button className=" py-[.35rem] px-4 rounded-[2rem] border-2 border-pink-600 bg-pink-200 hover:bg-pink-300 text-pink-900 hover:shadow-md cursor-pointer transition-all duration-300 hover:scale-[1.03]">
-                            Super Admin
-                          </button>
-                        ) : role === "agent" ? (
-                          <button className=" py-[.35rem] px-4 rounded-[2rem] border-2 border-lime-600 bg-lime-200 hover:bg-lime-300 text-lime-900 hover:shadow-md cursor-pointer transition-all duration-300 hover:scale-[1.03]">
-                            Agent
-                          </button>
-                        ) : (
-                          <button className=" py-[.35rem] px-4 rounded-[2rem] border-2 border-green-600 bg-green-200 hover:bg-green-300 text-green-900 hover:shadow-md cursor-pointer transition-all duration-300 hover:scale-[1.03]">
-                            User
-                          </button>
-                        )}
-                      </div>
-                    ) : (
-                      <select
-                        value={userRole}
-                        onChange={(e) => handleUpdate(e.target.value)}
-                        onBlur={() => setShow(false)}
-                        className="w-full border rounded-md p-1 text-black text-[14px]"
-                      >
-                        <option value="admin"> Admin</option>
-                        <option value="superadmin">Super Admin</option>
-                        <option value="agent">Agent</option>
-                        <option value="user">User</option>
-                      </select>
-                    )}
-                  </div>
-                );
-              },
-              filterFn: (row, columnId, filterValue) => {
-                const cellValue =
-                  row.original[columnId]?.toString().toLowerCase() || "";
-
-                return cellValue.includes(filterValue.toLowerCase());
-              },
-            },
-            {
               accessorKey: "Actions",
-              minSize: 100,
-              maxSize: 140,
-              size: 130,
-              grow: false,
-              Header: ({ column }) => {
+              minSize: 150,
+              maxSize: 180,
+              size: 160,
+              Header: "ACTIONS",
+              Cell: ({ row }) => {
                 return (
-                  <div className=" flex flex-col gap-[2px]">
-                    <span className="ml-1 cursor-pointer">ACTIONS</span>
-                  </div>
-                );
-              },
-              Cell: ({ cell, row }) => {
-                const status = row.original.status;
-                const [userStatus, setUserStatus] = useState(status);
-
-                const handleUpdate = async (value) => {
-                  setUserStatus(value);
-                  alert(value);
-                  try {
-                    const { data } = await axios.put(
-                      `${process.env.NEXT_PUBLIC_SERVER_URI}/api/v1/auth/update/role/${row.original._id}`,
-                      { status: value }
-                    );
-                    if (data) {
-                      fetchUsers();
-                    }
-                  } catch (error) {
-                    console.log(error);
-                    toast.error(error.response?.data?.message);
-                  }
-                };
-                return (
-                  <div className="flex items-center justify-center gap-2 cursor-pointer text-[12px] text-black w-full h-full">
-                    <span
+                  <div className="flex items-center gap-2">
+                    <button
                       onClick={() => {
-                        setShowaddUser(true);
+                        setShowAddUser(true);
                         setUserId(row.original._id);
                       }}
-                      className="p-1 bg-yellow-500 hover:bg-yellow-600 rounded-full transition-all duration-300 hover:scale-[1.03]"
+                      className="p-2 bg-yellow-100 hover:bg-yellow-200 rounded-lg transition-all duration-200 hover:scale-105"
+                      title="Edit"
                     >
-                      <MdModeEditOutline className="text-[16px] text-white" />
-                    </span>
-                    <span
-                      onClick={() => handleUpdate(!status)}
-                      className={`p-1  ${
-                        userStatus
-                          ? "bg-sky-200 hover:bg-sky-300"
-                          : "bg-green-200 hover:bg-green-300"
-                      }  rounded-full transition-all duration-300 hover:scale-[1.03] cursor-pointer`}
-                    >
-                      {userStatus ? (
-                        <MdNotInterested className="text-[16px] text-sky-500 hover:text-sky-600" />
-                      ) : (
-                        <FaCheckDouble className="text-[14px] text-green-600 hover:text-green-700" />
-                      )}
-                    </span>
-                    <span
+                      <MdModeEditOutline className="text-yellow-600 text-lg" />
+                    </button>
+                    <button
                       onClick={() => handleDeleteConfirmation(row.original._id)}
-                      className="p-1 bg-red-200 hover:bg-red-300   rounded-full transition-all duration-300 hover:scale-[1.03]"
+                      className="p-2 bg-red-100 hover:bg-red-200 rounded-lg transition-all duration-200 hover:scale-105"
+                      title="Delete"
                     >
-                      <MdDelete className="text-[16px] text-red-500 hover:text-red-600" />
-                    </span>
+                      <MdDelete className="text-red-600 text-lg" />
+                    </button>
                   </div>
                 );
               },
@@ -846,74 +588,87 @@ export default function Users() {
           ]
         : []),
     ],
-    // eslint-disable-next-line
-    [userData, currentUrl, filterUser, activeTab, paginatedData]
+    [
+      auth.user?.role,
+      currentPage,
+      handleStatusToggle,
+      handleDeleteConfirmation,
+      setShowAddUser,
+      setUserId,
+      fetchUsers,
+      auth?.token,
+    ]
   );
 
-  const table = useMaterialReactTable({
-    columns,
-    data: paginatedData,
-    getRowId: (row) => row._id,
-    enableStickyHeader: true,
-    enableStickyFooter: false,
-    columnFilterDisplayMode: "popover",
-    muiTableContainerProps: {
-      sx: (theme) => ({
-        minHeight: {
-          xs: "330px",
-          sm: "350px",
-          md: "330px",
-          lg: "400px",
-          xl: "500px",
-        },
-        maxHeight: {
-          xs: "350px",
-          sm: "380px",
-          md: "400px",
-          lg: "500px",
-          xl: "800px",
-        },
-      }),
-    },
+  // Ensure columns is always an array
+  const safeColumns = useMemo(() => {
+    if (!columns || !Array.isArray(columns)) return [];
+    return columns.filter(
+      (col) => col && typeof col === "object" && col.accessorKey
+    );
+  }, [columns]);
 
-    enableColumnActions: false,
-    enableColumnFilters: false,
-    enableSorting: false,
-    enableGlobalFilter: true,
-    enableRowNumbers: true,
-    enableColumnResizing: true,
-    enableTopToolbar: true,
-    enableBottomToolbar: false,
-    enableRowSelection: true,
-    onRowSelectionChange: setRowSelection,
-    state: { rowSelection },
-    // enableEditing: true,
-    // state: { isLoading: isLoading },
+  // Ensure data is always an array
+  const safeData = useMemo(() => {
+    if (!filterUser || !Array.isArray(filterUser)) return [];
+    return filterUser.filter(
+      (item) => item && typeof item === "object" && item !== null
+    );
+  }, [filterUser]);
 
-    enablePagination: false,
-    initialState: {
-      pagination: { pageSize: 20 },
-      pageSize: 20,
-      density: "compact",
-    },
+  // Helpers
+  const getValue = (row, accessor) => {
+    if (!row || !accessor) return "";
+    if (accessor.includes(".")) {
+      return accessor.split(".").reduce((acc, key) => acc?.[key], row) ?? "";
+    }
+    return row[accessor] ?? "";
+  };
 
-    muiTableHeadCellProps: {
-      style: {
-        fontWeight: "600",
-        fontSize: "12px",
-        backgroundColor: "#c6080a",
-        color: "#fff",
-        padding: ".7rem 0.3rem",
-      },
-    },
-  });
+  const renderCell = (col, row) => {
+    const value = getValue(row, col.accessorKey);
+    if (typeof col.Cell === "function") {
+      return col.Cell({
+        cell: { getValue: () => value },
+        row: { original: row },
+      });
+    }
+    return value;
+  };
 
-  // Close Modal
+  // Selection handling for bulk actions
+  const allRowIds = safeData.map((row, idx) =>
+    String(row?._id || row?.id || idx)
+  );
+  const toggleSelectAll = () => {
+    if (allRowIds.every((id) => rowSelection[id])) {
+      setRowSelection({});
+    } else {
+      const next = {};
+      allRowIds.forEach((id) => {
+        next[id] = true;
+      });
+      setRowSelection(next);
+    }
+  };
+
+  const toggleSelectRow = (id) => {
+    setRowSelection((prev) => {
+      const next = { ...prev };
+      if (next[id]) {
+        delete next[id];
+      } else {
+        next[id] = true;
+      }
+      return next;
+    });
+  };
+
   useEffect(() => {
     const handleClickOutside = (event) => {
       if (closeModal.current && !closeModal.current.contains(event.target)) {
         setUserId("");
-        setShowaddUser(false);
+        setShowAddUser(false);
       }
     };
 
@@ -923,189 +678,286 @@ export default function Users() {
 
   return (
     <MainLayout
-      title="User Profile - Manage Your Account and Orders"
-      description="View and update your personal information, track orders, and manage account settings from your user profile page."
-      keywords="user profile, manage account, order history, update profile, track orders, e-commerce user page, account settings, user dashboard"
+      title="User Management - Admin Dashboard"
+      description="Manage users, roles, and permissions"
+      keywords="users, admin, management"
     >
-      <div className="relative p-1 sm:p-2 h-[100%] w-full pb-4 flex flex-col ">
-        <div className="flex flex-col pb-2 ">
-          <Breadcrumb path={currentUrl} />
-          <div className="flex flex-col gap-5 mt-4 ">
-            {/* Tabs */}
-            <div className="w-full px-4 rounded-md bg-white flex items-center gap-4 overflow-x-auto shidden">
-              <button
-                className={`border-b-[3px] py-3 text-[14px] px-2 font-medium cursor-pointer min-w-fit ${
-                  activeTab === "All"
-                    ? " border-red-600 text-red-600"
-                    : "text-gray-700 hover:text-gray-800 border-white"
-                }`}
-                onClick={() => handleTabClick("All")}
-              >
-                All ({userData.length})
-              </button>
-              <button
-                className={`border-b-[3px] py-3 text-[14px] px-2 font-medium cursor-pointer min-w-fit ${
-                  activeTab === "Active"
-                    ? "border-b-[3px] border-red-600 text-red-600"
-                    : "text-gray-700 hover:text-gray-800 border-white"
-                }`}
-                onClick={() => handleTabClick("Active")}
-              >
-                Active ({activeUsers})
-              </button>
-              <button
-                className={` border-b-[3px] py-3 text-[14px] px-2 font-medium cursor-pointer min-w-fit ${
-                  activeTab === "Blocked"
-                    ? "border-b-[3px] border-red-600 text-red-600"
-                    : "text-gray-700 hover:text-gray-800 border-white"
-                }`}
-                onClick={() => handleTabClick("Blocked")}
-              >
-                Blocked ({blockUsers})
-              </button>
-              <button
-                className={` border-b-[3px] py-3 text-[14px] px-2 font-medium cursor-pointer ${
-                  role === "user"
-                    ? "border-b-[3px] border-red-600 text-red-600"
-                    : "text-gray-700 hover:text-gray-800 border-white"
-                }`}
-                onClick={() => setRole("user")}
-              >
-                Customer
-              </button>
-              <button
-                className={` border-b-[3px] py-3 text-[14px] px-2 font-medium cursor-pointer ${
-                  role === "admin"
-                    ? "border-b-[3px] border-red-600 text-red-600"
-                    : "text-gray-700 hover:text-gray-800 border-white"
-                }`}
-                onClick={() => setRole("admin")}
-              >
-                Admin
-              </button>
-              <button
-                className={` border-b-[3px] py-3 text-[14px] px-2 font-medium cursor-pointer ${
-                  role === "agent"
-                    ? "border-b-[3px] border-red-600 text-red-600"
-                    : "text-gray-700 hover:text-gray-800 border-white"
-                }`}
-                onClick={() => setRole("agent")}
-              >
-                Agent
-              </button>
-              <button
-                className={` border-b-[3px] py-3 text-[14px] px-2 font-medium cursor-pointer min-w-fit ${
-                  role === "superadmin"
-                    ? "border-b-[3px] border-red-600 text-red-600"
-                    : "text-gray-700 hover:text-gray-800 border-white"
-                }`}
-                onClick={() => setRole("superadmin")}
-              >
-                Super Admin
-              </button>
-              <button
-                className={` border-b-[3px] py-3 text-[14px] px-2 font-medium cursor-pointer ${
-                  role === "123"
-                    ? "border-b-[3px] border-red-600 text-red-600"
-                    : "text-gray-700 hover:text-gray-800 border-white"
-                }`}
-                onClick={() => setRole("")}
-              >
-                Clear
-              </button>
-            </div>
-            {/* Actions */}
-            <div className="flex items-center justify-between flex-wrap gap-4">
-              <h1 className="text-2xl font-sans font-semibold text-black">
-                Users
-              </h1>
-              {auth.user?.role === "superadmin" && (
-                <div className="flex items-center gap-4">
-                  <button
-                    onClick={() => handleDeleteConfirmationUsers()}
-                    className="text-[14px] py-2 px-4 hover:border-2 hover:rounded-md hover:shadow-md hover:scale-[1.03] text-gray-600 hover:text-gray-800 border-b-2 border-gray-600 transition-all duration-300 "
-                  >
-                    Delete All
-                  </button>
-                  <button
-                    onClick={() => setShowaddUser(true)}
-                    className={`flex text-[14px] items-center justify-center text-white bg-[#c6080a] hover:bg-red-800   py-2 rounded-md shadow-md hover:shadow-xl transition-all duration-300 cursor-pointer hover:scale-[1.03] px-4`}
-                  >
-                    ADD NEW USER
-                  </button>
-                </div>
-              )}
-            </div>
-          </div>
-          {/*  */}
+      <div className="relative p-4 sm:p-6 h-full w-full flex flex-col">
+        <Breadcrumb path={currentUrl} />
 
-          <div className=" relative overflow-hidden w-full h-[93%] py-3 sm:py-4 bg-white rounded-md shadow  px-2 sm:px-4 mt-4  ">
-            <div className="flex items-center justify-between flex-wrap gap-3">
-              <div className="relative">
-                <span className="absolute top-2 left-[.4rem] z-10">
-                  <IoSearch className="text-[18px] text-gray-500" />
-                </span>
+        <div className="flex flex-col gap-6 mt-6">
+          {/* Header Section */}
+          <div className="flex items-center justify-between flex-wrap gap-4">
+            <div>
+              <h1 className="text-3xl font-bold bg-gradient-to-r from-[#c6080a] to-[#e63946] bg-clip-text text-transparent">
+                User Management
+              </h1>
+              <p className="text-gray-600 mt-1">
+                Manage user accounts, roles, and permissions
+              </p>
+            </div>
+            {(auth.user?.role === "superadmin" ||
+              auth.user?.role === "admin") && (
+              <div className="flex items-center gap-3">
+                {Object.keys(rowSelection).length > 0 && (
+                  <>
+                    <motion.button
+                      initial={{ opacity: 0, scale: 0.9 }}
+                      animate={{ opacity: 1, scale: 1 }}
+                      onClick={() => handleBulkStatusUpdate(true)}
+                      className="px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg font-medium transition-all duration-200 hover:scale-105 shadow-lg flex items-center gap-2"
+                    >
+                      <FaUserCheck className="text-lg" />
+                      Activate ({Object.keys(rowSelection).length})
+                    </motion.button>
+                    <motion.button
+                      initial={{ opacity: 0, scale: 0.9 }}
+                      animate={{ opacity: 1, scale: 1 }}
+                      onClick={() => handleBulkStatusUpdate(false)}
+                      className="px-4 py-2 bg-orange-600 hover:bg-orange-700 text-white rounded-lg font-medium transition-all duration-200 hover:scale-105 shadow-lg flex items-center gap-2"
+                    >
+                      <FaUserSlash className="text-lg" />
+                      Block ({Object.keys(rowSelection).length})
+                    </motion.button>
+                    <motion.button
+                      initial={{ opacity: 0, scale: 0.9 }}
+                      animate={{ opacity: 1, scale: 1 }}
+                      onClick={handleBulkDelete}
+                      className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg font-medium transition-all duration-200 hover:scale-105 shadow-lg"
+                    >
+                      Delete ({Object.keys(rowSelection).length})
+                    </motion.button>
+                  </>
+                )}
+                <button
+                  onClick={() => setShowAddUser(true)}
+                  className="px-4 py-2 bg-gradient-to-r from-[#c6080a] to-[#e63946] hover:from-[#a00608] hover:to-[#c6080a] text-white rounded-lg font-medium transition-all duration-200 hover:scale-105 shadow-lg"
+                >
+                  Add New User
+                </button>
+              </div>
+            )}
+          </div>
+
+          {/* Stats Cards */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            {[
+              {
+                label: "Total Users",
+                value: stats.total,
+                color: "blue",
+                icon: "👥",
+                bg: "from-indigo-500 via-sky-500 to-cyan-400",
+              },
+              {
+                label: "Active Users",
+                value: stats.active,
+                color: "green",
+                icon: "✅",
+                bg: "from-emerald-500 via-green-500 to-lime-400",
+              },
+              {
+                label: "Blocked Users",
+                value: stats.blocked,
+                color: "red",
+                icon: "🚫",
+                bg: "from-rose-500 via-red-500 to-orange-400",
+              },
+              {
+                label: "Sellers",
+                value: stats.byRole?.seller || 0,
+                color: "orange",
+                icon: "🏪",
+                bg: "from-amber-500 via-orange-500 to-pink-500",
+              },
+            ].map((stat, index) => (
+              <motion.div
+                key={stat.label}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: index * 0.1 }}
+                className={`relative overflow-hidden rounded-xl p-6 shadow-lg hover:shadow-xl transition-all duration-300 bg-gradient-to-br ${stat.bg}`}
+              >
+                {/* subtle glass overlay */}
+                <div className="pointer-events-none absolute inset-0 bg-white/5" />
+                <div className="relative flex items-center justify-between z-10">
+                  <div>
+                    <p className="text-sm text-white/80 mb-1">{stat.label}</p>
+                    <p className="text-3xl font-bold text-white drop-shadow-sm">
+                      {stat.value}
+                    </p>
+                  </div>
+                  <div className="text-4xl drop-shadow-sm">{stat.icon}</div>
+                </div>
+              </motion.div>
+            ))}
+          </div>
+
+          {/* Tabs and Filters */}
+          <div className="bg-white rounded-xl shadow-lg p-4">
+            <div className="flex items-center gap-4 mb-4 overflow-x-auto">
+              {["All", "Active", "Blocked"].map((tab) => (
+                <button
+                  key={tab}
+                  onClick={() => handleTabClick(tab)}
+                  className={`px-4 py-2 rounded-lg font-medium transition-all duration-200 whitespace-nowrap ${
+                    activeTab === tab
+                      ? "bg-gradient-to-r from-[#c6080a] to-[#e63946] text-white shadow-md"
+                      : "text-gray-700 hover:bg-gray-100"
+                  }`}
+                >
+                  {tab} (
+                  {tab === "All"
+                    ? stats.total
+                    : tab === "Active"
+                    ? stats.active
+                    : stats.blocked}
+                  )
+                </button>
+              ))}
+              <div className="flex items-center gap-2 ml-auto">
+                <span className="text-sm text-gray-600">Filter by Role:</span>
+                <select
+                  value={role}
+                  onChange={(e) => {
+                    setRole(e.target.value);
+                    setCurrentPage(1);
+                  }}
+                  className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#c6080a] text-sm"
+                >
+                  <option value="">All Roles</option>
+                  <option value="user">User</option>
+                  <option value="admin">Admin</option>
+                  <option value="superadmin">Super Admin</option>
+                  <option value="agent">Agent</option>
+                </select>
+              </div>
+            </div>
+
+            {/* Search and Pagination */}
+            <div className="flex items-center justify-between gap-4 flex-wrap">
+              <div className="relative flex-1 min-w-[250px]">
+                <IoSearch className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-xl" />
                 <input
                   type="search"
                   value={searchQuery}
                   onChange={(e) => handleSearch(e.target.value)}
-                  placeholder="Search"
-                  className="w-[17rem] h-[2.2rem] rounded-md border border-gray-400 focus:border-red-600 outline-none px-2 pl-[1.8rem] text-[12px]"
+                  placeholder="Search users by name, email, or location..."
+                  className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#c6080a] focus:border-transparent"
                 />
               </div>
-              {/* Pegination */}
-              <div className="flex items-center gap-3 justify-end sm:justify-normal w-full sm:w-fit">
-                <span>
-                  {currentPage} of {totalPages}
+              <div className="flex items-center gap-3">
+                <span className="text-sm text-gray-600">
+                  Page {currentPage} of {totalPages}
                 </span>
-                <div className="flex items-center gap-2">
-                  <CiCircleChevLeft
-                    onClick={() => handlePageChange("prev")}
-                    className={`text-[27px] text-green-500 hover:text-green-600 ${
-                      currentPage === 1
-                        ? "opacity-50 cursor-not-allowed"
-                        : "cursor-pointer"
-                    }`}
-                  />
-                  <CiCircleChevRight
-                    onClick={() => handlePageChange("next")}
-                    className={`text-[27px] text-green-500 hover:text-green-600 ${
-                      currentPage === totalPages
-                        ? "opacity-50 cursor-not-allowed"
-                        : "cursor-pointer"
-                    }`}
-                  />
-                </div>
+                <button
+                  onClick={() => handlePageChange("prev")}
+                  disabled={currentPage === 1}
+                  className="p-2 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-100 transition-colors"
+                >
+                  <CiCircleChevLeft className="text-2xl text-[#c6080a]" />
+                </button>
+                <button
+                  onClick={() => handlePageChange("next")}
+                  disabled={currentPage === totalPages}
+                  className="p-2 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-100 transition-colors"
+                >
+                  <CiCircleChevRight className="text-2xl text-[#c6080a]" />
+                </button>
               </div>
             </div>
+          </div>
 
-            <div className=" flex overflow-x-auto w-full h-[90%] overflow-y-auto mt-3 pb-4 ">
-              {isLoading ? (
-                <div className="flex items-center justify-center w-full h-screen px-4 py-4">
-                  <Loader />
-                </div>
-              ) : (
-                <div className="w-full min-h-[20vh] relative">
-                  <div className="h-full overflow-y-scroll shidden relative">
-                    <MaterialReactTable table={table} />
-                  </div>
-                </div>
-              )}
-            </div>
+          {/* Table */}
+          <div className="bg-white rounded-xl shadow-lg p-4 overflow-hidden">
+            {isLoading ? (
+              <div className="flex items-center justify-center h-96">
+                <Loader />
+              </div>
+            ) : safeColumns.length > 0 ? (
+              <div className="overflow-x-auto">
+                <Table className="min-w-full">
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead className="w-12">
+                        <input
+                          type="checkbox"
+                          onChange={toggleSelectAll}
+                          checked={
+                            allRowIds.length > 0 &&
+                            allRowIds.every((id) => rowSelection[id])
+                          }
+                          className="accent-[#c6080a] w-4 h-4"
+                        />
+                      </TableHead>
+                      {safeColumns.map((col) => (
+                        <TableHead key={col.accessorKey} className="text-xs">
+                          {col.Header || col.accessorKey}
+                        </TableHead>
+                      ))}
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {safeData.length === 0 ? (
+                      <TableRow>
+                        <TableCell colSpan={safeColumns.length + 1}>
+                          <div className="flex items-center justify-center py-10 text-gray-500">
+                            No users found
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    ) : (
+                      safeData.map((row, idx) => {
+                        const rowId = String(row?._id || row?.id || idx);
+                        return (
+                          <TableRow key={rowId}>
+                            <TableCell>
+                              <input
+                                type="checkbox"
+                                className="accent-[#c6080a] w-4 h-4"
+                                checked={!!rowSelection[rowId]}
+                                onChange={() => toggleSelectRow(rowId)}
+                              />
+                            </TableCell>
+                            {safeColumns.map((col) => (
+                              <TableCell key={col.accessorKey}>
+                                {renderCell(col, row)}
+                              </TableCell>
+                            ))}
+                          </TableRow>
+                        );
+                      })
+                    )}
+                  </TableBody>
+                </Table>
+              </div>
+            ) : (
+              <div className="flex items-center justify-center h-96">
+                <p className="text-gray-500 text-lg">No users found</p>
+              </div>
+            )}
           </div>
         </div>
-        {/* -------------Handle User Modal------------ */}
-        {showAddUser && (
-          <div className="fixed top-0 left-0 p-2 sm:p-4 w-full h-full flex items-center justify-center z-[9999999] bg-gray-300/80 overflow-y-auto shidden">
-            <UserModal
-              closeModal={closeModal}
-              setShowaddUser={setShowaddUser}
-              userId={userId}
-              setUserId={setUserId}
-              fetchUsers={fetchUsers}
-            />
-          </div>
-        )}
+
+        {/* User Modal */}
+        <AnimatePresence>
+          {showAddUser && (
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="fixed top-0 left-0 p-2 sm:p-4 w-full h-full flex items-center justify-center z-[9999999] bg-black/50 backdrop-blur-sm overflow-y-auto"
+            >
+              <UserModal
+                closeModal={closeModal}
+                setShowAddUser={setShowAddUser}
+                userId={userId}
+                setUserId={setUserId}
+                fetchUsers={() => fetchUsers(currentPage)}
+              />
+            </motion.div>
+          )}
+        </AnimatePresence>
       </div>
     </MainLayout>
   );
