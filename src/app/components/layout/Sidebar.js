@@ -15,7 +15,7 @@ import { IoSettingsOutline } from "react-icons/io5";
 import { BsChatRightText } from "react-icons/bs";
 import { RiCoupon4Line } from "react-icons/ri";
 import { useAuth } from "@/app/context/authContext";
-import { FaRegQuestionCircle } from "react-icons/fa";
+import { FaRegQuestionCircle, FaUserCircle } from "react-icons/fa";
 import { LuContact } from "react-icons/lu";
 import { TbTruckReturn } from "react-icons/tb";
 import { HiOutlineUserGroup } from "react-icons/hi2";
@@ -33,6 +33,7 @@ const rolePermissions = {
   superadmin: {
     // Full access to all features
     dashboard: { access: true, priority: 1 },
+    profile: { access: true, priority: 1 },
     users: { access: true, priority: 1 },
     products: { access: true, priority: 1 },
     "1688-products": { access: true, priority: 1 },
@@ -53,6 +54,7 @@ const rolePermissions = {
   },
   admin: {
     dashboard: { access: true, priority: 2 },
+    profile: { access: true, priority: 2 },
     users: { access: true, priority: 2 },
     products: { access: true, priority: 2 },
     "1688-products": { access: true, priority: 2 },
@@ -78,6 +80,7 @@ const rolePermissions = {
     notifications: { access: true, priority: 3 },
   },
   seller: {
+    profile: { access: true, priority: 4 },
     dashboard: { access: true, priority: 4 },
     products: { access: true, priority: 4 },
     orders: { access: true, priority: 4 },
@@ -161,6 +164,14 @@ export default function Sidebar({ hide, setHide }) {
         label: "Dashboard",
         icon: LuLayoutDashboard,
         path: "/dashboard",
+        badge: null,
+        section: "main",
+      },
+      {
+        id: "profile",
+        label: "Seller Profile",
+        icon: FaUserCircle,
+        path: "/dashboard/Profile",
         badge: null,
         section: "main",
       },
