@@ -18,6 +18,17 @@ import {
   Minimize2,
   RotateCcw,
   Copy,
+  Strikethrough,
+  Code,
+  Quote,
+  Heading1,
+  Heading2,
+  Heading3,
+  Undo,
+  Redo,
+  Palette,
+  Highlighter,
+  Minus,
 } from "lucide-react";
 
 export function RichTextEditor({
@@ -33,6 +44,8 @@ export function RichTextEditor({
   const [isExpanded, setIsExpanded] = useState(false);
   const [charCount, setCharCount] = useState(0);
   const [wordCount, setWordCount] = useState(0);
+  const [showColorPicker, setShowColorPicker] = useState(false);
+  const [showBgColorPicker, setShowBgColorPicker] = useState(false);
   const editorRef = useRef(null);
 
   const isNearLimit = maxLength && charCount > maxLength * 0.8;
@@ -112,6 +125,52 @@ export function RichTextEditor({
 
   const handleFormat = (format) => {
     execCommand(format);
+  };
+
+  const handleTextColor = (color) => {
+    document.execCommand("foreColor", false, color);
+    handleInput();
+    setShowColorPicker(false);
+    editorRef.current?.focus();
+  };
+
+  const handleBgColor = (color) => {
+    document.execCommand("backColor", false, color);
+    handleInput();
+    setShowBgColorPicker(false);
+    editorRef.current?.focus();
+  };
+
+  const handleHeading = (level) => {
+    execCommand("formatBlock", `<h${level}>`);
+  };
+
+  const handleBlockquote = () => {
+    execCommand("formatBlock", "<blockquote>");
+  };
+
+  const handleCode = () => {
+    execCommand("formatBlock", "<pre>");
+  };
+
+  const handleStrikethrough = () => {
+    execCommand("strikeThrough");
+  };
+
+  const handleHorizontalRule = () => {
+    document.execCommand("insertHorizontalRule", false);
+    handleInput();
+    editorRef.current?.focus();
+  };
+
+  const handleUndo = () => {
+    document.execCommand("undo", false);
+    handleInput();
+  };
+
+  const handleRedo = () => {
+    document.execCommand("redo", false);
+    handleInput();
   };
 
   const handleAlign = (alignment) => {
@@ -233,6 +292,7 @@ export function RichTextEditor({
       >
         {/* Formatting Toolbar */}
         <div className="flex flex-wrap items-center gap-1 p-2 border-b border-gray-100 dark:border-gray-800 bg-gray-50/80 dark:bg-gray-900/80 backdrop-blur-sm rounded-t-lg">
+          {/* Text Formatting */}
           <div className="flex items-center gap-1">
             <Button
               variant="ghost"
@@ -240,7 +300,7 @@ export function RichTextEditor({
               onClick={() => handleFormat("bold")}
               className="h-8 w-8 p-0 hover:bg-gray-200 dark:hover:bg-gray-700"
               type="button"
-              title="Bold"
+              title="Bold (Ctrl+B)"
             >
               <Bold className="h-4 w-4" />
             </Button>
@@ -250,7 +310,7 @@ export function RichTextEditor({
               onClick={() => handleFormat("italic")}
               className="h-8 w-8 p-0 hover:bg-gray-200 dark:hover:bg-gray-700"
               type="button"
-              title="Italic"
+              title="Italic (Ctrl+I)"
             >
               <Italic className="h-4 w-4" />
             </Button>
@@ -260,12 +320,81 @@ export function RichTextEditor({
               onClick={() => handleFormat("underline")}
               className="h-8 w-8 p-0 hover:bg-gray-200 dark:hover:bg-gray-700"
               type="button"
-              title="Underline"
+              title="Underline (Ctrl+U)"
             >
               <Underline className="h-4 w-4" />
             </Button>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={handleStrikethrough}
+              className="h-8 w-8 p-0 hover:bg-gray-200 dark:hover:bg-gray-700"
+              type="button"
+              title="Strikethrough"
+            >
+              <Strikethrough className="h-4 w-4" />
+            </Button>
           </div>
           <div className="h-6 w-px bg-gray-200 dark:bg-gray-700 mx-1" />
+          {/* Undo/Redo */}
+          <div className="flex items-center gap-1">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={handleUndo}
+              className="h-8 w-8 p-0 hover:bg-gray-200 dark:hover:bg-gray-700"
+              type="button"
+              title="Undo (Ctrl+Z)"
+            >
+              <Undo className="h-4 w-4" />
+            </Button>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={handleRedo}
+              className="h-8 w-8 p-0 hover:bg-gray-200 dark:hover:bg-gray-700"
+              type="button"
+              title="Redo (Ctrl+Y)"
+            >
+              <Redo className="h-4 w-4" />
+            </Button>
+          </div>
+          <div className="h-6 w-px bg-gray-200 dark:bg-gray-700 mx-1" />
+          {/* Headings */}
+          <div className="flex items-center gap-1">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => handleHeading(1)}
+              className="h-8 w-8 p-0 hover:bg-gray-200 dark:hover:bg-gray-700"
+              type="button"
+              title="Heading 1"
+            >
+              <Heading1 className="h-4 w-4" />
+            </Button>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => handleHeading(2)}
+              className="h-8 w-8 p-0 hover:bg-gray-200 dark:hover:bg-gray-700"
+              type="button"
+              title="Heading 2"
+            >
+              <Heading2 className="h-4 w-4" />
+            </Button>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => handleHeading(3)}
+              className="h-8 w-8 p-0 hover:bg-gray-200 dark:hover:bg-gray-700"
+              type="button"
+              title="Heading 3"
+            >
+              <Heading3 className="h-4 w-4" />
+            </Button>
+          </div>
+          <div className="h-6 w-px bg-gray-200 dark:bg-gray-700 mx-1" />
+          {/* Alignment */}
           <div className="flex items-center gap-1">
             <Button
               variant="ghost"
@@ -299,6 +428,7 @@ export function RichTextEditor({
             </Button>
           </div>
           <div className="h-6 w-px bg-gray-200 dark:bg-gray-700 mx-1" />
+          {/* Lists */}
           <div className="flex items-center gap-1">
             <Button
               variant="ghost"
@@ -322,6 +452,79 @@ export function RichTextEditor({
             </Button>
           </div>
           <div className="h-6 w-px bg-gray-200 dark:bg-gray-700 mx-1" />
+          {/* Colors */}
+          <div className="flex items-center gap-1 relative">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => {
+                setShowColorPicker(!showColorPicker);
+                setShowBgColorPicker(false);
+              }}
+              className="h-8 w-8 p-0 hover:bg-gray-200 dark:hover:bg-gray-700"
+              type="button"
+              title="Text Color"
+            >
+              <Palette className="h-4 w-4" />
+            </Button>
+            {showColorPicker && (
+              <div className="absolute top-full left-0 mt-1 p-2 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-xl z-50">
+                <div className="grid grid-cols-6 gap-1">
+                  {[
+                    "#000000", "#333333", "#666666", "#999999", "#cccccc", "#ffffff",
+                    "#ff0000", "#ff6600", "#ffcc00", "#33cc00", "#0066ff", "#6600ff",
+                    "#ff0066", "#ff3399", "#ff99cc", "#cc99ff", "#9999ff", "#66ccff",
+                    "#ffcccc", "#ffcc99", "#ffff99", "#ccff99", "#99ccff", "#cc99ff",
+                  ].map((color) => (
+                    <button
+                      key={color}
+                      type="button"
+                      onClick={() => handleTextColor(color)}
+                      className="w-6 h-6 rounded border border-gray-300 dark:border-gray-600 hover:scale-125 transition-transform"
+                      style={{ backgroundColor: color }}
+                      title={color}
+                    />
+                  ))}
+                </div>
+              </div>
+            )}
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => {
+                setShowBgColorPicker(!showBgColorPicker);
+                setShowColorPicker(false);
+              }}
+              className="h-8 w-8 p-0 hover:bg-gray-200 dark:hover:bg-gray-700"
+              type="button"
+              title="Background Color"
+            >
+              <Highlighter className="h-4 w-4" />
+            </Button>
+            {showBgColorPicker && (
+              <div className="absolute top-full left-9 mt-1 p-2 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-xl z-50">
+                <div className="grid grid-cols-6 gap-1">
+                  {[
+                    "#ffffcc", "#ccffcc", "#ccffff", "#ccccff", "#ffccff", "#ffcccc",
+                    "#ffff99", "#ccff99", "#99ffff", "#9999ff", "#ff99ff", "#ff9999",
+                    "#ffff66", "#ccff66", "#66ffff", "#6666ff", "#ff66ff", "#ff6666",
+                    "#ffff00", "#ccff00", "#00ffff", "#0000ff", "#ff00ff", "#ff0000",
+                  ].map((color) => (
+                    <button
+                      key={color}
+                      type="button"
+                      onClick={() => handleBgColor(color)}
+                      className="w-6 h-6 rounded border border-gray-300 dark:border-gray-600 hover:scale-125 transition-transform"
+                      style={{ backgroundColor: color }}
+                      title={color}
+                    />
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+          <div className="h-6 w-px bg-gray-200 dark:bg-gray-700 mx-1" />
+          {/* Special Formatting */}
           <div className="flex items-center gap-1">
             <Button
               variant="ghost"
@@ -339,13 +542,32 @@ export function RichTextEditor({
             <Button
               variant="ghost"
               size="sm"
-              onClick={() => execCommand("formatBlock", "<h2>")}
-              className="h-8 px-2 text-xs hover:bg-gray-200 dark:hover:bg-gray-700"
+              onClick={handleBlockquote}
+              className="h-8 w-8 p-0 hover:bg-gray-200 dark:hover:bg-gray-700"
               type="button"
-              title="Heading"
+              title="Quote"
             >
-              <Type className="h-3 w-3 mr-1" />
-              Heading
+              <Quote className="h-4 w-4" />
+            </Button>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={handleCode}
+              className="h-8 w-8 p-0 hover:bg-gray-200 dark:hover:bg-gray-700"
+              type="button"
+              title="Code Block"
+            >
+              <Code className="h-4 w-4" />
+            </Button>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={handleHorizontalRule}
+              className="h-8 w-8 p-0 hover:bg-gray-200 dark:hover:bg-gray-700"
+              type="button"
+              title="Horizontal Line"
+            >
+              <Minus className="h-4 w-4" />
             </Button>
           </div>
           <div className="ml-auto">
@@ -377,10 +599,15 @@ export function RichTextEditor({
               "w-full min-h-[250px] px-4 py-3 text-sm dark:bg-slate-800  focus:outline-none overflow-auto prose prose-sm max-w-none",
               "[&_ul]:list-disc [&_ul]:ml-6 [&_ol]:list-decimal [&_ol]:ml-6",
               "[&_li]:mb-1 [&_li]:leading-relaxed",
-              "[&_h1]:text-xl [&_h1]:font-bold [&_h1]:mb-2",
-              "[&_h2]:text-lg [&_h2]:font-semibold [&_h2]:mb-2",
+              "[&_h1]:text-2xl [&_h1]:font-bold [&_h1]:mb-3 [&_h1]:mt-4",
+              "[&_h2]:text-xl [&_h2]:font-bold [&_h2]:mb-2 [&_h2]:mt-3",
+              "[&_h3]:text-lg [&_h3]:font-semibold [&_h3]:mb-2 [&_h3]:mt-2",
               "[&_a]:text-blue-600 [&_a]:underline hover:[&_a]:text-blue-800",
-              "[&_strong]:font-bold [&_em]:italic [&_u]:underline",
+              "[&_strong]:font-bold [&_em]:italic [&_u]:underline [&_s]:line-through",
+              "[&_blockquote]:border-l-4 [&_blockquote]:border-gray-300 [&_blockquote]:pl-4 [&_blockquote]:italic [&_blockquote]:my-2",
+              "[&_pre]:bg-gray-100 [&_pre]:dark:bg-gray-800 [&_pre]:p-3 [&_pre]:rounded [&_pre]:my-2 [&_pre]:overflow-x-auto",
+              "[&_code]:bg-gray-100 [&_code]:dark:bg-gray-800 [&_code]:px-1 [&_code]:py-0.5 [&_code]:rounded [&_code]:text-sm",
+              "[&_hr]:border-t [&_hr]:border-gray-300 [&_hr]:my-4",
               isExpanded ? "min-h-[calc(100vh-12rem)]" : "",
               "scrollbar-thin scrollbar-thumb-gray-300 dark:scrollbar-thumb-gray-600 scrollbar-track-transparent"
             )}
@@ -516,6 +743,16 @@ export function RichTextEditor({
         <div
           className="fixed inset-0 bg-black/20 backdrop-blur-sm z-40"
           onClick={toggleExpanded}
+        />
+      )}
+      {/* Click outside to close color pickers */}
+      {(showColorPicker || showBgColorPicker) && (
+        <div
+          className="fixed inset-0 z-30"
+          onClick={() => {
+            setShowColorPicker(false);
+            setShowBgColorPicker(false);
+          }}
         />
       )}
     </div>

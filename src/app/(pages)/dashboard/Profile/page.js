@@ -18,9 +18,24 @@ import {
   FaInstagram,
   FaTwitter,
   FaTiktok,
+  FaCheckCircle,
+  FaSpinner,
+  FaArrowRight,
+  FaChartLine,
+  FaChartBar,
+  FaChartPie,
+  FaCog,
+  FaInfoCircle,
+  FaShieldAlt,
+  FaUserCheck,
+  FaCalendarAlt,
+  FaArrowUp,
 } from "react-icons/fa";
-import { Style } from "@/app/utils/CommonStyle";
-import ProfileModal from "./_conponents/ProfileModal";
+import ProfileModal from "./_components/ProfileModal";
+import OverviewTab from "./_components/OverviewTab";
+import AnalyticsTab from "./_components/AnalyticsTab";
+import SettingsTab from "./_components/SettingsTab";
+import VerificationTab from "./_components/VerificationTab";
 
 const MainLayout = dynamic(
   () => import("../../../components/layout/MainLayout"),
@@ -36,7 +51,8 @@ export default function SellerProfilePage() {
   const [seller, setSeller] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [mode, setMode] = useState("create"); // 'create' | 'edit'
+  const [mode, setMode] = useState("create");
+  const [activeTab, setActiveTab] = useState("overview");
 
   useEffect(() => {
     if (typeof window !== "undefined") {
@@ -63,7 +79,6 @@ export default function SellerProfilePage() {
     } catch (error) {
       const status = error?.response?.status;
       if (status === 400 || status === 404) {
-        // No seller profile yet – allow creation
         setSeller(null);
       } else {
         console.error("Error fetching seller profile:", error);
@@ -106,68 +121,92 @@ export default function SellerProfilePage() {
 
     if (!isActive) {
       return (
-        <span className="px-3 py-1 rounded-full text-xs font-semibold bg-gray-200 text-gray-700 border border-gray-300">
+        <motion.span
+          initial={{ opacity: 0, scale: 0.9 }}
+          animate={{ opacity: 1, scale: 1 }}
+          className="px-4 py-1.5 rounded-full text-xs font-semibold bg-gray-100 text-gray-700 border border-gray-300 shadow-sm"
+        >
           Inactive
-        </span>
+        </motion.span>
       );
     }
 
     const map = {
       approved: {
         label: "Verified Seller",
-        bg: "bg-emerald-100",
-        text: "text-emerald-800",
-        border: "border-emerald-500",
+        bg: "bg-emerald-50",
+        text: "text-emerald-700",
+        border: "border-emerald-300",
+        icon: FaCheckCircle,
       },
       pending: {
         label: "Pending Verification",
-        bg: "bg-amber-100",
-        text: "text-amber-800",
-        border: "border-amber-500",
+        bg: "bg-amber-50",
+        text: "text-amber-700",
+        border: "border-amber-300",
       },
       rejected: {
         label: "Verification Rejected",
-        bg: "bg-red-100",
-        text: "text-red-800",
-        border: "border-red-500",
+        bg: "bg-red-50",
+        text: "text-red-700",
+        border: "border-red-300",
       },
       suspended: {
         label: "Suspended",
-        bg: "bg-gray-100",
-        text: "text-gray-800",
-        border: "border-gray-500",
+        bg: "bg-gray-50",
+        text: "text-gray-700",
+        border: "border-gray-300",
       },
     };
 
     const config = map[verificationStatus] || map.pending;
+    const Icon = config.icon;
 
     return (
-      <span
-        className={`px-3 py-1 rounded-full text-xs font-semibold ${config.bg} ${config.text} border ${config.border}`}
+      <motion.span
+        initial={{ opacity: 0, scale: 0.9 }}
+        animate={{ opacity: 1, scale: 1 }}
+        className={`px-4 py-1.5 rounded-full text-xs font-semibold ${config.bg} ${config.text} border ${config.border} shadow-sm flex items-center gap-1.5`}
       >
-        {config.label}
-      </span>
+        {Icon && <Icon className="text-xs" />}
+        <span>{config.label}</span>
+      </motion.span>
     );
   };
+
+  const tabs = [
+    { id: "overview", label: "Store Details", icon: FaStore },
+    { id: "verification", label: "Verification", icon: FaShieldAlt },
+    { id: "analytics", label: "Analytics", icon: FaChartLine },
+    { id: "settings", label: "Settings", icon: FaCog },
+  ];
 
   const stats = seller
     ? [
         {
           label: "Total Products",
           value: seller.totalProducts || 0,
+          icon: "📦",
+          color: "from-blue-500 to-blue-600",
         },
         {
           label: "Total Sales",
           value: seller.totalSales || 0,
+          icon: "💰",
+          color: "from-green-500 to-green-600",
         },
         {
           label: "Total Revenue",
           value: `€${(seller.totalRevenue || 0).toLocaleString()}`,
+          icon: "💵",
+          color: "from-emerald-500 to-emerald-600",
         },
         {
           label: "Rating",
           value: `${seller.rating?.average?.toFixed(1) || "0.0"} ★`,
           sub: `${seller.rating?.totalReviews || 0} reviews`,
+          icon: "⭐",
+          color: "from-amber-500 to-amber-600",
         },
       ]
     : [];
@@ -178,25 +217,33 @@ export default function SellerProfilePage() {
       description="Create and manage your seller profile, update store branding, address and social links."
       keywords="seller profile, store settings, marketplace, seller dashboard"
     >
-      <div className="relative p-4 sm:p-6 h-full w-full flex flex-col">
+      <div className="relative min-h-screen bg-gradient-to-br from-gray-50 via-white to-gray-50 py-0">
         <Breadcrumb path={currentUrl} />
 
-        <div className="mt-6 flex flex-col gap-6">
-          <div className="flex items-center justify-between flex-wrap gap-3">
-            <div>
-              <h1 className="text-3xl font-bold bg-gradient-to-r from-[#c6080a] to-[#e63946] bg-clip-text text-transparent">
+        <div className="mt-6 max-w-7xl mx-auto flex flex-col gap-6">
+          {/* Header Section */}
+          <motion.div
+            initial={{ opacity: 0, y: -20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 pb-6 border-b border-gray-200"
+          >
+            <div className="flex-1">
+              <h1 className="text-xl sm:text-2xl font-bold bg-gradient-to-r from-[#c6080a] via-[#e63946] to-rose-600 bg-clip-text text-transparent mb-2">
                 Seller Profile
               </h1>
-              <p className="text-gray-600 mt-1">
+              <p className="text-gray-600 text-xs sm:text-sm max-w-2xl">
                 Design a beautiful store profile, manage your brand, and keep
-                your store information up to date.
+                your store information up to date for better customer
+                engagement.
               </p>
             </div>
-            <div className="flex items-center gap-3">
+            <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 w-full sm:w-auto">
               {getStatusBadge()}
-              <button
+              <motion.button
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
                 onClick={seller ? handleOpenEdit : handleOpenCreate}
-                className={`${Style.gradient_btn} !w-auto flex items-center gap-2 px-5 py-2 rounded-full`}
+                className="inline-flex items-center justify-center gap-2 px-6 py-3 rounded-xl font-semibold text-white bg-gradient-to-r from-[#c6080a] via-[#e63946] to-rose-500 shadow-lg hover:shadow-xl transition-all duration-200 cursor-pointer text-xs sm:text-sm"
               >
                 {seller ? (
                   <>
@@ -206,286 +253,216 @@ export default function SellerProfilePage() {
                 ) : (
                   <>
                     <FaPlusCircle className="text-sm" />
-                    <span>Create Seller Profile</span>
+                    <span>Create Profile</span>
                   </>
                 )}
-              </button>
+              </motion.button>
             </div>
-          </div>
+          </motion.div>
 
+          {/* Suspension Reason Banner */}
+          {seller?.verificationStatus === "suspended" &&
+            seller?.suspensionReason && (
+              <motion.div
+                initial={{ opacity: 0, y: -10 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="mb-4 rounded-2xl border border-red-200 bg-red-50 px-4 py-3 flex items-start gap-3"
+              >
+                <FaInfoCircle className="mt-0.5 text-red-500 text-sm" />
+                <div className="space-y-1">
+                  <p className="text-xs font-semibold text-red-700 uppercase tracking-wide">
+                    Account Suspended
+                  </p>
+                  <p className="text-xs text-red-600 leading-relaxed">
+                    {seller.suspensionReason}
+                  </p>
+                </div>
+              </motion.div>
+            )}
+
+          {/* Loading State */}
           {isLoading ? (
-            <Loader />
+            <div className="flex items-center justify-center py-20">
+              <Loader />
+            </div>
           ) : !seller ? (
+            /* Empty State */
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
-              className="w-full rounded-2xl bg-gradient-to-r from-[#c6080a]/5 via-[#e63946]/5 to-amber-100/40 border border-dashed border-[#e63946]/40 p-8 flex flex-col md:flex-row items-center justify-between gap-6"
+              transition={{ delay: 0.1 }}
+              className="w-full rounded-3xl bg-gradient-to-br from-[#c6080a]/10 via-[#e63946]/8 to-amber-50/60 border-2 border-dashed border-[#e63946]/30 p-8 sm:p-12 lg:p-16 flex flex-col lg:flex-row items-center justify-between gap-8 lg:gap-12 shadow-lg"
             >
-              <div className="max-w-xl">
-                <h2 className="text-2xl font-semibold text-gray-900 mb-2">
-                  Bring your brand to life with a stunning seller profile
-                </h2>
-                <p className="text-gray-600 mb-4">
-                  Add your store logo, banner, address and social links so
-                  customers can trust and discover your brand more easily.
-                </p>
-                <ul className="space-y-2 text-sm text-gray-700">
-                  <li>✓ Upload a high-quality logo and hero banner</li>
-                  <li>✓ Add a rich store description and contact details</li>
-                  <li>✓ Use smart Google Maps suggestions for your address</li>
-                  <li>✓ Connect your website and social channels</li>
+              <div className="flex-1 max-w-xl space-y-6">
+                <div className="space-y-3">
+                  <h2 className="text-xl sm:text-2xl font-bold text-gray-900">
+                    Bring your brand to life with a stunning seller profile
+                  </h2>
+                  <p className="text-gray-600 text-xs sm:text-sm leading-relaxed">
+                    Add your store logo, banner, address, and social links so
+                    customers can trust and discover your brand more easily.
+                    Create a professional presence that builds credibility and
+                    drives sales.
+                  </p>
+                </div>
+                <ul className="space-y-3 text-xs sm:text-sm text-gray-700">
+                  {[
+                    "Upload a high-quality logo and hero banner",
+                    "Add a rich store description and contact details",
+                    "Use smart Google Maps suggestions for your address",
+                    "Connect your website and social channels",
+                  ].map((item, index) => (
+                    <motion.li
+                      key={index}
+                      initial={{ opacity: 0, x: -20 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      transition={{ delay: 0.2 + index * 0.1 }}
+                      className="flex items-center gap-3"
+                    >
+                      <FaCheckCircle className="text-emerald-600 flex-shrink-0 text-lg" />
+                      <span>{item}</span>
+                    </motion.li>
+                  ))}
                 </ul>
-                <button
+                <motion.button
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
                   onClick={handleOpenCreate}
-                  className="mt-5 inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-gradient-to-r from-[#c6080a] to-[#e63946] text-white text-sm font-medium shadow-md hover:shadow-lg hover:scale-[1.02] transition-all cursor-pointer"
+                  className="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-gradient-to-r from-[#c6080a] to-[#e63946] text-white text-xs sm:text-sm font-semibold shadow-lg hover:shadow-xl transition-all duration-200 cursor-pointer group"
                 >
-                  <FaPlusCircle className="text-sm" />
+                  <FaPlusCircle className="text-sm group-hover:rotate-90 transition-transform duration-300" />
                   <span>Create your seller profile</span>
-                </button>
+                  <FaArrowRight className="text-xs group-hover:translate-x-1 transition-transform duration-200" />
+                </motion.button>
               </div>
               <motion.div
                 initial={{ opacity: 0, scale: 0.9 }}
                 animate={{ opacity: 1, scale: 1 }}
-                transition={{ delay: 0.1 }}
-                className="relative w-full max-w-sm h-60 rounded-2xl overflow-hidden shadow-xl bg-gradient-to-br from-[#c6080a] via-rose-500 to-amber-400 flex items-center justify-center"
+                transition={{ delay: 0.3 }}
+                className="relative w-full max-w-md h-64 sm:h-80 lg:h-96 rounded-3xl overflow-hidden shadow-2xl bg-gradient-to-br from-[#c6080a] via-rose-500 to-amber-400 flex items-center justify-center"
               >
-                <div className="absolute inset-0 bg-gradient-to-t from-black/30 to-transparent" />
-                <div className="relative flex flex-col items-center text-center text-white px-4">
-                  <div className="w-16 h-16 rounded-full bg-white/15 flex items-center justify-center mb-3">
-                    <FaStore className="text-3xl" />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-black/10 to-transparent" />
+                <div className="relative flex flex-col items-center text-center text-white px-6 z-10">
+                  <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-3xl bg-white/20 backdrop-blur-sm flex items-center justify-center mb-4 border border-white/30 shadow-xl">
+                    <FaStore className="text-4xl sm:text-5xl" />
                   </div>
-                  <p className="text-lg font-semibold mb-1">
+                  <p className="text-lg sm:text-xl font-bold mb-2">
                     Your Storefront, Elevated
                   </p>
-                  <p className="text-xs text-white/80">
+                  <p className="text-xs sm:text-sm text-white/90 max-w-xs">
                     Create an engaging, modern profile that tells your story and
                     builds trust with every visitor.
                   </p>
                 </div>
+                <div className="absolute inset-0 bg-[radial-gradient(circle_at_30%_50%,rgba(255,255,255,0.1),transparent_50%)]" />
               </motion.div>
             </motion.div>
           ) : (
-            <div className="grid grid-cols-1 lg:grid-cols-[2fr,1.3fr] gap-6">
-              {/* Left: Profile Overview */}
+            /* Profile Display with Tabs */
+            <div className="space-y-6">
+              {/* Tabs Navigation */}
               <motion.div
-                initial={{ opacity: 0, y: 20 }}
+                initial={{ opacity: 0, y: -10 }}
                 animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.3 }}
-                className="bg-white rounded-2xl shadow-lg border border-gray-200 overflow-hidden"
+                className="bg-white rounded-2xl shadow-lg border border-gray-200 p-2"
               >
-                <div className="relative h-44 w-full bg-gradient-to-r from-[#c6080a]/20 via-[#e63946]/20 to-amber-100">
-                  {seller.storeBanner ? (
-                    <Image
-                      src={seller.storeBanner}
-                      alt={seller.storeName}
-                      fill
-                      className="object-cover"
-                    />
-                  ) : (
-                    <div className="w-full h-full flex items-center justify-center text-gray-300 text-sm">
-                      Add a beautiful banner to showcase your brand
-                    </div>
-                  )}
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent" />
-                  <div className="absolute -bottom-10 left-6 flex items-end gap-4">
-                    <div className="relative w-24 h-24 rounded-2xl bg-gradient-to-br from-[#c6080a] to-[#e63946] border-4 border-white shadow-xl overflow-hidden flex items-center justify-center">
-                      {seller.storeLogo ? (
-                        <Image
-                          src={seller.storeLogo}
-                          alt={seller.storeName}
-                          fill
-                          className="object-cover"
-                        />
-                      ) : (
-                        <FaStore className="text-3xl text-white" />
-                      )}
-                    </div>
-                    <div className="pb-2">
-                      <h2 className="text-2xl font-semibold text-white drop-shadow-sm">
-                        {seller.storeName}
-                      </h2>
-                      <p className="text-sm text-gray-100">
-                        /{seller.storeSlug}
-                      </p>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="pt-14 px-6 pb-6 space-y-4">
-                  {seller.storeDescription && (
-                    <p className="text-gray-700 text-sm leading-relaxed">
-                      {seller.storeDescription}
-                    </p>
-                  )}
-
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div className="space-y-1">
-                      <p className="text-xs font-semibold text-gray-500">
-                        Contact Email
-                      </p>
-                      <p className="text-sm text-gray-800 break-all">
-                        {seller.contactEmail || auth?.user?.email || "—"}
-                      </p>
-                    </div>
-                    <div className="space-y-1">
-                      <p className="text-xs font-semibold text-gray-500">
-                        Contact Phone
-                      </p>
-                      <p className="text-sm text-gray-800">
-                        {seller.contactPhone || auth?.user?.number || "—"}
-                      </p>
-                    </div>
-                    <div className="space-y-1">
-                      <p className="text-xs font-semibold text-gray-500 flex items-center gap-1">
-                        <FaMapMarkerAlt className="text-red-500" />
-                        Store Address
-                      </p>
-                      <p className="text-sm text-gray-800">
-                        {seller.storeAddress?.address || "—"}
-                      </p>
-                      <p className="text-xs text-gray-500">
-                        {[seller.storeAddress?.city, seller.storeAddress?.state]
-                          .filter(Boolean)
-                          .join(", ")}
-                      </p>
-                      <p className="text-xs text-gray-500">
-                        {[
-                          seller.storeAddress?.postalCode,
-                          seller.storeAddress?.country,
-                        ]
-                          .filter(Boolean)
-                          .join(" ")}
-                      </p>
-                    </div>
-                    <div className="space-y-2">
-                      <p className="text-xs font-semibold text-gray-500">
-                        Social & Links
-                      </p>
-                      <div className="flex flex-wrap items-center gap-2">
-                        {seller.socialLinks?.website && (
-                          <a
-                            href={seller.socialLinks.website}
-                            target="_blank"
-                            rel="noreferrer"
-                            className="inline-flex items-center gap-1 px-3 py-1 rounded-full border border-gray-200 text-xs text-gray-700 hover:border-[#c6080a] hover:text-[#c6080a] transition-colors"
-                          >
-                            <FaGlobe className="text-sm" />
-                            Website
-                          </a>
-                        )}
-                        {seller.socialLinks?.facebook && (
-                          <a
-                            href={seller.socialLinks.facebook}
-                            target="_blank"
-                            rel="noreferrer"
-                            className="inline-flex items-center justify-center w-8 h-8 rounded-full bg-blue-600 text-white text-xs hover:bg-blue-700 transition-colors"
-                          >
-                            <FaFacebookF />
-                          </a>
-                        )}
-                        {seller.socialLinks?.instagram && (
-                          <a
-                            href={seller.socialLinks.instagram}
-                            target="_blank"
-                            rel="noreferrer"
-                            className="inline-flex items-center justify-center w-8 h-8 rounded-full bg-gradient-to-tr from-yellow-400 via-pink-500 to-purple-600 text-white text-xs hover:opacity-90 transition-opacity"
-                          >
-                            <FaInstagram />
-                          </a>
-                        )}
-                        {seller.socialLinks?.twitter && (
-                          <a
-                            href={seller.socialLinks.twitter}
-                            target="_blank"
-                            rel="noreferrer"
-                            className="inline-flex items-center justify-center w-8 h-8 rounded-full bg-sky-500 text-white text-xs hover:bg-sky-600 transition-colors"
-                          >
-                            <FaTwitter />
-                          </a>
-                        )}
-                        {seller.socialLinks?.tiktok && (
-                          <a
-                            href={seller.socialLinks.tiktok}
-                            target="_blank"
-                            rel="noreferrer"
-                            className="inline-flex items-center justify-center w-8 h-8 rounded-full bg-black text-white text-xs hover:bg-gray-900 transition-colors"
-                          >
-                            <FaTiktok />
-                          </a>
-                        )}
-                        {!seller.socialLinks?.website &&
-                          !seller.socialLinks?.facebook &&
-                          !seller.socialLinks?.instagram &&
-                          !seller.socialLinks?.twitter &&
-                          !seller.socialLinks?.tiktok && (
-                            <p className="text-xs text-gray-400">
-                              No social links added yet.
-                            </p>
-                          )}
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </motion.div>
-
-              {/* Right: Metrics & Tips */}
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.35, delay: 0.05 }}
-                className="space-y-4"
-              >
-                <div className="bg-white rounded-2xl shadow-lg border border-gray-200 p-5">
-                  <h3 className="text-sm font-semibold text-gray-900 mb-3">
-                    Store Performance
-                  </h3>
-                  <div className="grid grid-cols-2 gap-3">
-                    {stats.map((item) => (
-                      <div
-                        key={item.label}
-                        className="rounded-xl border border-gray-100 bg-gradient-to-br from-gray-50 to-white p-3 shadow-sm"
+                <div className="flex items-center gap-2 overflow-x-auto scrollbar-hide">
+                  {tabs.map((tab) => {
+                    const Icon = tab.icon;
+                    const isActive = activeTab === tab.id;
+                    return (
+                      <motion.button
+                        key={tab.id}
+                        onClick={() => setActiveTab(tab.id)}
+                        className={`relative flex items-center gap-2.5 px-5 py-3 rounded-xl font-semibold text-sm transition-all duration-200 whitespace-nowrap ${
+                          isActive
+                            ? "text-white"
+                            : "text-gray-600 hover:text-gray-900 hover:bg-gray-50"
+                        }`}
+                        whileHover={{ scale: 1.02 }}
+                        whileTap={{ scale: 0.98 }}
                       >
-                        <p className="text-[11px] uppercase tracking-wide text-gray-500">
-                          {item.label}
-                        </p>
-                        <p className="text-lg font-semibold text-gray-900 mt-1">
-                          {item.value}
-                        </p>
-                        {item.sub && (
-                          <p className="text-[11px] text-gray-500 mt-0.5">
-                            {item.sub}
-                          </p>
+                        {isActive && (
+                          <motion.div
+                            layoutId="activeTab"
+                            className="absolute inset-0 bg-gradient-to-r from-[#c6080a] via-[#e63946] to-rose-500 rounded-xl shadow-lg"
+                            transition={{
+                              type: "spring",
+                              stiffness: 500,
+                              damping: 30,
+                            }}
+                          />
                         )}
-                      </div>
-                    ))}
-                  </div>
-                </div>
-
-                <div className="bg-gradient-to-br from-[#c6080a]/8 via-[#e63946]/5 to-amber-50 rounded-2xl border border-[#e63946]/20 p-5 shadow-md">
-                  <h3 className="text-sm font-semibold text-gray-900 mb-2">
-                    Profile optimization tips
-                  </h3>
-                  <ul className="space-y-1.5 text-xs text-gray-700">
-                    <li>• Use a clear, high-resolution logo and banner.</li>
-                    <li>
-                      • Write a concise, benefit-driven store description that
-                      explains what makes you unique.
-                    </li>
-                    <li>
-                      • Keep your contact details and address updated for
-                      smoother deliveries.
-                    </li>
-                    <li>
-                      • Add your website and social links to increase customer
-                      trust.
-                    </li>
-                  </ul>
+                        <Icon
+                          className={`relative z-10 text-base ${
+                            isActive ? "text-white" : "text-gray-500"
+                          }`}
+                        />
+                        <span className="relative z-10">{tab.label}</span>
+                      </motion.button>
+                    );
+                  })}
                 </div>
               </motion.div>
+
+              {/* Tab Content */}
+              <AnimatePresence mode="wait">
+                {activeTab === "overview" && (
+                  <motion.div
+                    key="overview"
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -20 }}
+                    transition={{ duration: 0.3 }}
+                  >
+                    <OverviewTab seller={seller} auth={auth} stats={stats} />
+                  </motion.div>
+                )}
+
+                {activeTab === "verification" && (
+                  <motion.div
+                    key="verification"
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -20 }}
+                    transition={{ duration: 0.3 }}
+                  >
+                    <VerificationTab
+                      seller={seller}
+                      onUpdate={handleProfileUpdated}
+                    />
+                  </motion.div>
+                )}
+
+                {activeTab === "analytics" && (
+                  <motion.div
+                    key="analytics"
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -20 }}
+                    transition={{ duration: 0.3 }}
+                  >
+                    <AnalyticsTab seller={seller} stats={stats} />
+                  </motion.div>
+                )}
+
+                {activeTab === "settings" && (
+                  <motion.div
+                    key="settings"
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -20 }}
+                    transition={{ duration: 0.3 }}
+                  >
+                    <SettingsTab seller={seller} onEdit={handleOpenEdit} />
+                  </motion.div>
+                )}
+              </AnimatePresence>
             </div>
           )}
         </div>
 
+        {/* Modal */}
         <AnimatePresence>
           {isModalOpen && (
             <ProfileModal

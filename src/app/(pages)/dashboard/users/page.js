@@ -452,6 +452,7 @@ export default function Users() {
                 }`}
               >
                 <option value="user">User</option>
+                <option value="seller">Seller</option>
                 <option value="admin">Admin</option>
                 <option value="superadmin">Super Admin</option>
                 <option value="agent">Agent</option>
@@ -827,6 +828,7 @@ export default function Users() {
                 >
                   <option value="">All Roles</option>
                   <option value="user">User</option>
+                  <option value="seller">Seller</option>
                   <option value="admin">Admin</option>
                   <option value="superadmin">Super Admin</option>
                   <option value="agent">Agent</option>
