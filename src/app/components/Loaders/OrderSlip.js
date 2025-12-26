@@ -161,14 +161,35 @@ const OrderSlip = ({ orderDetail, generatePDF }) => {
 
         {/* Total Section */}
         <div className="px-6 py-4 bg-red-600 text-white">
-          <div className="flex justify-end">
+          <div className="flex justify-end items-center gap-6">
             <div className="text-right">
               <div className="text-sm opacity-90 mb-1">SUBTOTAL</div>
-              <div className="text-2xl font-bold">
+              <div className="text-xl font-bold">
                 {formatCurrency(subtotal || 0)}
               </div>
             </div>
-            <div className="ml-8 text-right">
+            {(parseFloat(orderDetail?.discount || 0) > 0 || parseFloat(orderDetail?.couponDiscount || 0) > 0) && (
+              <div className="text-right">
+                <div className="text-sm opacity-90 mb-1 flex items-center gap-1">
+                  DISCOUNT
+                  {orderDetail?.couponCode && (
+                    <span className="text-[9px] bg-white/20 px-1.5 py-0.5 rounded">
+                      {orderDetail.couponCode}
+                    </span>
+                  )}
+                </div>
+                <div className="text-xl font-bold text-green-300">
+                  -{formatCurrency(parseFloat(orderDetail?.discount || orderDetail?.couponDiscount || 0))}
+                </div>
+              </div>
+            )}
+            <div className="text-right">
+              <div className="text-sm opacity-90 mb-1">SHIPPING</div>
+              <div className="text-xl font-bold">
+                {formatCurrency(parseFloat(orderDetail?.shippingFee || 0))}
+              </div>
+            </div>
+            <div className="text-right border-l border-white/30 pl-6">
               <div className="text-sm opacity-90 mb-1">TOTAL</div>
               <div className="text-2xl font-bold">
                 {formatCurrency(orderDetail?.totalAmount || 0)}
@@ -205,11 +226,14 @@ const OrderSlip = ({ orderDetail, generatePDF }) => {
                   <div className="flex justify-between">
                     <span>Estimated Delivery:</span>
                     <span className="font-medium text-gray-900">
-                      {orderDetail?.estimatedDelivery ||
-                        format(
-                          new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
-                          "MMM dd, yyyy"
-                        )}
+                      {typeof orderDetail?.estimatedDelivery === "object" && orderDetail?.estimatedDelivery?.min
+                        ? `${orderDetail.estimatedDelivery.min}-${orderDetail.estimatedDelivery.max} days`
+                        : typeof orderDetail?.estimatedDelivery === "string"
+                        ? orderDetail.estimatedDelivery
+                        : format(
+                            new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
+                            "MMM dd, yyyy"
+                          )}
                     </span>
                   </div>
                 </div>
@@ -236,19 +260,36 @@ const OrderSlip = ({ orderDetail, generatePDF }) => {
                       )}
                     </span>
                   </div>
-                  <div className="flex justify-between text-gray-600">
-                    <span>Discount</span>
-                    <span
-                      className={
-                        parseFloat(orderDetail?.discount || 0) > 0
-                          ? "text-green-600"
-                          : ""
-                      }
-                    >
-                      {parseFloat(orderDetail?.discount || 0) > 0 ? "-" : ""}
-                      {formatCurrency(parseFloat(orderDetail?.discount || 0))}
-                    </span>
-                  </div>
+                  {/* Discount - check both discount and couponDiscount fields */}
+                  {(parseFloat(orderDetail?.discount || 0) > 0 || parseFloat(orderDetail?.couponDiscount || 0) > 0 || orderDetail?.couponCode) && (
+                    <div className="flex justify-between text-gray-600">
+                      <span className="flex items-center gap-1">
+                        Discount
+                        {orderDetail?.couponCode && (
+                          <span className="text-[10px] bg-green-100 text-green-700 px-1.5 py-0.5 rounded font-medium">
+                            {orderDetail.couponCode}
+                          </span>
+                        )}
+                      </span>
+                      <span className="text-green-600 font-medium">
+                        -{formatCurrency(parseFloat(orderDetail?.discount || orderDetail?.couponDiscount || 0))}
+                      </span>
+                    </div>
+                  )}
+                  {/* Show €0.00 if no discount */}
+                  {!(parseFloat(orderDetail?.discount || 0) > 0 || parseFloat(orderDetail?.couponDiscount || 0) > 0 || orderDetail?.couponCode) && (
+                    <div className="flex justify-between text-gray-600">
+                      <span>Discount</span>
+                      <span>{formatCurrency(0)}</span>
+                    </div>
+                  )}
+                  {/* Tax/GST if applicable */}
+                  {orderDetail?.tax > 0 && (
+                    <div className="flex justify-between text-gray-600">
+                      <span>Tax (GST 1%)</span>
+                      <span>{formatCurrency(parseFloat(orderDetail?.tax || 0))}</span>
+                    </div>
+                  )}
                   <div className="border-t border-gray-200 my-2 pt-2 flex justify-between font-medium">
                     <span className="text-gray-900">Total</span>
                     <span className="text-lg text-red-700">

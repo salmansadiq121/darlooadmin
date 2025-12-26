@@ -135,10 +135,8 @@ export default function VerificationTab({ seller, onUpdate }) {
   const [isEditing, setIsEditing] = useState(false);
   const [formData, setFormData] = useState({
     businessName: "",
-    taxIdentificationNumber: "",
     identityDocument: {
       type: "",
-      number: "",
     },
     phone: "",
     phoneCode: "",
@@ -161,7 +159,6 @@ export default function VerificationTab({ seller, onUpdate }) {
   const documentTypes = [
     { value: "passport", label: "Passport" },
     { value: "national_id", label: "National ID" },
-    { value: "drivers_license", label: "Driver's License" },
   ];
 
   const accountTypes = [
@@ -196,11 +193,8 @@ export default function VerificationTab({ seller, onUpdate }) {
         const phone = data.verification.phone || "";
         setFormData({
           businessName: data.verification.businessName || "",
-          taxIdentificationNumber:
-            data.verification.taxIdentificationNumber || "",
           identityDocument: {
             type: data.verification.identityDocument?.type || "",
-            number: data.verification.identityDocument?.number || "",
           },
           phone: phoneCode && phone ? `${phoneCode}${phone}` : "",
           phoneCode: phoneCode,
@@ -302,15 +296,51 @@ export default function VerificationTab({ seller, onUpdate }) {
       }));
       return false;
     }
-    if (
-      name.includes("bankDetails.accountNumber") &&
-      !formData.bankDetails.accountNumber?.trim()
-    ) {
-      setErrors((prev) => ({
-        ...prev,
-        "bankDetails.accountNumber": "Account number is required",
-      }));
-      return false;
+    if (name.includes("bankDetails.accountNumber")) {
+      const rawAccount = formData.bankDetails.accountNumber || "";
+      const normalizedAccount = rawAccount.replace(/[\s-]/g, "");
+
+      if (!normalizedAccount.trim()) {
+        setErrors((prev) => ({
+          ...prev,
+          "bankDetails.accountNumber": "Account number is required",
+        }));
+        return false;
+      }
+
+      // Advanced-style validation similar to Stripe heuristics
+      // 1. Allow only letters, numbers, spaces and dashes
+      if (!/^[0-9A-Za-z]+$/.test(normalizedAccount)) {
+        setErrors((prev) => ({
+          ...prev,
+          "bankDetails.accountNumber":
+            "Account number can only contain letters and numbers",
+        }));
+        return false;
+      }
+
+      // 2. Basic length checks (IBAN-like vs local account)
+      // IBAN style: starts with 2 letters followed by alphanumerics, length 15–34
+      if (/^[A-Za-z]{2}[0-9A-Za-z]+$/.test(normalizedAccount)) {
+        if (normalizedAccount.length < 15 || normalizedAccount.length > 34) {
+          setErrors((prev) => ({
+            ...prev,
+            "bankDetails.accountNumber":
+              "IBAN numbers must be between 15 and 34 characters",
+          }));
+          return false;
+        }
+      } else {
+        // Local-style account number: numeric or alphanumeric, 6–34 chars
+        if (normalizedAccount.length < 6 || normalizedAccount.length > 34) {
+          setErrors((prev) => ({
+            ...prev,
+            "bankDetails.accountNumber":
+              "Account number length looks invalid. Please double‑check it.",
+          }));
+          return false;
+        }
+      }
     }
     if (
       name.includes("bankDetails.bankName") &&
@@ -334,12 +364,7 @@ export default function VerificationTab({ seller, onUpdate }) {
     }
 
     // General required fields
-    if (
-      !value &&
-      ["businessName", "taxIdentificationNumber", "phone", "email"].includes(
-        name
-      )
-    ) {
+    if (!value && ["businessName", "phone", "email"].includes(name)) {
       setErrors((prev) => ({ ...prev, [name]: "This field is required" }));
       return false;
     }
@@ -374,9 +399,7 @@ export default function VerificationTab({ seller, onUpdate }) {
     // Validate all required fields (matching backend requirements)
     const requiredFields = [
       "businessName",
-      "taxIdentificationNumber",
       "identityDocument.type",
-      "identityDocument.number",
       "phone",
       "email",
       "bankDetails.accountHolderName",
@@ -396,6 +419,28 @@ export default function VerificationTab({ seller, onUpdate }) {
         newErrors[field] = "This field is required";
       }
     });
+
+    // Advanced account number validation (same rules as blur-time validation)
+    if (formData.bankDetails?.accountNumber) {
+      const rawAccount = formData.bankDetails.accountNumber;
+      const normalizedAccount = rawAccount.replace(/[\s-]/g, "");
+
+      if (!/^[0-9A-Za-z]+$/.test(normalizedAccount)) {
+        newErrors["bankDetails.accountNumber"] =
+          "Account number can only contain letters and numbers";
+      } else if (/^[A-Za-z]{2}[0-9A-Za-z]+$/.test(normalizedAccount)) {
+        if (normalizedAccount.length < 15 || normalizedAccount.length > 34) {
+          newErrors["bankDetails.accountNumber"] =
+            "IBAN numbers must be between 15 and 34 characters";
+        }
+      } else if (
+        normalizedAccount.length < 6 ||
+        normalizedAccount.length > 34
+      ) {
+        newErrors["bankDetails.accountNumber"] =
+          "Account number length looks invalid. Please double‑check it.";
+      }
+    }
 
     if (!frontImage) {
       newErrors.frontImage = "Front image of identity document is required";
@@ -443,12 +488,9 @@ export default function VerificationTab({ seller, onUpdate }) {
 
       const payload = {
         businessName: formData.businessName.trim(),
-        taxIdentificationNumber: formData.taxIdentificationNumber
-          .trim()
-          .toUpperCase(),
+
         identityDocument: {
           type: formData.identityDocument.type,
-          number: formData.identityDocument.number.trim().toUpperCase(),
           frontImage,
           backImage: backImage || "",
         },
@@ -681,27 +723,6 @@ export default function VerificationTab({ seller, onUpdate }) {
               onBlur={() => handleBlur("businessName")}
               disabled={isFormDisabled}
             />
-
-            <InputField
-              label="Tax Identification Number"
-              name="taxIdentificationNumber"
-              placeholder="Enter tax ID number"
-              required
-              icon={FaFileAlt}
-              value={formData.taxIdentificationNumber}
-              error={
-                touched.taxIdentificationNumber &&
-                errors.taxIdentificationNumber
-              }
-              isValid={
-                touched.taxIdentificationNumber &&
-                !errors.taxIdentificationNumber &&
-                formData.taxIdentificationNumber
-              }
-              onChange={handleChange}
-              onBlur={() => handleBlur("taxIdentificationNumber")}
-              disabled={isFormDisabled}
-            />
           </div>
         </div>
 
@@ -745,27 +766,6 @@ export default function VerificationTab({ seller, onUpdate }) {
                 disabled={isFormDisabled}
               />
             </div>
-
-            <InputField
-              label="Document Number"
-              name="identityDocument.number"
-              placeholder="Enter document number"
-              required
-              icon={FaIdCard}
-              value={formData.identityDocument.number}
-              error={
-                touched["identityDocument.number"] &&
-                errors["identityDocument.number"]
-              }
-              isValid={
-                touched["identityDocument.number"] &&
-                !errors["identityDocument.number"] &&
-                formData.identityDocument.number
-              }
-              onChange={handleChange}
-              onBlur={() => handleBlur("identityDocument.number")}
-              disabled={isFormDisabled}
-            />
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">

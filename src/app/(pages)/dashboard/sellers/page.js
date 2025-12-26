@@ -10,7 +10,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import axios from "axios";
 import Loader from "@/app/utils/Loader";
 import dynamic from "next/dynamic";
-import { IoClose, IoSearch } from "react-icons/io5";
+import { IoClose, IoSearch, IoGrid, IoList, IoEye } from "react-icons/io5";
 import { CiCircleChevLeft, CiCircleChevRight } from "react-icons/ci";
 import { format } from "date-fns";
 import Image from "next/image";
@@ -19,14 +19,17 @@ import {
   MdDelete,
   MdCheckCircle,
   MdCancel,
+  MdVerified,
+  MdTrendingUp,
 } from "react-icons/md";
 import { Style } from "@/app/utils/CommonStyle";
 import toast from "react-hot-toast";
 import Swal from "sweetalert2";
 import { useAuth } from "@/app/context/authContext";
-import { HiSwitchHorizontal } from "react-icons/hi";
-import { TbShieldCheck, TbShieldX } from "react-icons/tb";
-import { FaStore, FaUserCheck, FaStar } from "react-icons/fa";
+import { HiSwitchHorizontal, HiOutlineExternalLink } from "react-icons/hi";
+import { TbShieldCheck, TbShieldX, TbPackage, TbCurrencyEuro } from "react-icons/tb";
+import { FaStore, FaUserCheck, FaStar, FaBoxOpen, FaChartLine, FaMapMarkerAlt, FaGlobe, FaEnvelope, FaPhone } from "react-icons/fa";
+import { BiPackage } from "react-icons/bi";
 import {
   Table,
   TableHeader,
@@ -71,6 +74,9 @@ export default function Sellers() {
   const [suspensionSeller, setSuspensionSeller] = useState(null);
   const [suspensionReason, setSuspensionReason] = useState("");
   const [isSuspensionSubmitting, setIsSuspensionSubmitting] = useState(false);
+  const [viewMode, setViewMode] = useState("card"); // "card" or "table"
+  const [selectedSeller, setSelectedSeller] = useState(null);
+  const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
 
   const fetchSellers = async (page = 1, filters = {}) => {
     setIsLoading(true);
@@ -889,6 +895,33 @@ export default function Sellers() {
               />
             </div>
             <div className="flex items-center gap-4">
+              {/* View Toggle */}
+              <div className="flex items-center bg-gray-100 rounded-xl p-1">
+                <motion.button
+                  whileTap={{ scale: 0.95 }}
+                  onClick={() => setViewMode("card")}
+                  className={`p-2.5 rounded-lg transition-all ${
+                    viewMode === "card"
+                      ? "bg-white shadow-md text-[#c6080a]"
+                      : "text-gray-500 hover:text-gray-700"
+                  }`}
+                  title="Card View"
+                >
+                  <IoGrid className="text-lg" />
+                </motion.button>
+                <motion.button
+                  whileTap={{ scale: 0.95 }}
+                  onClick={() => setViewMode("table")}
+                  className={`p-2.5 rounded-lg transition-all ${
+                    viewMode === "table"
+                      ? "bg-white shadow-md text-[#c6080a]"
+                      : "text-gray-500 hover:text-gray-700"
+                  }`}
+                  title="Table View"
+                >
+                  <IoList className="text-lg" />
+                </motion.button>
+              </div>
               <div className="flex items-center gap-2 px-4 py-2 bg-gray-50 rounded-xl border border-gray-200">
                 <span className="text-sm font-semibold text-gray-700">
                   Page {currentPage} of {totalPages}
@@ -1009,94 +1042,481 @@ export default function Sellers() {
             )}
           </AnimatePresence>
 
-          {/* Enhanced Table */}
-          <div className="bg-white rounded-2xl shadow-lg border border-gray-200/60 overflow-hidden">
-            {isLoading ? (
-              <div className="flex items-center justify-center h-96">
-                <Loader />
-              </div>
-            ) : safeColumns.length > 0 ? (
-              <div className="overflow-x-auto">
-                <Table className="min-w-full">
-                  <TableHeader>
-                    <TableRow className="bg-gradient-to-r from-gray-50 to-gray-100/50 border-b-2 border-gray-200">
-                      <TableHead className="w-12">
-                        <input
-                          type="checkbox"
-                          onChange={toggleSelectAll}
-                          checked={
-                            allRowIds.length > 0 &&
-                            allRowIds.every((id) => rowSelection[id])
-                          }
-                          className="w-4 h-4 rounded border-gray-300 text-[#c6080a] focus:ring-2 focus:ring-[#c6080a]/20 cursor-pointer"
+          {/* Content View - Card or Table */}
+          {isLoading ? (
+            <div className="flex items-center justify-center h-96 bg-white rounded-2xl shadow-lg border border-gray-200/60">
+              <Loader />
+            </div>
+          ) : viewMode === "card" ? (
+            /* Card View */
+            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+              {safeData.length === 0 ? (
+                <div className="col-span-full flex flex-col items-center justify-center py-20 text-gray-400 bg-white rounded-2xl shadow-lg border border-gray-200/60">
+                  <FaStore className="text-5xl mb-4 opacity-30" />
+                  <p className="text-lg font-medium">No sellers found</p>
+                  <p className="text-sm mt-1">Try adjusting your search or filters</p>
+                </div>
+              ) : (
+                safeData.map((seller, idx) => (
+                  <motion.div
+                    key={seller._id}
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: idx * 0.05 }}
+                    whileHover={{ y: -4 }}
+                    className="group relative bg-white rounded-2xl shadow-lg border border-gray-200/60 overflow-hidden hover:shadow-2xl transition-all duration-300"
+                  >
+                    {/* Banner/Header */}
+                    <div className="relative h-28 bg-gradient-to-br from-[#c6080a] via-[#e63946] to-rose-500 overflow-hidden">
+                      {seller.storeBanner ? (
+                        <Image
+                          src={seller.storeBanner}
+                          alt={seller.storeName}
+                          fill
+                          className="object-cover"
                         />
-                      </TableHead>
-                      {safeColumns.map((col) => (
-                        <TableHead
-                          key={col.accessorKey}
-                          className="text-xs font-bold text-gray-700 uppercase tracking-wider py-4"
-                        >
-                          {col.Header || col.accessorKey}
-                        </TableHead>
-                      ))}
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {safeData.length === 0 ? (
-                      <TableRow>
-                        <TableCell colSpan={safeColumns.length + 1}>
-                          <div className="flex flex-col items-center justify-center py-20 text-gray-400">
-                            <FaStore className="text-5xl mb-4 opacity-30" />
-                            <p className="text-lg font-medium">
-                              No sellers found
-                            </p>
-                            <p className="text-sm mt-1">
-                              Try adjusting your search or filters
-                            </p>
+                      ) : (
+                        <div className="absolute inset-0 opacity-20">
+                          <div className="absolute inset-0 bg-[radial-gradient(circle_at_30%_50%,rgba(255,255,255,0.2),transparent_50%)]" />
+                        </div>
+                      )}
+                      {/* Verification Badge */}
+                      <div className="absolute top-3 right-3">
+                        {getStatusBadge(seller.verificationStatus, seller.isActive)}
+                      </div>
+                      {/* Store Logo - Positioned at bottom */}
+                      <div className="absolute -bottom-10 left-5 z-10">
+                        <div className="w-20 h-20 rounded-2xl bg-white shadow-xl border-4 border-white overflow-hidden flex items-center justify-center">
+                          {seller.storeLogo ? (
+                            <Image
+                              src={seller.storeLogo}
+                              alt={seller.storeName}
+                              width={80}
+                              height={80}
+                              className="w-full h-full object-cover"
+                            />
+                          ) : (
+                            <div className="w-full h-full bg-gradient-to-br from-[#c6080a] to-[#e63946] flex items-center justify-center">
+                              <FaStore className="text-white text-2xl" />
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Content */}
+                    <div className="pt-12 px-5 pb-5">
+                      {/* Store Name */}
+                      <div className="mb-4">
+                        <h3 className="text-lg font-bold text-gray-900 group-hover:text-[#c6080a] transition-colors flex items-center gap-2">
+                          {seller.storeName}
+                          {seller.verificationStatus === "approved" && (
+                            <MdVerified className="text-blue-500 text-lg" />
+                          )}
+                        </h3>
+                        <p className="text-xs text-gray-500">/{seller.storeSlug}</p>
+                      </div>
+
+                      {/* Owner Info */}
+                      {seller.user && (
+                        <div className="flex items-center gap-3 mb-4 p-3 bg-gray-50 rounded-xl">
+                          {seller.user.avatar ? (
+                            <Image
+                              src={seller.user.avatar}
+                              alt={seller.user.name}
+                              width={40}
+                              height={40}
+                              className="w-10 h-10 rounded-full object-cover"
+                            />
+                          ) : (
+                            <div className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-white font-bold">
+                              {seller.user.name?.charAt(0) || "U"}
+                            </div>
+                          )}
+                          <div className="flex-1 min-w-0">
+                            <p className="text-sm font-semibold text-gray-900 truncate">{seller.user.name}</p>
+                            <p className="text-xs text-gray-500 truncate">{seller.user.email}</p>
                           </div>
-                        </TableCell>
-                      </TableRow>
-                    ) : (
-                      safeData.map((row, idx) => {
-                        const rowId = String(row?._id || row?.id || idx);
-                        return (
-                          <motion.tr
-                            key={rowId}
-                            initial={{ opacity: 0, x: -20 }}
-                            animate={{ opacity: 1, x: 0 }}
-                            transition={{ delay: idx * 0.02 }}
-                            className="border-b border-gray-100 hover:bg-gradient-to-r hover:from-[#c6080a]/5 hover:to-transparent transition-all duration-200 group"
+                        </div>
+                      )}
+
+                      {/* Stats Grid */}
+                      <div className="grid grid-cols-3 gap-3 mb-4">
+                        <div className="text-center p-2 bg-blue-50 rounded-xl">
+                          <div className="flex items-center justify-center gap-1 text-blue-600 mb-1">
+                            <BiPackage className="text-sm" />
+                          </div>
+                          <p className="text-lg font-bold text-gray-900">{seller.totalProducts || 0}</p>
+                          <p className="text-[10px] text-gray-500 uppercase font-medium">Products</p>
+                        </div>
+                        <div className="text-center p-2 bg-emerald-50 rounded-xl">
+                          <div className="flex items-center justify-center gap-1 text-emerald-600 mb-1">
+                            <FaChartLine className="text-sm" />
+                          </div>
+                          <p className="text-lg font-bold text-gray-900">{seller.totalSales || 0}</p>
+                          <p className="text-[10px] text-gray-500 uppercase font-medium">Sales</p>
+                        </div>
+                        <div className="text-center p-2 bg-amber-50 rounded-xl">
+                          <div className="flex items-center justify-center gap-1 text-amber-600 mb-1">
+                            <FaStar className="text-sm" />
+                          </div>
+                          <p className="text-lg font-bold text-gray-900">{(seller.rating?.average || 0).toFixed(1)}</p>
+                          <p className="text-[10px] text-gray-500 uppercase font-medium">Rating</p>
+                        </div>
+                      </div>
+
+                      {/* Revenue */}
+                      <div className="flex items-center justify-between p-3 bg-gradient-to-r from-green-50 to-emerald-50 rounded-xl mb-4">
+                        <div className="flex items-center gap-2">
+                          <div className="w-8 h-8 rounded-lg bg-emerald-500 flex items-center justify-center">
+                            <TbCurrencyEuro className="text-white text-lg" />
+                          </div>
+                          <span className="text-sm font-medium text-gray-700">Revenue</span>
+                        </div>
+                        <span className="text-lg font-bold text-emerald-600">
+                          €{(seller.totalRevenue || 0).toLocaleString()}
+                        </span>
+                      </div>
+
+                      {/* Location */}
+                      {seller.storeAddress?.city && (
+                        <div className="flex items-center gap-2 text-sm text-gray-500 mb-4">
+                          <FaMapMarkerAlt className="text-gray-400" />
+                          <span>{seller.storeAddress.city}, {seller.storeAddress.country}</span>
+                        </div>
+                      )}
+
+                      {/* Actions */}
+                      <div className="flex items-center gap-2 pt-3 border-t border-gray-100">
+                        <motion.button
+                          whileHover={{ scale: 1.05 }}
+                          whileTap={{ scale: 0.95 }}
+                          onClick={() => {
+                            setSelectedSeller(seller);
+                            setIsDetailModalOpen(true);
+                          }}
+                          className="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-xl text-sm font-semibold transition-colors"
+                        >
+                          <IoEye className="text-base" />
+                          View
+                        </motion.button>
+                        {(auth.user?.role === "superadmin" || auth.user?.role === "admin") && (
+                          <>
+                            <motion.button
+                              whileHover={{ scale: 1.05 }}
+                              whileTap={{ scale: 0.95 }}
+                              onClick={() => handleStatusUpdate(seller._id, "approved", seller.isActive, undefined)}
+                              className="p-2.5 bg-emerald-100 hover:bg-emerald-200 text-emerald-700 rounded-xl transition-colors"
+                              title="Approve"
+                            >
+                              <TbShieldCheck className="text-lg" />
+                            </motion.button>
+                            <motion.button
+                              whileHover={{ scale: 1.05 }}
+                              whileTap={{ scale: 0.95 }}
+                              onClick={() => handleStatusUpdate(seller._id, "rejected", seller.isActive, undefined)}
+                              className="p-2.5 bg-red-100 hover:bg-red-200 text-red-700 rounded-xl transition-colors"
+                              title="Reject"
+                            >
+                              <TbShieldX className="text-lg" />
+                            </motion.button>
+                            <motion.button
+                              whileHover={{ scale: 1.05 }}
+                              whileTap={{ scale: 0.95 }}
+                              onClick={() => openSuspensionModal(seller)}
+                              className="p-2.5 bg-gray-200 hover:bg-gray-300 text-gray-700 rounded-xl transition-colors"
+                              title="Suspend"
+                            >
+                              <MdCancel className="text-lg" />
+                            </motion.button>
+                          </>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Active Status Toggle */}
+                    <div className="absolute top-3 left-3">
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleStatusUpdate(seller._id, seller.verificationStatus, !seller.isActive, undefined);
+                        }}
+                        className={`relative inline-flex h-6 w-10 items-center rounded-full transition-colors duration-200 focus:outline-none shadow-inner ${
+                          seller.isActive ? "bg-emerald-500" : "bg-gray-400"
+                        }`}
+                      >
+                        <span className={`absolute inline-block h-4 w-4 rounded-full bg-white shadow-lg transition-transform duration-300 ease-in-out ${
+                          seller.isActive ? "translate-x-5" : "translate-x-1"
+                        }`} />
+                      </button>
+                    </div>
+                  </motion.div>
+                ))
+              )}
+            </div>
+          ) : (
+            /* Table View */
+            <div className="bg-white rounded-2xl shadow-lg border border-gray-200/60 overflow-hidden">
+              {safeColumns.length > 0 ? (
+                <div className="overflow-x-auto">
+                  <Table className="min-w-full">
+                    <TableHeader>
+                      <TableRow className="bg-gradient-to-r from-gray-50 to-gray-100/50 border-b-2 border-gray-200">
+                        <TableHead className="w-12">
+                          <input
+                            type="checkbox"
+                            onChange={toggleSelectAll}
+                            checked={
+                              allRowIds.length > 0 &&
+                              allRowIds.every((id) => rowSelection[id])
+                            }
+                            className="w-4 h-4 rounded border-gray-300 text-[#c6080a] focus:ring-2 focus:ring-[#c6080a]/20 cursor-pointer"
+                          />
+                        </TableHead>
+                        {safeColumns.map((col) => (
+                          <TableHead
+                            key={col.accessorKey}
+                            className="text-xs font-bold text-gray-700 uppercase tracking-wider py-4"
                           >
-                            <TableCell className="py-4">
-                              <input
-                                type="checkbox"
-                                className="w-4 h-4 rounded border-gray-300 text-[#c6080a] focus:ring-2 focus:ring-[#c6080a]/20 cursor-pointer"
-                                checked={!!rowSelection[rowId]}
-                                onChange={() => toggleSelectRow(rowId)}
-                              />
-                            </TableCell>
-                            {safeColumns.map((col) => (
-                              <TableCell
-                                key={col.accessorKey}
-                                className="py-4 group-hover:text-gray-900 transition-colors"
-                              >
-                                {renderCell(col, row)}
+                            {col.Header || col.accessorKey}
+                          </TableHead>
+                        ))}
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {safeData.length === 0 ? (
+                        <TableRow>
+                          <TableCell colSpan={safeColumns.length + 1}>
+                            <div className="flex flex-col items-center justify-center py-20 text-gray-400">
+                              <FaStore className="text-5xl mb-4 opacity-30" />
+                              <p className="text-lg font-medium">No sellers found</p>
+                              <p className="text-sm mt-1">Try adjusting your search or filters</p>
+                            </div>
+                          </TableCell>
+                        </TableRow>
+                      ) : (
+                        safeData.map((row, idx) => {
+                          const rowId = String(row?._id || row?.id || idx);
+                          return (
+                            <motion.tr
+                              key={rowId}
+                              initial={{ opacity: 0, x: -20 }}
+                              animate={{ opacity: 1, x: 0 }}
+                              transition={{ delay: idx * 0.02 }}
+                              className="border-b border-gray-100 hover:bg-gradient-to-r hover:from-[#c6080a]/5 hover:to-transparent transition-all duration-200 group"
+                            >
+                              <TableCell className="py-4">
+                                <input
+                                  type="checkbox"
+                                  className="w-4 h-4 rounded border-gray-300 text-[#c6080a] focus:ring-2 focus:ring-[#c6080a]/20 cursor-pointer"
+                                  checked={!!rowSelection[rowId]}
+                                  onChange={() => toggleSelectRow(rowId)}
+                                />
                               </TableCell>
-                            ))}
-                          </motion.tr>
-                        );
-                      })
+                              {safeColumns.map((col) => (
+                                <TableCell
+                                  key={col.accessorKey}
+                                  className="py-4 group-hover:text-gray-900 transition-colors"
+                                >
+                                  {renderCell(col, row)}
+                                </TableCell>
+                              ))}
+                            </motion.tr>
+                          );
+                        })
+                      )}
+                    </TableBody>
+                  </Table>
+                </div>
+              ) : (
+                <div className="flex flex-col items-center justify-center h-96 text-gray-400">
+                  <FaStore className="text-5xl mb-4 opacity-30" />
+                  <p className="text-lg font-medium">No sellers found</p>
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Seller Detail Modal */}
+          <AnimatePresence>
+            {isDetailModalOpen && selectedSeller && (
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4 overflow-y-auto"
+                onClick={() => setIsDetailModalOpen(false)}
+              >
+                <motion.div
+                  initial={{ opacity: 0, y: 30, scale: 0.95 }}
+                  animate={{ opacity: 1, y: 0, scale: 1 }}
+                  exit={{ opacity: 0, y: 20, scale: 0.95 }}
+                  transition={{ duration: 0.25, ease: [0.16, 1, 0.3, 1] }}
+                  onClick={(e) => e.stopPropagation()}
+                  className="w-full max-w-2xl rounded-2xl bg-white shadow-2xl border border-gray-200 overflow-hidden my-8"
+                >
+                  {/* Modal Header with Banner */}
+                  <div className="relative h-36 bg-gradient-to-br from-[#c6080a] via-[#e63946] to-rose-500">
+                    {selectedSeller.storeBanner && (
+                      <Image
+                        src={selectedSeller.storeBanner}
+                        alt={selectedSeller.storeName}
+                        fill
+                        className="object-cover"
+                      />
                     )}
-                  </TableBody>
-                </Table>
-              </div>
-            ) : (
-              <div className="flex flex-col items-center justify-center h-96 text-gray-400">
-                <FaStore className="text-5xl mb-4 opacity-30" />
-                <p className="text-lg font-medium">No sellers found</p>
-              </div>
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
+                    <button
+                      type="button"
+                      onClick={() => setIsDetailModalOpen(false)}
+                      className="absolute top-4 right-4 w-10 h-10 rounded-full bg-white/20 backdrop-blur-sm hover:bg-white/30 flex items-center justify-center text-white transition-colors"
+                    >
+                      <IoClose className="text-xl" />
+                    </button>
+                    {/* Store Logo */}
+                    <div className="absolute -bottom-12 left-6">
+                      <div className="w-24 h-24 rounded-2xl bg-white shadow-xl border-4 border-white overflow-hidden">
+                        {selectedSeller.storeLogo ? (
+                          <Image
+                            src={selectedSeller.storeLogo}
+                            alt={selectedSeller.storeName}
+                            width={96}
+                            height={96}
+                            className="w-full h-full object-cover"
+                          />
+                        ) : (
+                          <div className="w-full h-full bg-gradient-to-br from-[#c6080a] to-[#e63946] flex items-center justify-center">
+                            <FaStore className="text-white text-3xl" />
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                    {/* Status Badge */}
+                    <div className="absolute bottom-4 right-4">
+                      {getStatusBadge(selectedSeller.verificationStatus, selectedSeller.isActive)}
+                    </div>
+                  </div>
+
+                  {/* Modal Content */}
+                  <div className="pt-16 px-6 pb-6">
+                    {/* Store Info */}
+                    <div className="mb-6">
+                      <h2 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
+                        {selectedSeller.storeName}
+                        {selectedSeller.verificationStatus === "approved" && (
+                          <MdVerified className="text-blue-500" />
+                        )}
+                      </h2>
+                      <p className="text-sm text-gray-500">/{selectedSeller.storeSlug}</p>
+                      {selectedSeller.storeDescription && (
+                        <p className="mt-3 text-sm text-gray-600 leading-relaxed">
+                          {selectedSeller.storeDescription}
+                        </p>
+                      )}
+                    </div>
+
+                    {/* Stats */}
+                    <div className="grid grid-cols-4 gap-3 mb-6">
+                      <div className="text-center p-4 bg-blue-50 rounded-xl">
+                        <BiPackage className="text-blue-500 text-xl mx-auto mb-2" />
+                        <p className="text-2xl font-bold text-gray-900">{selectedSeller.totalProducts || 0}</p>
+                        <p className="text-xs text-gray-500 uppercase">Products</p>
+                      </div>
+                      <div className="text-center p-4 bg-emerald-50 rounded-xl">
+                        <FaChartLine className="text-emerald-500 text-xl mx-auto mb-2" />
+                        <p className="text-2xl font-bold text-gray-900">{selectedSeller.totalSales || 0}</p>
+                        <p className="text-xs text-gray-500 uppercase">Sales</p>
+                      </div>
+                      <div className="text-center p-4 bg-green-50 rounded-xl">
+                        <TbCurrencyEuro className="text-green-500 text-xl mx-auto mb-2" />
+                        <p className="text-2xl font-bold text-gray-900">€{(selectedSeller.totalRevenue || 0).toLocaleString()}</p>
+                        <p className="text-xs text-gray-500 uppercase">Revenue</p>
+                      </div>
+                      <div className="text-center p-4 bg-amber-50 rounded-xl">
+                        <FaStar className="text-amber-500 text-xl mx-auto mb-2" />
+                        <p className="text-2xl font-bold text-gray-900">{(selectedSeller.rating?.average || 0).toFixed(1)}</p>
+                        <p className="text-xs text-gray-500 uppercase">{selectedSeller.rating?.totalReviews || 0} Reviews</p>
+                      </div>
+                    </div>
+
+                    {/* Owner & Contact Info */}
+                    <div className="grid grid-cols-2 gap-4 mb-6">
+                      {/* Owner */}
+                      {selectedSeller.user && (
+                        <div className="p-4 bg-gray-50 rounded-xl">
+                          <p className="text-xs font-bold text-gray-500 uppercase mb-3">Store Owner</p>
+                          <div className="flex items-center gap-3">
+                            {selectedSeller.user.avatar ? (
+                              <Image
+                                src={selectedSeller.user.avatar}
+                                alt={selectedSeller.user.name}
+                                width={48}
+                                height={48}
+                                className="w-12 h-12 rounded-full object-cover"
+                              />
+                            ) : (
+                              <div className="w-12 h-12 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-white font-bold text-lg">
+                                {selectedSeller.user.name?.charAt(0) || "U"}
+                              </div>
+                            )}
+                            <div>
+                              <p className="font-semibold text-gray-900">{selectedSeller.user.name}</p>
+                              <p className="text-xs text-gray-500">{selectedSeller.user.email}</p>
+                            </div>
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Contact */}
+                      <div className="p-4 bg-gray-50 rounded-xl">
+                        <p className="text-xs font-bold text-gray-500 uppercase mb-3">Contact Info</p>
+                        <div className="space-y-2">
+                          {selectedSeller.contactEmail && (
+                            <div className="flex items-center gap-2 text-sm text-gray-600">
+                              <FaEnvelope className="text-gray-400" />
+                              <span className="truncate">{selectedSeller.contactEmail}</span>
+                            </div>
+                          )}
+                          {selectedSeller.contactPhone && (
+                            <div className="flex items-center gap-2 text-sm text-gray-600">
+                              <FaPhone className="text-gray-400" />
+                              <span>{selectedSeller.contactPhone}</span>
+                            </div>
+                          )}
+                          {selectedSeller.storeAddress?.city && (
+                            <div className="flex items-center gap-2 text-sm text-gray-600">
+                              <FaMapMarkerAlt className="text-gray-400" />
+                              <span>{selectedSeller.storeAddress.city}, {selectedSeller.storeAddress.country}</span>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Social Links */}
+                    {(selectedSeller.socialLinks?.website || selectedSeller.socialLinks?.facebook || selectedSeller.socialLinks?.instagram) && (
+                      <div className="mb-6">
+                        <p className="text-xs font-bold text-gray-500 uppercase mb-3">Social Links</p>
+                        <div className="flex items-center gap-2">
+                          {selectedSeller.socialLinks?.website && (
+                            <a href={selectedSeller.socialLinks.website} target="_blank" rel="noopener noreferrer" className="p-2.5 bg-gray-100 hover:bg-gray-200 rounded-xl transition-colors">
+                              <FaGlobe className="text-gray-600" />
+                            </a>
+                          )}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Joined Date */}
+                    <div className="text-sm text-gray-500 pt-4 border-t border-gray-200">
+                      Joined: {format(new Date(selectedSeller.createdAt), "MMMM dd, yyyy")}
+                    </div>
+                  </div>
+                </motion.div>
+              </motion.div>
             )}
-          </div>
+          </AnimatePresence>
         </div>
       </div>
     </MainLayout>

@@ -21,12 +21,25 @@ export default function Login({ setActive }) {
 
   // Redirect if the user is already logged in
   useEffect(() => {
-    if (auth?.token) {
-      router.push("/dashboard");
+    if (auth?.token && auth?.user) {
+      // Determine redirect path based on role and verification status
+      let redirectPath = "/dashboard";
+
+      if (auth.user.role === "seller") {
+        // Check if seller is verified
+        const isVerified = auth.user.sellerStatus === "approved";
+
+        if (!isVerified) {
+          // Unverified sellers can only access profile section
+          redirectPath = "/dashboard/Profile";
+        }
+      }
+
+      router.push(redirectPath);
     }
 
     // eslint-disable-next-line
-  }, [auth]);
+  }, [auth, router]);
 
   const handleLogin = async (e) => {
     e.preventDefault();
@@ -41,11 +54,49 @@ export default function Login({ setActive }) {
         }
       );
       if (data) {
-        router.push("/dashboard");
-        setAuth({ ...auth, user: data?.user, token: data?.token });
-        localStorage.setItem("auth", JSON.stringify(data));
-        toast.success(data.message);
-        setLoading(false);
+        if (data?.user?.role !== "user") {
+          // Determine redirect path based on role and verification status
+          let redirectPath = "/dashboard";
+
+          if (data.user.role === "seller") {
+            // Check if seller is verified
+            const isVerified = data.user.sellerStatus === "approved";
+
+            if (isVerified) {
+              // Verified sellers can access dashboard
+              redirectPath = "/dashboard";
+            } else {
+              // Unverified sellers can only access profile section
+              redirectPath = "/dashboard/Profile";
+
+              // Show informative message for unverified sellers
+              toast.success(
+                data.message +
+                  " Please complete verification to access all features.",
+                { duration: 4000 }
+              );
+            }
+          } else {
+            // Non-seller roles go to dashboard
+            redirectPath = "/dashboard";
+          }
+
+          setAuth({ ...auth, user: data?.user, token: data?.token });
+          localStorage.setItem("auth", JSON.stringify(data));
+
+          if (
+            data.user.role !== "seller" ||
+            data.user.sellerStatus === "approved"
+          ) {
+            toast.success(data.message);
+          }
+
+          router.push(redirectPath);
+          setLoading(false);
+        } else {
+          toast.error("You are not authorized to access this dashboard.");
+          setLoading(false);
+        }
       }
     } catch (error) {
       console.log(error);

@@ -92,26 +92,25 @@ export default function OverviewTab({ seller, auth, stats }) {
             </div>
           </div>
         </div>
-
-        {/* Description Section */}
-        {seller.storeDescription && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ delay: 0.2 }}
-            className="px-6 sm:px-8 pb-6 sm:pb-8"
-          >
-            <div className="bg-white/5 backdrop-blur-md rounded-2xl p-5 sm:p-6 border border-white/10 shadow-xl">
-              <div
-                className="text-xs sm:text-sm leading-relaxed text-white/90 prose prose-invert prose-sm max-w-none [&_*]:text-white/90 [&_strong]:text-white [&_em]:text-white/80 [&_a]:text-white underline [&_h1]:text-lg [&_h2]:text-base [&_h3]:text-sm [&_ul]:list-disc [&_ul]:ml-4 [&_ol]:list-decimal [&_ol]:ml-4 [&_blockquote]:border-l-white/30 [&_pre]:bg-white/10 [&_pre]:p-3 [&_pre]:rounded"
-                dangerouslySetInnerHTML={{ __html: seller.storeDescription }}
-              />
-            </div>
-          </motion.div>
-        )}
       </motion.div>
 
       {/* Main Content Grid */}
+      {/* Description Section */}
+      {seller.storeDescription && (
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 0.2 }}
+          className=" pb-4"
+        >
+          <div className="bg-white/5 backdrop-blur-md rounded-2xl p-5 sm:p-6 border border-white/10 shadow-xl">
+            <div
+              className="text-xs sm:text-sm leading-relaxed text-gray-700 prose prose-invert prose-sm max-w-none [&_*]:text-white/90 [&_strong]:text-white [&_em]:text-white/80 [&_a]:text-white underline [&_h1]:text-lg [&_h2]:text-base [&_h3]:text-sm [&_ul]:list-disc [&_ul]:ml-4 [&_ol]:list-decimal [&_ol]:ml-4 [&_blockquote]:border-l-white/30 [&_pre]:bg-white/10 [&_pre]:p-3 [&_pre]:rounded"
+              dangerouslySetInnerHTML={{ __html: seller.storeDescription }}
+            />
+          </div>
+        </motion.div>
+      )}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Left: Contact & Address Info */}
         <div className="lg:col-span-2 space-y-6">

@@ -47,7 +47,7 @@ export default function OrderDetail() {
           <Breadcrumb path={currentUrl} />
           <div className="flex flex-col gap-4   w-full">
             <div className="flex items-center justify-between flex-wrap gap-4">
-              <h1 className="text-2xl font-sans font-semibold text-black">
+              <h1 className="text-[15px] sm:text-[16px] lg:text-[17px] font-sans font-semibold text-black">
                 Order Detail
               </h1>
               <div className="flex items-center justify-end gap-4 w-full sm:w-fit">

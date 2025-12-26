@@ -25,7 +25,14 @@ import {
   FaUser,
   FaInfoCircle,
   FaArrowRight,
+  FaClock,
+  FaHistory,
+  FaFilter,
+  FaStore,
 } from "react-icons/fa";
+import { IoSearch, IoClose } from "react-icons/io5";
+import { TbShieldCheck, TbShieldX, TbRefresh } from "react-icons/tb";
+import { MdPending, MdVerified, MdOutlineWarning } from "react-icons/md";
 import { format } from "date-fns";
 
 const MainLayout = dynamic(
@@ -46,6 +53,16 @@ export default function VerificationsPage() {
   const [reviewStatus, setReviewStatus] = useState("");
   const [rejectionReason, setRejectionReason] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [activeTab, setActiveTab] = useState("pending");
+  const [searchQuery, setSearchQuery] = useState("");
+  const [allVerifications, setAllVerifications] = useState([]);
+  const [stats, setStats] = useState({
+    total: 0,
+    pending: 0,
+    approved: 0,
+    rejected: 0,
+    requires_changes: 0,
+  });
 
   useEffect(() => {
     if (typeof window !== "undefined") {
@@ -59,20 +76,38 @@ export default function VerificationsPage() {
     }
   }, [auth?.token]);
 
-  const fetchVerifications = async () => {
+  const fetchVerifications = async (status = "all") => {
     setIsLoading(true);
     try {
-      const { data } = await axios.get(
-        `${process.env.NEXT_PUBLIC_SERVER_URI}/api/v1/seller/verifications/pending`,
-        {
-          headers: {
-            Authorization: auth?.token,
-          },
-        }
-      );
+      // Fetch all verifications for stats
+      const endpoint = status === "all" || status === "pending"
+        ? `${process.env.NEXT_PUBLIC_SERVER_URI}/api/v1/seller/verifications/pending`
+        : `${process.env.NEXT_PUBLIC_SERVER_URI}/api/v1/seller/verifications/all?status=${status}`;
+
+      const { data } = await axios.get(endpoint, {
+        headers: {
+          Authorization: auth?.token,
+        },
+      });
 
       if (data?.success) {
-        setVerifications(data.verifications || []);
+        const verificationList = data.verifications || [];
+        setAllVerifications(verificationList);
+
+        // Filter based on active tab
+        const filtered = activeTab === "all"
+          ? verificationList
+          : verificationList.filter(v => v.status === activeTab);
+        setVerifications(filtered);
+
+        // Calculate stats
+        setStats({
+          total: verificationList.length,
+          pending: verificationList.filter(v => v.status === "pending").length,
+          approved: verificationList.filter(v => v.status === "approved").length,
+          rejected: verificationList.filter(v => v.status === "rejected").length,
+          requires_changes: verificationList.filter(v => v.status === "requires_changes").length,
+        });
       }
     } catch (error) {
       console.error("Error fetching verifications:", error);
@@ -81,6 +116,29 @@ export default function VerificationsPage() {
       setIsLoading(false);
     }
   };
+
+  // Filter verifications based on search and active tab
+  useEffect(() => {
+    let filtered = allVerifications;
+
+    // Filter by status tab
+    if (activeTab !== "all") {
+      filtered = filtered.filter(v => v.status === activeTab);
+    }
+
+    // Filter by search query
+    if (searchQuery.trim()) {
+      const query = searchQuery.toLowerCase();
+      filtered = filtered.filter(v =>
+        v.businessName?.toLowerCase().includes(query) ||
+        v.seller?.storeName?.toLowerCase().includes(query) ||
+        v.email?.toLowerCase().includes(query) ||
+        v.seller?.user?.name?.toLowerCase().includes(query)
+      );
+    }
+
+    setVerifications(filtered);
+  }, [activeTab, searchQuery, allVerifications]);
 
   const openReviewModal = (verification) => {
     setSelectedVerification(verification);
@@ -211,31 +269,141 @@ export default function VerificationsPage() {
             </div>
           </motion.div>
 
-          {/* Enhanced Stats */}
-          <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
-            <motion.div
-              initial={{ opacity: 0, y: 20, scale: 0.9 }}
-              animate={{ opacity: 1, y: 0, scale: 1 }}
-              transition={{ delay: 0.1, type: "spring", stiffness: 200 }}
-              whileHover={{ scale: 1.05, y: -4 }}
-              className="relative overflow-hidden group bg-white rounded-2xl p-5 shadow-lg border border-gray-200/60 hover:shadow-2xl transition-all duration-300"
+          {/* Enhanced Stats Cards */}
+          <div className="grid grid-cols-2 sm:grid-cols-5 gap-4">
+            {[
+              {
+                label: "Total",
+                value: stats.total,
+                color: "from-blue-500 to-blue-600",
+                bgColor: "from-blue-50 to-blue-100/50",
+                icon: FaShieldAlt,
+              },
+              {
+                label: "Pending",
+                value: stats.pending,
+                color: "from-amber-500 to-amber-600",
+                bgColor: "from-amber-50 to-amber-100/50",
+                icon: MdPending,
+              },
+              {
+                label: "Approved",
+                value: stats.approved,
+                color: "from-emerald-500 to-emerald-600",
+                bgColor: "from-emerald-50 to-emerald-100/50",
+                icon: TbShieldCheck,
+              },
+              {
+                label: "Changes Required",
+                value: stats.requires_changes,
+                color: "from-indigo-500 to-indigo-600",
+                bgColor: "from-indigo-50 to-indigo-100/50",
+                icon: MdOutlineWarning,
+              },
+              {
+                label: "Rejected",
+                value: stats.rejected,
+                color: "from-red-500 to-red-600",
+                bgColor: "from-red-50 to-red-100/50",
+                icon: TbShieldX,
+              },
+            ].map((stat, index) => {
+              const Icon = stat.icon;
+              return (
+                <motion.div
+                  key={stat.label}
+                  initial={{ opacity: 0, y: 20, scale: 0.9 }}
+                  animate={{ opacity: 1, y: 0, scale: 1 }}
+                  transition={{ delay: index * 0.1, type: "spring", stiffness: 200 }}
+                  whileHover={{ scale: 1.05, y: -4 }}
+                  className="relative overflow-hidden group bg-white rounded-2xl p-4 shadow-lg border border-gray-200/60 hover:shadow-2xl transition-all duration-300"
+                >
+                  <div className={`absolute inset-0 bg-gradient-to-br ${stat.bgColor} opacity-0 group-hover:opacity-100 transition-opacity duration-300`} />
+                  <div className="relative flex items-center justify-between">
+                    <div className="flex-1">
+                      <p className="text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-1">{stat.label}</p>
+                      <p className="text-2xl font-bold text-gray-900">{stat.value}</p>
+                    </div>
+                    <div className={`w-10 h-10 rounded-xl bg-gradient-to-br ${stat.color} flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform duration-300`}>
+                      <Icon className="text-white text-lg" />
+                    </div>
+                  </div>
+                </motion.div>
+              );
+            })}
+          </div>
+
+          {/* Filter Tabs and Search */}
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-4">
+            {/* Tabs */}
+            <div className="relative bg-white rounded-2xl shadow-lg border border-gray-200/60 p-2 flex items-center gap-1 overflow-x-auto flex-1">
+              {[
+                { id: "pending", label: "Pending", icon: MdPending, color: "amber" },
+                { id: "approved", label: "Approved", icon: TbShieldCheck, color: "emerald" },
+                { id: "requires_changes", label: "Changes", icon: MdOutlineWarning, color: "indigo" },
+                { id: "rejected", label: "Rejected", icon: TbShieldX, color: "red" },
+              ].map((tab) => {
+                const isActive = activeTab === tab.id;
+                const TabIcon = tab.icon;
+                return (
+                  <motion.button
+                    key={tab.id}
+                    onClick={() => setActiveTab(tab.id)}
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.98 }}
+                    className={`relative flex items-center gap-2 px-4 py-2.5 rounded-xl font-semibold transition-all duration-300 whitespace-nowrap text-sm ${
+                      isActive ? "text-white" : "text-gray-700 hover:text-gray-900 hover:bg-gray-50"
+                    }`}
+                  >
+                    {isActive && (
+                      <motion.div
+                        layoutId="activeVerificationTab"
+                        className="absolute inset-0 bg-gradient-to-r from-[#c6080a] via-[#e63946] to-rose-500 rounded-xl shadow-lg"
+                        transition={{ type: "spring", stiffness: 500, damping: 30 }}
+                      />
+                    )}
+                    <TabIcon className={`relative z-10 text-base ${isActive ? "text-white" : `text-${tab.color}-500`}`} />
+                    <span className="relative z-10">{tab.label}</span>
+                    <span className={`relative z-10 px-1.5 py-0.5 rounded-full text-xs font-bold ${
+                      isActive ? "bg-white/20 text-white" : `bg-${tab.color}-100 text-${tab.color}-700`
+                    }`}>
+                      {stats[tab.id] || 0}
+                    </span>
+                  </motion.button>
+                );
+              })}
+            </div>
+
+            {/* Search */}
+            <div className="relative min-w-[280px]">
+              <IoSearch className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 text-lg z-10" />
+              <input
+                type="search"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                placeholder="Search by business, store, or email..."
+                className="w-full pl-11 pr-4 py-3 border-2 border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#c6080a]/20 focus:border-[#c6080a] transition-all duration-200 bg-white shadow-lg text-sm"
+              />
+              {searchQuery && (
+                <button
+                  onClick={() => setSearchQuery("")}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 p-1 hover:bg-gray-100 rounded-full transition-colors"
+                >
+                  <IoClose className="text-gray-400 text-lg" />
+                </button>
+              )}
+            </div>
+
+            {/* Refresh Button */}
+            <motion.button
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95, rotate: 180 }}
+              onClick={() => fetchVerifications()}
+              className="p-3 bg-white rounded-xl shadow-lg border border-gray-200/60 hover:bg-gray-50 transition-colors"
+              title="Refresh"
             >
-              <div className="absolute inset-0 bg-gradient-to-br from-amber-50 to-amber-100/50 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-              <div className="relative flex items-center justify-between">
-                <div className="flex-1">
-                  <p className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">
-                    Pending Reviews
-                  </p>
-                  <p className="text-3xl font-bold text-gray-900 mb-1">
-                    {verifications.length}
-                  </p>
-                </div>
-                <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-amber-500 to-amber-600 flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform duration-300">
-                  <FaInfoCircle className="text-white text-xl" />
-                </div>
-              </div>
-              <div className="absolute bottom-0 right-0 w-20 h-20 bg-gradient-to-tr from-transparent to-white/20 rounded-tl-full opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-            </motion.div>
+              <TbRefresh className={`text-xl text-gray-600 ${isLoading ? "animate-spin" : ""}`} />
+            </motion.button>
           </div>
 
           {/* Verifications List */}

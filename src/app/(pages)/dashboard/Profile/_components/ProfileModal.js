@@ -683,10 +683,10 @@ export default function ProfileModal({
           exit={{ opacity: 0, y: 20, scale: 0.96 }}
           transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
           onClick={(e) => e.stopPropagation()}
-          className="w-full max-w-6xl max-h-[92vh] rounded-3xl shadow-2xl border border-gray-200/60 overflow-hidden flex flex-col bg-white backdrop-blur-xl"
+          className="w-full max-w-6xl max-h-[98vh] rounded-3xl shadow-2xl border border-gray-200/60 overflow-hidden flex flex-col bg-white backdrop-blur-xl"
         >
           {/* Header + Stepper */}
-          <div className="relative px-6 sm:px-8 pt-7 pb-6 border-b border-gray-200/80 bg-gradient-to-br from-slate-50 via-white to-slate-50/50 overflow-hidden">
+          <div className="relative px-6 sm:px-8 pt-4  pb-6 border-b border-gray-200/80 bg-gradient-to-br from-slate-50 via-white to-slate-50/50 overflow-hidden">
             {/* Decorative background elements */}
             <div className="absolute top-0 right-0 w-64 h-64 bg-gradient-to-br from-[#c6080a]/5 to-transparent rounded-full blur-3xl -mr-32 -mt-32" />
             <div className="absolute bottom-0 left-0 w-48 h-48 bg-gradient-to-tr from-[#e63946]/5 to-transparent rounded-full blur-2xl -ml-24 -mb-24" />
@@ -703,7 +703,7 @@ export default function ProfileModal({
                   <div className="absolute inset-0 bg-gradient-to-br from-white/20 to-transparent rounded-2xl" />
                 </motion.div>
                 <div>
-                  <h2 className="text-2xl sm:text-3xl font-bold bg-gradient-to-r from-gray-900 via-gray-800 to-gray-900 bg-clip-text text-transparent tracking-tight">
+                  <h2 className="text-xl font-bold bg-gradient-to-r from-gray-900 via-gray-800 to-gray-900 bg-clip-text text-transparent tracking-tight">
                     {mode === "edit"
                       ? "Edit Seller Profile"
                       : "Create Seller Profile"}
@@ -727,8 +727,8 @@ export default function ProfileModal({
             </div>
 
             {/* Enhanced Stepper bar */}
-            <div className="relative">
-              <div className="flex items-center justify-between mb-7 -mt-6 gap-3">
+            <div className="relative mt-2">
+              <div className="flex items-center justify-between mb-7 gap-3">
                 {steps.map((step, index) => {
                   const isActive = index === currentStep;
                   const isCompleted = index < currentStep;

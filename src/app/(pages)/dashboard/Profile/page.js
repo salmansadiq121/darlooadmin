@@ -30,12 +30,16 @@ import {
   FaUserCheck,
   FaCalendarAlt,
   FaArrowUp,
+  FaTruck,
+  FaWallet,
 } from "react-icons/fa";
 import ProfileModal from "./_components/ProfileModal";
 import OverviewTab from "./_components/OverviewTab";
 import AnalyticsTab from "./_components/AnalyticsTab";
 import SettingsTab from "./_components/SettingsTab";
 import VerificationTab from "./_components/VerificationTab";
+import ShippingSettingsTab from "./_components/ShippingSettingsTab";
+import PayoutsTab from "./_components/PayoutsTab";
 
 const MainLayout = dynamic(
   () => import("../../../components/layout/MainLayout"),
@@ -177,6 +181,8 @@ export default function SellerProfilePage() {
   const tabs = [
     { id: "overview", label: "Store Details", icon: FaStore },
     { id: "verification", label: "Verification", icon: FaShieldAlt },
+    { id: "shipping", label: "Shipping", icon: FaTruck },
+    { id: "payouts", label: "Payouts", icon: FaWallet },
     { id: "analytics", label: "Analytics", icon: FaChartLine },
     { id: "settings", label: "Settings", icon: FaCog },
   ];
@@ -429,6 +435,37 @@ export default function SellerProfilePage() {
                   >
                     <VerificationTab
                       seller={seller}
+                      onUpdate={handleProfileUpdated}
+                    />
+                  </motion.div>
+                )}
+
+                {activeTab === "shipping" && (
+                  <motion.div
+                    key="shipping"
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -20 }}
+                    transition={{ duration: 0.3 }}
+                  >
+                    <ShippingSettingsTab
+                      seller={seller}
+                      onUpdate={handleProfileUpdated}
+                    />
+                  </motion.div>
+                )}
+
+                {activeTab === "payouts" && (
+                  <motion.div
+                    key="payouts"
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -20 }}
+                    transition={{ duration: 0.3 }}
+                  >
+                    <PayoutsTab
+                      seller={seller}
+                      token={auth?.token}
                       onUpdate={handleProfileUpdated}
                     />
                   </motion.div>
