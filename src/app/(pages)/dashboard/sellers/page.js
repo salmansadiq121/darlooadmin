@@ -1160,8 +1160,11 @@ export default function Sellers() {
                           <div className="flex items-center justify-center gap-1 text-amber-600 mb-1">
                             <FaStar className="text-sm" />
                           </div>
-                          <p className="text-lg font-bold text-gray-900">{(seller.rating?.average || 0).toFixed(1)}</p>
-                          <p className="text-[10px] text-gray-500 uppercase font-medium">Rating</p>
+                          <div className="flex items-center justify-center gap-1">
+                            <p className="text-lg font-bold text-gray-900">{(seller.rating?.average || 0).toFixed(1)}</p>
+                            <FaStar className="text-amber-400 text-xs" />
+                          </div>
+                          <p className="text-[10px] text-gray-500">{seller.rating?.totalReviews || 0} reviews</p>
                         </div>
                       </div>
 

@@ -81,15 +81,22 @@ export default function Header() {
   }, [auth, setAuth, router]);
 
   // Fetch notifications with error handling and validation
-  const fetchNotifications = useCallback(async () => {
-    if (!auth?.user?._id) {
+  const fetchNotifications = useCallback(async (signal) => {
+    if (!auth?.user?._id || !auth?.token) {
       return;
     }
 
     try {
       setIsLoading(true);
       const { data } = await axios.get(
-        `${process.env.NEXT_PUBLIC_SERVER_URI}/api/v1/notification/header/admin/${auth.user._id}`
+        `${process.env.NEXT_PUBLIC_SERVER_URI}/api/v1/notification/header/admin/${auth.user._id}`,
+        {
+          headers: {
+            Authorization: `Bearer ${auth.token}`,
+          },
+          timeout: 10000, // 10 second timeout
+          signal, // AbortController signal for cleanup
+        }
       );
 
       if (data?.notifications && Array.isArray(data.notifications)) {
@@ -98,34 +105,56 @@ export default function Header() {
         setUnreadCount(unread);
       }
     } catch (error) {
+      // Don't log or show error if request was cancelled
+      if (axios.isCancel(error) || error.name === "CanceledError") {
+        return;
+      }
       console.error("Error fetching notifications:", error);
       if (error.response?.status === 401) {
         toast.error("Session expired. Please login again.");
         handleLogout();
       }
+      // Don't show toast for network errors during polling - it's annoying
     } finally {
       setIsLoading(false);
     }
-  }, [auth?.user?._id, handleLogout]);
+  }, [auth?.user?._id, auth?.token, handleLogout]);
 
   useEffect(() => {
-    fetchNotifications();
-    // Refresh notifications every 30 seconds
-    const interval = setInterval(fetchNotifications, 30000);
-    return () => clearInterval(interval);
+    const abortController = new AbortController();
+
+    // Initial fetch
+    fetchNotifications(abortController.signal);
+
+    // Refresh notifications every 60 seconds (reduced from 30)
+    const interval = setInterval(() => {
+      fetchNotifications(abortController.signal);
+    }, 60000);
+
+    return () => {
+      abortController.abort();
+      clearInterval(interval);
+    };
   }, [fetchNotifications]);
 
   // Mark notification as read with validation
   const markSingleNotificationAsRead = useCallback(
     async (id) => {
-      if (!id) {
+      if (!id || !auth?.token) {
         toast.error("Invalid notification ID");
         return;
       }
 
       try {
         await axios.put(
-          `${process.env.NEXT_PUBLIC_SERVER_URI}/api/v1/notification/read/${id}`
+          `${process.env.NEXT_PUBLIC_SERVER_URI}/api/v1/notification/read/${id}`,
+          {},
+          {
+            headers: {
+              Authorization: `Bearer ${auth.token}`,
+            },
+            timeout: 10000,
+          }
         );
         fetchNotifications();
         toast.success("Marked as read");
@@ -134,11 +163,13 @@ export default function Header() {
         toast.error("Failed to mark as read");
       }
     },
-    [fetchNotifications]
+    [auth?.token, fetchNotifications]
   );
 
   // Mark all as read
   const markAllAsRead = useCallback(async () => {
+    if (!auth?.token) return;
+
     try {
       const unreadIds = notificationData
         .filter((n) => !n.isRead)
@@ -152,7 +183,14 @@ export default function Header() {
       await Promise.all(
         unreadIds.map((id) =>
           axios.put(
-            `${process.env.NEXT_PUBLIC_SERVER_URI}/api/v1/notification/read/${id}`
+            `${process.env.NEXT_PUBLIC_SERVER_URI}/api/v1/notification/read/${id}`,
+            {},
+            {
+              headers: {
+                Authorization: `Bearer ${auth.token}`,
+              },
+              timeout: 10000,
+            }
           )
         )
       );
@@ -163,7 +201,7 @@ export default function Header() {
       console.error("Error marking all as read:", error);
       toast.error("Failed to mark all as read");
     }
-  }, [notificationData, fetchNotifications]);
+  }, [auth?.token, notificationData, fetchNotifications]);
 
   // Notification variants for animation
   const notificationVariants = {

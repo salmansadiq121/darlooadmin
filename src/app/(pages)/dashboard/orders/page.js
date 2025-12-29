@@ -8,11 +8,7 @@ import Image from "next/image";
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { CiCircleChevLeft, CiCircleChevRight } from "react-icons/ci";
 import { IoSearch, IoFilterOutline } from "react-icons/io5";
-import {
-  MdDelete,
-  MdStorefront,
-  MdOutlineLocalShipping,
-} from "react-icons/md";
+import { MdDelete, MdStorefront, MdOutlineLocalShipping } from "react-icons/md";
 import { format } from "date-fns";
 import { TiEye } from "react-icons/ti";
 import { useRouter } from "next/navigation";
@@ -104,8 +100,10 @@ export default function Orders() {
     completedOrders: 0,
   });
 
-  const isAdmin = auth?.user?.role === "admin" || auth?.user?.role === "superadmin";
-  const isSeller = auth?.user?.role === "seller" || (auth?.user?.isSeller && !isAdmin);
+  const isAdmin =
+    auth?.user?.role === "admin" || auth?.user?.role === "superadmin";
+  const isSeller =
+    auth?.user?.role === "seller" || (auth?.user?.isSeller && !isAdmin);
 
   // Current URL
   useEffect(() => {
@@ -157,7 +155,9 @@ export default function Orders() {
       });
 
       const { data } = await axios.get(
-        `${process.env.NEXT_PUBLIC_SERVER_URI}/api/v1/order/all/orders?${params.toString()}`,
+        `${
+          process.env.NEXT_PUBLIC_SERVER_URI
+        }/api/v1/order/all/orders?${params.toString()}`,
         {
           headers: {
             Authorization: auth?.token,
@@ -174,9 +174,12 @@ export default function Orders() {
         if (data.counts) {
           setCounts(data.counts);
         }
-        const totalRevenue = data.orders?.reduce((sum, order) => {
-          return sum + parseFloat(order.totalAmount || order.sellerSubtotal || 0);
-        }, 0) || 0;
+        const totalRevenue =
+          data.orders?.reduce((sum, order) => {
+            return (
+              sum + parseFloat(order.totalAmount || order.sellerSubtotal || 0)
+            );
+          }, 0) || 0;
 
         setStats({
           totalRevenue,
@@ -395,7 +398,8 @@ export default function Orders() {
         `"${order.user?.number || "N/A"}"`,
       ];
 
-      const shippingAddress = order.shippingAddress || order.parentOrder?.shippingAddress;
+      const shippingAddress =
+        order.shippingAddress || order.parentOrder?.shippingAddress;
       const shippingAddressStr = shippingAddress
         ? `"${shippingAddress.address || ""}"`
         : `"N/A"`;
@@ -424,8 +428,12 @@ export default function Orders() {
               `"${order.discount || "0"}"`,
               `"${order.shippingFee || "0"}"`,
               `"${order.totalAmount || order.sellerSubtotal || "0"}"`,
-              `"${order.paymentMethod || order.parentOrder?.paymentMethod || "N/A"}"`,
-              `"${order.paymentStatus || order.parentOrder?.paymentStatus || "N/A"}"`,
+              `"${
+                order.paymentMethod || order.parentOrder?.paymentMethod || "N/A"
+              }"`,
+              `"${
+                order.paymentStatus || order.parentOrder?.paymentStatus || "N/A"
+              }"`,
               `"${order.orderStatus || "N/A"}"`,
               shippingAddressStr,
               `"${country}"`,
@@ -451,8 +459,12 @@ export default function Orders() {
             `"${order.discount || "0"}"`,
             `"${order.shippingFee || "0"}"`,
             `"${order.totalAmount || order.sellerSubtotal || "0"}"`,
-            `"${order.paymentMethod || order.parentOrder?.paymentMethod || "N/A"}"`,
-            `"${order.paymentStatus || order.parentOrder?.paymentStatus || "N/A"}"`,
+            `"${
+              order.paymentMethod || order.parentOrder?.paymentMethod || "N/A"
+            }"`,
+            `"${
+              order.paymentStatus || order.parentOrder?.paymentStatus || "N/A"
+            }"`,
             `"${order.orderStatus || "N/A"}"`,
             shippingAddressStr,
             `"${country}"`,
@@ -552,6 +564,75 @@ export default function Orders() {
           );
         },
       },
+      // Customer column - Second position
+      {
+        accessorKey: "customer",
+        minSize: 180,
+        maxSize: 250,
+        size: 200,
+        grow: true,
+        Header: () => (
+          <div className="flex items-center gap-1.5 text-[11px]">
+            <FiUsers className="w-3.5 h-3.5" />
+            <span>CUSTOMER</span>
+          </div>
+        ),
+        Cell: ({ row }) => {
+          const order = row.original;
+          const user = order.user || order.parentOrder?.user;
+          const customerName = user?.name || order.customerName || "Guest";
+          const customerEmail = user?.email || order.customerEmail || "";
+          const customerPhone =
+            user?.number || user?.phone || order.customerPhone || "";
+          const avatar = user?.avatar;
+
+          return (
+            <div className="flex items-center gap-2.5">
+              {/* Avatar */}
+              <div className="relative flex-shrink-0">
+                {avatar ? (
+                  <Image
+                    src={avatar}
+                    alt={customerName}
+                    width={40}
+                    height={40}
+                    className="w-10 h-10 rounded-xl object-cover border-2 border-white shadow-md"
+                  />
+                ) : (
+                  <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-slate-100 to-slate-200 flex items-center justify-center border-2 border-white shadow-md">
+                    <span className="text-sm font-bold text-slate-500">
+                      {customerName.charAt(0).toUpperCase()}
+                    </span>
+                  </div>
+                )}
+              </div>
+              {/* Info */}
+              <div className="flex flex-col min-w-0">
+                <span className="text-[12px] font-semibold text-slate-800 truncate">
+                  {customerName}
+                </span>
+                {customerEmail && (
+                  <span className="text-[10px] text-slate-500 truncate">
+                    {customerEmail}
+                  </span>
+                )}
+                {customerPhone && (
+                  <span className="text-[10px] text-slate-400 flex items-center gap-1">
+                    <svg
+                      className="w-2.5 h-2.5"
+                      fill="currentColor"
+                      viewBox="0 0 20 20"
+                    >
+                      <path d="M2 3a1 1 0 011-1h2.153a1 1 0 01.986.836l.74 4.435a1 1 0 01-.54 1.06l-1.548.773a11.037 11.037 0 006.105 6.105l.774-1.548a1 1 0 011.059-.54l4.435.74a1 1 0 01.836.986V17a1 1 0 01-1 1h-2C7.82 18 2 12.18 2 5V3z" />
+                    </svg>
+                    {customerPhone}
+                  </span>
+                )}
+              </div>
+            </div>
+          );
+        },
+      },
       // Seller column (visible for admin)
       ...(isAdmin
         ? [
@@ -584,9 +665,14 @@ export default function Orders() {
                   );
                 }
 
-                const uniqueSellers = products.length > 0
-                  ? [...new Set(products.map((p) => p.sellerName).filter(Boolean))]
-                  : [sellerName];
+                const uniqueSellers =
+                  products.length > 0
+                    ? [
+                        ...new Set(
+                          products.map((p) => p.sellerName).filter(Boolean)
+                        ),
+                      ]
+                    : [sellerName];
 
                 if (uniqueSellers.length > 1) {
                   return (
@@ -612,8 +698,8 @@ export default function Orders() {
       {
         accessorKey: "products",
         minSize: 180,
-        maxSize: 280,
-        size: 240,
+        maxSize: 260,
+        size: 220,
         grow: true,
         Header: () => (
           <div className="flex items-center gap-1.5 text-[11px]">
@@ -655,8 +741,11 @@ export default function Orders() {
                         className="object-cover"
                       />
                     </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="text-[11px] font-semibold text-slate-800 truncate group-hover:text-red-600 transition-colors leading-tight">
+                    <div className="flex-1 min-w-0 max-w-[140px]">
+                      <p
+                        className="text-[11px] font-semibold text-slate-800 truncate group-hover:text-red-600 transition-colors leading-tight"
+                        title={firstProduct?.product?.name || "Unnamed Product"}
+                      >
                         {firstProduct?.product?.name || "Unnamed Product"}
                       </p>
                       <div className="flex items-center gap-1.5 mt-1">
@@ -710,12 +799,16 @@ export default function Orders() {
                                   className="object-cover"
                                 />
                               </div>
-                              <div className="flex-1 min-w-0">
-                                <p className="text-[10px] text-slate-700 truncate font-medium">
+                              <div className="flex-1 min-w-0 max-w-[120px]">
+                                <p
+                                  className="text-[10px] text-slate-700 truncate font-medium"
+                                  title={product?.product?.name || "Unnamed"}
+                                >
                                   {product?.product?.name || "Unnamed"}
                                 </p>
                                 <span className="text-[9px] text-slate-500">
-                                  Qty: {product?.quantity || 1} • €{product?.price || 0}
+                                  Qty: {product?.quantity || 1} • €
+                                  {product?.price || 0}
                                 </span>
                               </div>
                             </div>
@@ -742,9 +835,7 @@ export default function Orders() {
         maxSize: 75,
         size: 65,
         grow: false,
-        Header: () => (
-          <span className="text-[11px]">QTY</span>
-        ),
+        Header: () => <span className="text-[11px]">QTY</span>,
         Cell: ({ row }) => {
           const products = row.original.products || [];
           const totalQty = products.reduce(
@@ -798,7 +889,8 @@ export default function Orders() {
           </div>
         ),
         Cell: ({ row }) => {
-          const price = row.original.totalAmount || row.original.sellerSubtotal || 0;
+          const price =
+            row.original.totalAmount || row.original.sellerSubtotal || 0;
           const shippingFee = row.original.shippingFee || 0;
 
           return (
@@ -817,9 +909,9 @@ export default function Orders() {
       },
       {
         accessorKey: "trackingId",
-        minSize: 80,
-        maxSize: 130,
-        size: 105,
+        minSize: 100,
+        maxSize: 150,
+        size: 130,
         grow: false,
         Header: () => (
           <div className="flex items-center gap-1 text-[11px]">
@@ -840,19 +932,21 @@ export default function Orders() {
 
           if (!trackingId) {
             return (
-              <span className="text-[10px] text-slate-400 italic">
+              <span className="inline-flex items-center gap-1 px-2 py-1 rounded-lg bg-slate-100 text-slate-400 text-[10px] italic border border-slate-200">
+                <MdOutlineLocalShipping className="w-3 h-3" />
                 No tracking
               </span>
             );
           }
 
           return (
-            <div className="flex flex-col gap-0.5">
-              <span className="text-[10px] font-mono font-semibold text-slate-700 truncate max-w-[95px]">
+            <div className="flex flex-col gap-1 p-1.5 rounded-lg bg-cyan-50/50 border border-cyan-100">
+              <span className="text-[10px] font-mono font-bold text-cyan-700">
                 {trackingId}
               </span>
               {shippingCarrier && (
-                <span className="text-[8px] text-slate-400 uppercase tracking-wide font-semibold">
+                <span className="text-[9px] text-cyan-600 uppercase tracking-wide font-semibold flex items-center gap-1">
+                  <FiTruck className="w-2.5 h-2.5" />
                   {shippingCarrier}
                 </span>
               )}
@@ -862,39 +956,45 @@ export default function Orders() {
       },
       {
         accessorKey: "paymentMethod",
-        minSize: 80,
-        maxSize: 115,
-        size: 95,
+        minSize: 110,
+        maxSize: 140,
+        size: 125,
         grow: false,
-        Header: () => (
-          <span className="text-[11px]">PAYMENT</span>
-        ),
+        Header: () => <span className="text-[11px]">PAYMENT</span>,
         Cell: ({ row }) => {
-          const paymentMethod = row.original.paymentMethod || row.original.parentOrder?.paymentMethod;
+          const paymentMethod =
+            row.original.paymentMethod ||
+            row.original.parentOrder?.paymentMethod;
 
           const methodConfig = {
             "Credit Card": {
-              bg: "bg-violet-50",
+              bg: "bg-gradient-to-r from-violet-50 to-purple-50",
               text: "text-violet-700",
               border: "border-violet-200",
               icon: "💳",
             },
             PayPal: {
-              bg: "bg-blue-50",
+              bg: "bg-gradient-to-r from-blue-50 to-indigo-50",
               text: "text-blue-700",
               border: "border-blue-200",
               icon: "🅿️",
             },
             "Bank Transfer": {
-              bg: "bg-teal-50",
+              bg: "bg-gradient-to-r from-teal-50 to-cyan-50",
               text: "text-teal-700",
               border: "border-teal-200",
               icon: "🏦",
             },
+            COD: {
+              bg: "bg-gradient-to-r from-amber-50 to-yellow-50",
+              text: "text-amber-700",
+              border: "border-amber-200",
+              icon: "💵",
+            },
           };
 
           const config = methodConfig[paymentMethod] || {
-            bg: "bg-slate-50",
+            bg: "bg-gradient-to-r from-slate-50 to-gray-50",
             text: "text-slate-700",
             border: "border-slate-200",
             icon: "💰",
@@ -902,25 +1002,21 @@ export default function Orders() {
 
           return (
             <span
-              className={`inline-flex items-center gap-1 px-2 py-1 rounded-lg ${config.bg} ${config.text} ${config.border} border text-[10px] font-medium`}
+              className={`inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl ${config.bg} ${config.text} ${config.border} border text-[10px] font-semibold shadow-sm whitespace-nowrap`}
             >
-              <span className="text-[10px]">{config.icon}</span>
-              <span className="truncate max-w-[60px]">
-                {paymentMethod || "N/A"}
-              </span>
+              <span className="text-[12px]">{config.icon}</span>
+              <span>{paymentMethod || "N/A"}</span>
             </span>
           );
         },
       },
       {
         accessorKey: "orderStatus",
-        minSize: 140,
-        maxSize: 200,
-        size: 170,
+        minSize: 150,
+        maxSize: 220,
+        size: 180,
         grow: true,
-        Header: () => (
-          <span className="text-[11px]">ORDER STATUS</span>
-        ),
+        Header: () => <span className="text-[11px]">ORDER STATUS</span>,
         Cell: ({ row }) => {
           const order = row.original;
           // For seller orders, show seller order status
@@ -986,9 +1082,13 @@ export default function Orders() {
               <div
                 className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-xl ${config.bg} ${config.text} ${config.border} border shadow-sm`}
               >
-                <span className={`w-2 h-2 rounded-full ${config.dot} animate-pulse`} />
+                <span
+                  className={`w-2 h-2 rounded-full ${config.dot} animate-pulse`}
+                />
                 {config.icon}
-                <span className="text-[11px] font-bold whitespace-nowrap">{status}</span>
+                <span className="text-[11px] font-bold whitespace-nowrap">
+                  {status}
+                </span>
               </div>
             );
           }
@@ -1019,9 +1119,13 @@ export default function Orders() {
                     key={status}
                     className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg ${config.bg} ${config.text} ${config.border} border shadow-sm w-fit`}
                   >
-                    <span className={`w-1.5 h-1.5 rounded-full ${config.dot}`} />
+                    <span
+                      className={`w-1.5 h-1.5 rounded-full ${config.dot}`}
+                    />
                     <span className="text-[10px] font-bold">{count}</span>
-                    <span className="text-[10px] font-semibold whitespace-nowrap">{status}</span>
+                    <span className="text-[10px] font-semibold whitespace-nowrap">
+                      {status}
+                    </span>
                   </div>
                 );
               })}
@@ -1031,15 +1135,16 @@ export default function Orders() {
       },
       {
         accessorKey: "paymentStatus",
-        minSize: 110,
-        maxSize: 140,
-        size: 125,
+        minSize: 130,
+        maxSize: 160,
+        size: 145,
         grow: false,
-        Header: () => (
-          <span className="text-[11px]">PAYMENT STATUS</span>
-        ),
+        Header: () => <span className="text-[11px]">PAYMENT STATUS</span>,
         Cell: ({ row }) => {
-          const paymentStatus = row.original.paymentStatus || row.original.parentOrder?.paymentStatus || "Pending";
+          const paymentStatus =
+            row.original.paymentStatus ||
+            row.original.parentOrder?.paymentStatus ||
+            "Pending";
           const [paymentStat, setPaymentStat] = useState(paymentStatus);
           const [showUpdate, setShowUpdate] = useState(false);
           const statuses = ["Pending", "Completed", "Failed", "Refunded"];
@@ -1125,43 +1230,41 @@ export default function Orders() {
       },
       {
         accessorKey: "Actions",
-        minSize: 70,
-        maxSize: 100,
-        size: 85,
+        minSize: 90,
+        maxSize: 120,
+        size: 100,
         grow: false,
-        Header: () => (
-          <span className="text-[11px]">ACTIONS</span>
-        ),
+        Header: () => <span className="text-[11px]">ACTIONS</span>,
         Cell: ({ row }) => {
           return (
-            <div className="flex items-center justify-center gap-1.5">
+            <div className="flex items-center justify-center gap-2">
               <motion.button
-                whileHover={{ scale: 1.08 }}
-                whileTap={{ scale: 0.92 }}
+                whileHover={{ scale: 1.1, y: -2 }}
+                whileTap={{ scale: 0.9 }}
                 onClick={() =>
                   router.push(`/dashboard/orders/details/${row.original._id}`)
                 }
-                className="p-2 rounded-lg bg-indigo-50 text-indigo-600 hover:bg-indigo-100 transition-all border border-indigo-200"
+                className="p-2.5 rounded-xl bg-gradient-to-br from-indigo-50 to-blue-50 text-indigo-600 hover:from-indigo-100 hover:to-blue-100 transition-all border border-indigo-200 shadow-sm hover:shadow-md"
                 title="View Details"
               >
-                <TiEye className="w-3.5 h-3.5" />
+                <TiEye className="w-4 h-4" />
               </motion.button>
 
               {isAdmin && (
                 <motion.button
-                  whileHover={{ scale: 1.08 }}
-                  whileTap={{ scale: 0.92 }}
+                  whileHover={{ scale: 1.1, y: -2 }}
+                  whileTap={{ scale: 0.9 }}
                   onClick={() => {
                     setOrderId(row.original._id);
                     handleDeleteConfirmation(row.original._id);
                   }}
-                  className="p-2 rounded-lg bg-red-50 text-red-600 hover:bg-red-100 transition-all border border-red-200"
+                  className="p-2.5 rounded-xl bg-gradient-to-br from-red-50 to-rose-50 text-red-600 hover:from-red-100 hover:to-rose-100 transition-all border border-red-200 shadow-sm hover:shadow-md"
                   title="Delete Order"
                 >
                   {isLoad && orderId === row.original._id ? (
-                    <ImSpinner4 className="w-3.5 h-3.5 animate-spin" />
+                    <ImSpinner4 className="w-4 h-4 animate-spin" />
                   ) : (
-                    <MdDelete className="w-3.5 h-3.5" />
+                    <MdDelete className="w-4 h-4" />
                   )}
                 </motion.button>
               )}
@@ -1170,7 +1273,14 @@ export default function Orders() {
         },
       },
     ],
-    [orderData, filterOrders, activeTab, paginatedData, auth?.user?.role, isAdmin]
+    [
+      orderData,
+      filterOrders,
+      activeTab,
+      paginatedData,
+      auth?.user?.role,
+      isAdmin,
+    ]
   );
 
   const table = useMaterialReactTable({
@@ -1206,20 +1316,48 @@ export default function Orders() {
         border: "none",
       },
     },
-    muiTableBodyRowProps: ({ row }) => ({
-      sx: {
-        "&:hover": {
-          backgroundColor: "rgba(239, 68, 68, 0.03) !important",
+    muiTableBodyRowProps: ({ row }) => {
+      const orderStatus = row.original.orderStatus;
+      const isDelivered = orderStatus === "Delivered";
+      const isCancelled = orderStatus === "Cancelled";
+      const isReturned = orderStatus === "Returned";
+
+      return {
+        sx: {
+          backgroundColor: isDelivered
+            ? "rgba(16, 185, 129, 0.08) !important"
+            : isCancelled
+            ? "rgba(239, 68, 68, 0.05) !important"
+            : isReturned
+            ? "rgba(249, 115, 22, 0.05) !important"
+            : "transparent",
+          "&:hover": {
+            backgroundColor: isDelivered
+              ? "rgba(16, 185, 129, 0.12) !important"
+              : isCancelled
+              ? "rgba(239, 68, 68, 0.08) !important"
+              : isReturned
+              ? "rgba(249, 115, 22, 0.08) !important"
+              : "rgba(239, 68, 68, 0.03) !important",
+          },
+          transition: "all 0.2s ease",
+          cursor: "pointer",
+          borderLeft: isDelivered
+            ? "4px solid #10b981"
+            : isCancelled
+            ? "4px solid #ef4444"
+            : isReturned
+            ? "4px solid #f97316"
+            : "4px solid transparent",
         },
-        transition: "all 0.15s ease",
-        cursor: "pointer",
-      },
-    }),
+      };
+    },
     muiTableBodyCellProps: {
       sx: {
         borderBottom: "1px solid #f1f5f9",
-        padding: "10px 12px",
+        padding: "12px 14px",
         fontSize: "13px",
+        verticalAlign: "middle",
       },
     },
     enableColumnActions: false,
@@ -1241,19 +1379,26 @@ export default function Orders() {
     },
     muiTableHeadCellProps: {
       sx: {
-        fontWeight: "600",
+        fontWeight: "700",
         fontSize: "11px",
-        letterSpacing: "0.3px",
+        letterSpacing: "0.5px",
         textTransform: "uppercase",
         background: "linear-gradient(135deg, #dc2626 0%, #b91c1c 100%)",
         color: "#fff",
-        padding: "12px",
+        padding: "14px 12px",
         borderBottom: "none",
+        whiteSpace: "nowrap",
         "&:first-of-type": {
           borderTopLeftRadius: "0",
         },
         "&:last-child": {
           borderTopRightRadius: "0",
+        },
+        "& .MuiTableSortLabel-root": {
+          color: "#fff !important",
+        },
+        "& .MuiCheckbox-root": {
+          color: "#fff !important",
         },
       },
     },
@@ -1266,7 +1411,12 @@ export default function Orders() {
     { id: "Processing", label: "Processing", icon: FiRefreshCw, color: "blue" },
     { id: "Packing", label: "Packing", icon: FiBox, color: "violet" },
     { id: "Shipped", label: "Shipped", icon: FiTruck, color: "cyan" },
-    { id: "Delivered", label: "Delivered", icon: FiCheckCircle, color: "emerald" },
+    {
+      id: "Delivered",
+      label: "Delivered",
+      icon: FiCheckCircle,
+      color: "emerald",
+    },
     { id: "Cancelled", label: "Cancelled", icon: FiXCircle, color: "rose" },
     { id: "Returned", label: "Returned", icon: FiPackage, color: "orange" },
   ];
@@ -1314,24 +1464,36 @@ export default function Orders() {
                 <div className="flex items-center gap-2 px-3 py-2 rounded-xl bg-emerald-50 border border-emerald-200">
                   <FiDollarSign className="w-4 h-4 text-emerald-600" />
                   <div>
-                    <span className="text-[9px] text-emerald-600 font-semibold uppercase block">Revenue</span>
-                    <p className="text-[13px] font-bold text-emerald-700">€{stats.totalRevenue.toFixed(2)}</p>
+                    <span className="text-[9px] text-emerald-600 font-semibold uppercase block">
+                      Revenue
+                    </span>
+                    <p className="text-[13px] font-bold text-emerald-700">
+                      €{stats.totalRevenue.toFixed(2)}
+                    </p>
                   </div>
                 </div>
 
                 <div className="flex items-center gap-2 px-3 py-2 rounded-xl bg-amber-50 border border-amber-200">
                   <FiClock className="w-4 h-4 text-amber-600" />
                   <div>
-                    <span className="text-[9px] text-amber-600 font-semibold uppercase block">Pending</span>
-                    <p className="text-[13px] font-bold text-amber-700">{counts.Pending || 0}</p>
+                    <span className="text-[9px] text-amber-600 font-semibold uppercase block">
+                      Pending
+                    </span>
+                    <p className="text-[13px] font-bold text-amber-700">
+                      {counts.Pending || 0}
+                    </p>
                   </div>
                 </div>
 
                 <div className="flex items-center gap-2 px-3 py-2 rounded-xl bg-blue-50 border border-blue-200 hidden sm:flex">
                   <FiShoppingCart className="w-4 h-4 text-blue-600" />
                   <div>
-                    <span className="text-[9px] text-blue-600 font-semibold uppercase block">Total</span>
-                    <p className="text-[13px] font-bold text-blue-700">{pagination.total || 0}</p>
+                    <span className="text-[9px] text-blue-600 font-semibold uppercase block">
+                      Total
+                    </span>
+                    <p className="text-[13px] font-bold text-blue-700">
+                      {pagination.total || 0}
+                    </p>
                   </div>
                 </div>
               </div>
@@ -1378,20 +1540,38 @@ export default function Orders() {
                 const Icon = tab.icon;
                 const isActive = activeTab === tab.id;
                 const colorClasses = {
-                  red: isActive ? "bg-red-500 text-white" : "text-slate-600 hover:bg-red-50",
-                  amber: isActive ? "bg-amber-500 text-white" : "text-slate-600 hover:bg-amber-50",
-                  blue: isActive ? "bg-blue-500 text-white" : "text-slate-600 hover:bg-blue-50",
-                  violet: isActive ? "bg-violet-500 text-white" : "text-slate-600 hover:bg-violet-50",
-                  cyan: isActive ? "bg-cyan-500 text-white" : "text-slate-600 hover:bg-cyan-50",
-                  emerald: isActive ? "bg-emerald-500 text-white" : "text-slate-600 hover:bg-emerald-50",
-                  rose: isActive ? "bg-rose-500 text-white" : "text-slate-600 hover:bg-rose-50",
-                  orange: isActive ? "bg-orange-500 text-white" : "text-slate-600 hover:bg-orange-50",
+                  red: isActive
+                    ? "bg-red-500 text-white"
+                    : "text-slate-600 hover:bg-red-50",
+                  amber: isActive
+                    ? "bg-amber-500 text-white"
+                    : "text-slate-600 hover:bg-amber-50",
+                  blue: isActive
+                    ? "bg-blue-500 text-white"
+                    : "text-slate-600 hover:bg-blue-50",
+                  violet: isActive
+                    ? "bg-violet-500 text-white"
+                    : "text-slate-600 hover:bg-violet-50",
+                  cyan: isActive
+                    ? "bg-cyan-500 text-white"
+                    : "text-slate-600 hover:bg-cyan-50",
+                  emerald: isActive
+                    ? "bg-emerald-500 text-white"
+                    : "text-slate-600 hover:bg-emerald-50",
+                  rose: isActive
+                    ? "bg-rose-500 text-white"
+                    : "text-slate-600 hover:bg-rose-50",
+                  orange: isActive
+                    ? "bg-orange-500 text-white"
+                    : "text-slate-600 hover:bg-orange-50",
                 };
 
                 return (
                   <button
                     key={tab.id}
-                    className={`flex items-center gap-1.5 py-2 px-3 text-[11px] font-semibold rounded-lg cursor-pointer transition-all duration-200 ${colorClasses[tab.color]}`}
+                    className={`flex items-center gap-1.5 py-2 px-3 text-[11px] font-semibold rounded-lg cursor-pointer transition-all duration-200 ${
+                      colorClasses[tab.color]
+                    }`}
                     onClick={() => handleTabClick(tab.id)}
                   >
                     <Icon className="w-3.5 h-3.5" />
@@ -1611,7 +1791,9 @@ export default function Orders() {
                           initial={{ opacity: 0, y: 10 }}
                           animate={{ opacity: 1, y: 0 }}
                           transition={{ delay: index * 0.05 }}
-                          className={`flex items-center gap-3 px-4 py-4 border-b border-slate-100 ${index % 2 === 0 ? 'bg-white' : 'bg-slate-50/50'}`}
+                          className={`flex items-center gap-3 px-4 py-4 border-b border-slate-100 ${
+                            index % 2 === 0 ? "bg-white" : "bg-slate-50/50"
+                          }`}
                         >
                           {/* Checkbox */}
                           <div className="w-5 h-5 rounded border-2 border-slate-200 animate-pulse" />
@@ -1697,16 +1879,27 @@ export default function Orders() {
                           </div>
                         </div>
                         <div className="text-center">
-                          <p className="text-slate-800 font-bold text-[14px]">Loading Orders</p>
-                          <p className="text-slate-500 text-[12px] mt-1">Fetching latest data...</p>
+                          <p className="text-slate-800 font-bold text-[14px]">
+                            Loading Orders
+                          </p>
+                          <p className="text-slate-500 text-[12px] mt-1">
+                            Fetching latest data...
+                          </p>
                         </div>
                         <div className="flex gap-1">
                           {[0, 1, 2].map((i) => (
                             <motion.div
                               key={i}
                               className="w-2 h-2 rounded-full bg-red-500"
-                              animate={{ scale: [1, 1.3, 1], opacity: [0.5, 1, 0.5] }}
-                              transition={{ duration: 0.8, repeat: Infinity, delay: i * 0.15 }}
+                              animate={{
+                                scale: [1, 1.3, 1],
+                                opacity: [0.5, 1, 0.5],
+                              }}
+                              transition={{
+                                duration: 0.8,
+                                repeat: Infinity,
+                                delay: i * 0.15,
+                              }}
                             />
                           ))}
                         </div>
@@ -1724,7 +1917,9 @@ export default function Orders() {
                     <div className="p-4 rounded-full bg-slate-100 mb-3">
                       <FiPackage className="w-10 h-10 text-slate-400" />
                     </div>
-                    <h3 className="text-[15px] font-bold text-slate-700 mb-1">No Orders Found</h3>
+                    <h3 className="text-[15px] font-bold text-slate-700 mb-1">
+                      No Orders Found
+                    </h3>
                     <p className="text-slate-500 text-[13px] text-center max-w-md">
                       {searchQuery
                         ? `No orders matching "${searchQuery}"`
@@ -1796,16 +1991,30 @@ export default function Orders() {
                       <HiDownload className="w-4 h-4 text-white" />
                     </div>
                     <div>
-                      <h2 className="text-[15px] font-bold text-slate-900">Export Orders</h2>
-                      <p className="text-[11px] text-slate-500">Choose export option</p>
+                      <h2 className="text-[15px] font-bold text-slate-900">
+                        Export Orders
+                      </h2>
+                      <p className="text-[11px] text-slate-500">
+                        Choose export option
+                      </p>
                     </div>
                   </div>
                   <button
                     onClick={() => setShowExportModal(false)}
                     className="p-2 rounded-lg hover:bg-slate-100 text-slate-400 hover:text-slate-600 transition-colors"
                   >
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                    <svg
+                      className="w-4 h-4"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M6 18L18 6M6 6l12 12"
+                      />
                     </svg>
                   </button>
                 </div>
@@ -1820,8 +2029,12 @@ export default function Orders() {
                         <HiDownload className="w-4 h-4" />
                       </div>
                       <div className="flex-1">
-                        <h3 className="font-semibold text-slate-800 text-[13px]">Export Selected</h3>
-                        <p className="text-[11px] text-slate-500">{Object.keys(rowSelection).length} orders selected</p>
+                        <h3 className="font-semibold text-slate-800 text-[13px]">
+                          Export Selected
+                        </h3>
+                        <p className="text-[11px] text-slate-500">
+                          {Object.keys(rowSelection).length} orders selected
+                        </p>
                       </div>
                       <span className="px-2 py-1 rounded-lg bg-blue-100 text-blue-700 text-[11px] font-bold">
                         {Object.keys(rowSelection).length}
@@ -1838,8 +2051,12 @@ export default function Orders() {
                         <HiDownload className="w-4 h-4" />
                       </div>
                       <div className="flex-1">
-                        <h3 className="font-semibold text-slate-800 text-[13px]">Export Current Page</h3>
-                        <p className="text-[11px] text-slate-500">Orders on this page</p>
+                        <h3 className="font-semibold text-slate-800 text-[13px]">
+                          Export Current Page
+                        </h3>
+                        <p className="text-[11px] text-slate-500">
+                          Orders on this page
+                        </p>
                       </div>
                       <span className="px-2 py-1 rounded-lg bg-emerald-100 text-emerald-700 text-[11px] font-bold">
                         {filterOrders.length}
@@ -1856,8 +2073,12 @@ export default function Orders() {
                         <HiDownload className="w-4 h-4" />
                       </div>
                       <div className="flex-1">
-                        <h3 className="font-semibold text-slate-800 text-[13px]">Export All Orders</h3>
-                        <p className="text-[11px] text-slate-500">Complete database export</p>
+                        <h3 className="font-semibold text-slate-800 text-[13px]">
+                          Export All Orders
+                        </h3>
+                        <p className="text-[11px] text-slate-500">
+                          Complete database export
+                        </p>
                       </div>
                       <span className="px-2 py-1 rounded-lg bg-red-100 text-red-700 text-[11px] font-bold">
                         {pagination.total}
@@ -1868,7 +2089,8 @@ export default function Orders() {
 
                 <div className="mt-4 pt-3 border-t border-slate-100">
                   <p className="text-[10px] text-slate-400 text-center">
-                    CSV format • Includes order details, customer info & seller data
+                    CSV format • Includes order details, customer info & seller
+                    data
                   </p>
                 </div>
               </motion.div>
