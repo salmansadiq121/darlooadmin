@@ -6,15 +6,14 @@ import {
   useMaterialReactTable,
 } from "material-react-table";
 import React, { useEffect, useMemo, useRef, useState } from "react";
-import { IoSearch, IoRefresh } from "react-icons/io5";
+import { IoSearch, IoRefresh, IoTrash } from "react-icons/io5";
 import { format } from "date-fns";
-import { useRouter } from "next/navigation";
 import Swal from "sweetalert2";
 import axios from "axios";
 import toast from "react-hot-toast";
 import { ImSpinner4 } from "react-icons/im";
 import { useAuth } from "@/app/context/authContext";
-import { FaCheckCircle, FaTimesCircle, FaClock, FaRedo } from "react-icons/fa";
+import { FaCheckCircle, FaTimesCircle, FaClock, FaRedo, FaPercent } from "react-icons/fa";
 import { MdOutlineEuro } from "react-icons/md";
 
 const MainLayout = dynamic(
@@ -43,7 +42,11 @@ export default function Affiliates() {
   const [searchQuery, setSearchQuery] = useState("");
   const [filteredData, setFilteredData] = useState([]);
   const [retryingId, setRetryingId] = useState("");
-  const router = useRouter();
+  const [selectedRows, setSelectedRows] = useState({});
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [showCommissionModal, setShowCommissionModal] = useState(false);
+  const [commissionRate, setCommissionRate] = useState(5);
+  const [isUpdatingCommission, setIsUpdatingCommission] = useState(false);
   const isInitialRender = useRef(true);
 
   // Current URL
@@ -142,6 +145,94 @@ export default function Affiliates() {
     }
   };
 
+  // Get selected order IDs
+  const getSelectedOrderIds = () => {
+    return Object.keys(selectedRows).filter((key) => selectedRows[key]);
+  };
+
+  // Bulk Delete Handler
+  const handleBulkDelete = async () => {
+    const selectedIds = getSelectedOrderIds();
+    if (selectedIds.length === 0) {
+      toast.error("Please select at least one record to delete");
+      return;
+    }
+
+    const result = await Swal.fire({
+      title: "Delete Affiliate Records?",
+      text: `Are you sure you want to delete ${selectedIds.length} affiliate tracking record(s)? This will remove the affiliate data from these orders.`,
+      icon: "warning",
+      showCancelButton: true,
+      confirmButtonColor: "#d33",
+      cancelButtonColor: "#3085d6",
+      confirmButtonText: "Yes, delete them!",
+    });
+
+    if (result.isConfirmed) {
+      try {
+        setIsDeleting(true);
+        const { data } = await axios.post(
+          `${process.env.NEXT_PUBLIC_SERVER_URI}/api/v1/order/affiliate/bulk-delete`,
+          { orderIds: selectedIds },
+          {
+            headers: {
+              Authorization: `${auth?.token}`,
+            },
+          }
+        );
+
+        if (data && data.success) {
+          toast.success(data.message || "Records deleted successfully!");
+          setSelectedRows({});
+          await fetchAffiliateData();
+        } else {
+          toast.error(data?.message || "Failed to delete records");
+        }
+      } catch (error) {
+        console.error("Error deleting records:", error);
+        toast.error(error.response?.data?.message || "Failed to delete records");
+      } finally {
+        setIsDeleting(false);
+      }
+    }
+  };
+
+  // Update Commission Handler
+  const handleUpdateCommission = async () => {
+    const selectedIds = getSelectedOrderIds();
+    if (selectedIds.length === 0) {
+      toast.error("Please select at least one record to update commission");
+      return;
+    }
+
+    try {
+      setIsUpdatingCommission(true);
+      const { data } = await axios.post(
+        `${process.env.NEXT_PUBLIC_SERVER_URI}/api/v1/order/affiliate/update-commission`,
+        { orderIds: selectedIds, commissionRate },
+        {
+          headers: {
+            Authorization: `${auth?.token}`,
+          },
+        }
+      );
+
+      if (data && data.success) {
+        toast.success(data.message || "Commission updated successfully!");
+        setShowCommissionModal(false);
+        setSelectedRows({});
+        await fetchAffiliateData();
+      } else {
+        toast.error(data?.message || "Failed to update commission");
+      }
+    } catch (error) {
+      console.error("Error updating commission:", error);
+      toast.error(error.response?.data?.message || "Failed to update commission");
+    } finally {
+      setIsUpdatingCommission(false);
+    }
+  };
+
   // Table Columns
   const columns = useMemo(
     () => [
@@ -237,12 +328,12 @@ export default function Affiliates() {
         },
       },
       {
-        accessorKey: "affiliate.affiliateId",
+        accessorKey: "affiliate.referredBy",
         header: "Affiliate ID",
         size: 150,
-        Cell: ({ cell }) => (
+        Cell: ({ cell, row }) => (
           <span className="text-sm text-gray-700">
-            {cell.getValue() || "N/A"}
+            {cell.getValue() || row.original.affiliate?.affiliateId || "N/A"}
           </span>
         ),
       },
@@ -250,12 +341,20 @@ export default function Affiliates() {
         accessorKey: "affiliate.commissionAmount",
         header: "Commission",
         size: 120,
-        Cell: ({ cell }) => (
-          <span className="font-semibold text-purple-600 flex items-center gap-1">
-            <MdOutlineEuro />
-            {parseFloat(cell.getValue() || 0).toFixed(2)}
-          </span>
-        ),
+        Cell: ({ cell, row }) => {
+          const rate = row.original.affiliate?.commissionRate;
+          return (
+            <div className="flex flex-col">
+              <span className="font-semibold text-purple-600 flex items-center gap-1">
+                <MdOutlineEuro />
+                {parseFloat(cell.getValue() || 0).toFixed(2)}
+              </span>
+              {rate && (
+                <span className="text-xs text-gray-500">({rate}%)</span>
+              )}
+            </div>
+          );
+        },
       },
       {
         accessorKey: "affiliate.trackedAt",
@@ -307,6 +406,10 @@ export default function Affiliates() {
     enableColumnResizing: true,
     enablePagination: true,
     paginationDisplayMode: "pages",
+    enableRowSelection: true,
+    onRowSelectionChange: setSelectedRows,
+    state: { rowSelection: selectedRows },
+    getRowId: (row) => row._id,
     initialState: {
       pagination: { pageSize: 10, pageIndex: 0 },
       density: "compact",
@@ -327,6 +430,8 @@ export default function Affiliates() {
       },
     },
   });
+
+  const selectedCount = getSelectedOrderIds().length;
 
   if (isLoading) {
     return <Loader />;
@@ -366,13 +471,14 @@ export default function Affiliates() {
             </div>
             <div className="bg-white rounded-lg shadow-md p-4 border-l-4 border-purple-500">
               <div className="text-sm text-gray-600">Total Commission</div>
-              <div className="text-2xl font-bold text-purple-600">
-                ${stats.totalCommission?.toFixed(2) || "0.00"}
+              <div className="text-2xl font-bold text-purple-600 flex items-center gap-1">
+                <MdOutlineEuro className="text-lg" />
+                {stats.totalCommission?.toFixed(2) || "0.00"}
               </div>
             </div>
             <div className="bg-white rounded-lg shadow-md p-4 border-l-4 border-indigo-500">
               <div className="text-sm text-gray-600">Total Revenue</div>
-              <div className="text-2xl font-bold text-indigo-600 flex itecms-center gap-1">
+              <div className="text-2xl font-bold text-indigo-600 flex items-center gap-1">
                 <MdOutlineEuro />
                 {stats.totalRevenue?.toFixed(2) || "0.00"}
               </div>
@@ -391,13 +497,41 @@ export default function Affiliates() {
                 className="w-full pl-10 pr-4 py-2 border-2 border-gray-300 rounded-md focus:border-red-600 focus:outline-none"
               />
             </div>
-            <button
-              onClick={fetchAffiliateData}
-              className="flex items-center gap-2 px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-md transition-all duration-300 hover:shadow-md"
-            >
-              <IoRefresh className="text-lg" />
-              Refresh
-            </button>
+            <div className="flex items-center gap-2 flex-wrap">
+              {selectedCount > 0 && (
+                <>
+                  <span className="text-sm text-gray-600 font-medium bg-gray-100 px-3 py-1 rounded-full">
+                    {selectedCount} selected
+                  </span>
+                  <button
+                    onClick={() => setShowCommissionModal(true)}
+                    className="flex items-center gap-2 px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-md transition-all duration-300 hover:shadow-md"
+                  >
+                    <FaPercent className="text-sm" />
+                    Set Commission
+                  </button>
+                  <button
+                    onClick={handleBulkDelete}
+                    disabled={isDeleting}
+                    className="flex items-center gap-2 px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-md transition-all duration-300 hover:shadow-md disabled:opacity-50"
+                  >
+                    {isDeleting ? (
+                      <ImSpinner4 className="text-lg animate-spin" />
+                    ) : (
+                      <IoTrash className="text-lg" />
+                    )}
+                    Delete
+                  </button>
+                </>
+              )}
+              <button
+                onClick={fetchAffiliateData}
+                className="flex items-center gap-2 px-4 py-2 bg-gray-600 hover:bg-gray-700 text-white rounded-md transition-all duration-300 hover:shadow-md"
+              >
+                <IoRefresh className="text-lg" />
+                Refresh
+              </button>
+            </div>
           </div>
 
           {/* Table */}
@@ -406,6 +540,78 @@ export default function Affiliates() {
           </div>
         </div>
       </div>
+
+      {/* Commission Modal */}
+      {showCommissionModal && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-xl p-6 w-full max-w-md mx-4 shadow-2xl">
+            <h3 className="text-xl font-bold text-gray-800 mb-4 flex items-center gap-2">
+              <FaPercent className="text-purple-600" />
+              Set Commission Rate
+            </h3>
+            <p className="text-gray-600 mb-4">
+              Set commission rate for {selectedCount} selected order(s). The commission amount will be calculated based on the order total.
+            </p>
+            <div className="mb-6">
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Commission Rate (%)
+              </label>
+              <div className="flex items-center gap-4">
+                <input
+                  type="range"
+                  min="0"
+                  max="50"
+                  step="0.5"
+                  value={commissionRate}
+                  onChange={(e) => setCommissionRate(parseFloat(e.target.value))}
+                  className="flex-1 h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-purple-600"
+                />
+                <div className="flex items-center gap-1 bg-purple-100 px-3 py-2 rounded-lg">
+                  <input
+                    type="number"
+                    min="0"
+                    max="100"
+                    step="0.5"
+                    value={commissionRate}
+                    onChange={(e) => setCommissionRate(parseFloat(e.target.value) || 0)}
+                    className="w-16 bg-transparent text-center font-bold text-purple-600 outline-none"
+                  />
+                  <span className="text-purple-600 font-bold">%</span>
+                </div>
+              </div>
+            </div>
+            <div className="bg-gray-50 rounded-lg p-4 mb-6">
+              <h4 className="text-sm font-medium text-gray-700 mb-2">Preview (on 100 order)</h4>
+              <div className="flex justify-between text-sm">
+                <span className="text-gray-600">Commission:</span>
+                <span className="font-bold text-purple-600">{(100 * commissionRate / 100).toFixed(2)}</span>
+              </div>
+            </div>
+            <div className="flex gap-3">
+              <button
+                onClick={() => setShowCommissionModal(false)}
+                className="flex-1 px-4 py-2 border-2 border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-all"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleUpdateCommission}
+                disabled={isUpdatingCommission}
+                className="flex-1 px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-all disabled:opacity-50 flex items-center justify-center gap-2"
+              >
+                {isUpdatingCommission ? (
+                  <>
+                    <ImSpinner4 className="animate-spin" />
+                    Updating...
+                  </>
+                ) : (
+                  "Apply Commission"
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </MainLayout>
   );
 }

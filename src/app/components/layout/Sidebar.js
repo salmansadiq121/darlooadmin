@@ -164,7 +164,7 @@ export default function Sidebar({ hide, setHide }) {
   const [active, setActive] = useState("");
   const [hoveredItem, setHoveredItem] = useState(null);
   const [isCollapsing, setIsCollapsing] = useState(false);
-  const [expandedSections, setExpandedSections] = useState(new Set(["main", "catalog", "operations"]));
+  const [expandedSections, setExpandedSections] = useState(new Set(["main", "management", "catalog", "marketing", "operations", "support", "legal", "system"]));
 
   // Validate user authentication
   useEffect(() => {

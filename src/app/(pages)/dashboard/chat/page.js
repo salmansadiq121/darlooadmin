@@ -36,13 +36,26 @@ import EmojiPicker from "emoji-picker-react";
 const MessageSkeleton = () => (
   <div className="space-y-4 p-4">
     {[1, 2, 3, 4, 5].map((i) => (
-      <div key={i} className={`flex ${i % 2 === 0 ? "justify-end" : "justify-start"}`}>
-        {i % 2 !== 0 && <div className="w-8 h-8 rounded-full bg-gray-200 animate-pulse mr-2" />}
-        <div className={`space-y-2 ${i % 2 === 0 ? "items-end" : "items-start"}`}>
-          <div className={`h-16 ${i % 2 === 0 ? "w-48" : "w-56"} rounded-2xl bg-gray-200 animate-pulse`} />
+      <div
+        key={i}
+        className={`flex ${i % 2 === 0 ? "justify-end" : "justify-start"}`}
+      >
+        {i % 2 !== 0 && (
+          <div className="w-8 h-8 rounded-full bg-gray-200 animate-pulse mr-2" />
+        )}
+        <div
+          className={`space-y-2 ${i % 2 === 0 ? "items-end" : "items-start"}`}
+        >
+          <div
+            className={`h-16 ${
+              i % 2 === 0 ? "w-48" : "w-56"
+            } rounded-2xl bg-gray-200 animate-pulse`}
+          />
           <div className="h-3 w-16 bg-gray-200 animate-pulse rounded" />
         </div>
-        {i % 2 === 0 && <div className="w-8 h-8 rounded-full bg-gray-200 animate-pulse ml-2" />}
+        {i % 2 === 0 && (
+          <div className="w-8 h-8 rounded-full bg-gray-200 animate-pulse ml-2" />
+        )}
       </div>
     ))}
   </div>
@@ -52,7 +65,10 @@ const MessageSkeleton = () => (
 const ChatSkeleton = () => (
   <div className="space-y-3 p-3">
     {[1, 2, 3, 4, 5, 6].map((i) => (
-      <div key={i} className="flex items-center gap-3 p-3 rounded-xl bg-gray-50">
+      <div
+        key={i}
+        className="flex items-center gap-3 p-3 rounded-xl bg-gray-50"
+      >
         <div className="w-12 h-12 rounded-full bg-gray-200 animate-pulse" />
         <div className="flex-1">
           <div className="h-4 w-32 bg-gray-200 animate-pulse rounded mb-2" />
@@ -66,10 +82,46 @@ const ChatSkeleton = () => (
 
 // Emoji list
 const emojis = [
-  "😊", "😂", "❤️", "👍", "🙏", "🔥", "😍", "😎", "🤔", "😢",
-  "😡", "🎉", "👋", "🤝", "👏", "🙌", "💯", "🚀", "✅", "😘",
-  "🥰", "😭", "😱", "🤗", "😴", "🤩", "😇", "🥺", "👌", "✌️",
-  "🤞", "👀", "💪", "🎁", "💰", "📦", "🛒", "⭐", "💖", "🙂",
+  "😊",
+  "😂",
+  "❤️",
+  "👍",
+  "🙏",
+  "🔥",
+  "😍",
+  "😎",
+  "🤔",
+  "😢",
+  "😡",
+  "🎉",
+  "👋",
+  "🤝",
+  "👏",
+  "🙌",
+  "💯",
+  "🚀",
+  "✅",
+  "😘",
+  "🥰",
+  "😭",
+  "😱",
+  "🤗",
+  "😴",
+  "🤩",
+  "😇",
+  "🥺",
+  "👌",
+  "✌️",
+  "🤞",
+  "👀",
+  "💪",
+  "🎁",
+  "💰",
+  "📦",
+  "🛒",
+  "⭐",
+  "💖",
+  "🙂",
 ];
 
 export default function AdminChat() {
@@ -235,9 +287,12 @@ export default function AdminChat() {
   // Close dropdowns on outside click
   useEffect(() => {
     const handleClickOutside = (e) => {
-      if (emojiRef.current && !emojiRef.current.contains(e.target)) setShowEmoji(false);
-      if (attachRef.current && !attachRef.current.contains(e.target)) setShowAttachments(false);
-      if (optionsRef.current && !optionsRef.current.contains(e.target)) setShowOptions(false);
+      if (emojiRef.current && !emojiRef.current.contains(e.target))
+        setShowEmoji(false);
+      if (attachRef.current && !attachRef.current.contains(e.target))
+        setShowAttachments(false);
+      if (optionsRef.current && !optionsRef.current.contains(e.target))
+        setShowOptions(false);
     };
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
@@ -484,8 +539,12 @@ export default function AdminChat() {
           <div className="bg-gradient-to-r from-red-600 to-red-500 px-4 py-3 flex-shrink-0">
             <div className="flex items-center justify-between mb-3">
               <h1 className="text-lg font-bold text-white flex items-center gap-2">
-                <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
-                  <path d="M12 2C6.48 2 2 6.48 2 12c0 1.85.5 3.58 1.36 5.07L2 22l4.93-1.36C8.42 21.5 10.15 22 12 22c5.52 0 10-4.48 10-10S17.52 2 12 2zm5.46 14.12c-.23.65-1.36 1.24-1.86 1.29-.46.04-.84.21-2.79-.58-2.32-.94-3.79-3.34-3.9-3.49-.11-.15-.89-1.18-.89-2.26 0-1.07.56-1.6.76-1.82.2-.22.44-.27.59-.27.15 0 .3 0 .43.01.14.01.33-.05.51.39.19.46.64 1.56.69 1.67.06.11.1.25.02.4-.08.15-.12.24-.23.37-.12.13-.25.29-.35.39-.12.11-.24.23-.1.45.14.22.61 1.01 1.31 1.63.9.8 1.66 1.05 1.9 1.17.23.11.37.1.51-.06.14-.16.58-.68.74-.91.16-.23.32-.19.53-.12.22.08 1.37.65 1.61.77.23.12.39.17.45.27.05.1.05.57-.18 1.22z"/>
+                <svg
+                  className="w-5 h-5"
+                  fill="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path d="M12 2C6.48 2 2 6.48 2 12c0 1.85.5 3.58 1.36 5.07L2 22l4.93-1.36C8.42 21.5 10.15 22 12 22c5.52 0 10-4.48 10-10S17.52 2 12 2zm5.46 14.12c-.23.65-1.36 1.24-1.86 1.29-.46.04-.84.21-2.79-.58-2.32-.94-3.79-3.34-3.9-3.49-.11-.15-.89-1.18-.89-2.26 0-1.07.56-1.6.76-1.82.2-.22.44-.27.59-.27.15 0 .3 0 .43.01.14.01.33-.05.51.39.19.46.64 1.56.69 1.67.06.11.1.25.02.4-.08.15-.12.24-.23.37-.12.13-.25.29-.35.39-.12.11-.24.23-.1.45.14.22.61 1.01 1.31 1.63.9.8 1.66 1.05 1.9 1.17.23.11.37.1.51-.06.14-.16.58-.68.74-.91.16-.23.32-.19.53-.12.22.08 1.37.65 1.61.77.23.12.39.17.45.27.05.1.05.57-.18 1.22z" />
                 </svg>
                 Admin Chat
               </h1>
@@ -516,11 +575,23 @@ export default function AdminChat() {
               <ChatSkeleton />
             ) : filteredChats.length === 0 ? (
               <div className="flex flex-col items-center justify-center h-64 text-gray-400 px-4">
-                <svg className="w-14 h-14 mb-3 opacity-50" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+                <svg
+                  className="w-14 h-14 mb-3 opacity-50"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={1.5}
+                    d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"
+                  />
                 </svg>
                 <p className="font-medium text-gray-600">No conversations</p>
-                <p className="text-sm text-gray-400">Start chatting with customers</p>
+                <p className="text-sm text-gray-400">
+                  Start chatting with customers
+                </p>
               </div>
             ) : (
               <div className="divide-y divide-gray-100">
@@ -542,7 +613,11 @@ export default function AdminChat() {
                       <div className="relative flex-shrink-0">
                         <div className="w-11 h-11 rounded-full overflow-hidden bg-gray-200">
                           <Image
-                            src={otherUser?.avatar && otherUser.avatar !== "N/A" ? otherUser.avatar : "/profile.png"}
+                            src={
+                              otherUser?.avatar && otherUser.avatar !== "N/A"
+                                ? otherUser.avatar
+                                : "/profile.png"
+                            }
                             alt={otherUser?.name || "User"}
                             width={44}
                             height={44}
@@ -563,7 +638,9 @@ export default function AdminChat() {
                             {otherUser?.name || "Unknown User"}
                           </h3>
                           <span className="text-[11px] text-gray-400 flex-shrink-0">
-                            {formatChatTime(chat.latestMessage?.createdAt || chat.updatedAt)}
+                            {formatChatTime(
+                              chat.latestMessage?.createdAt || chat.updatedAt
+                            )}
                           </span>
                         </div>
                         <p className="text-xs text-gray-500 truncate mt-0.5">
@@ -643,9 +720,18 @@ export default function AdminChat() {
                       <span className="flex items-center gap-1">
                         typing
                         <span className="flex gap-0.5">
-                          <span className="w-1 h-1 bg-white rounded-full animate-bounce" style={{ animationDelay: "0ms" }} />
-                          <span className="w-1 h-1 bg-white rounded-full animate-bounce" style={{ animationDelay: "150ms" }} />
-                          <span className="w-1 h-1 bg-white rounded-full animate-bounce" style={{ animationDelay: "300ms" }} />
+                          <span
+                            className="w-1 h-1 bg-white rounded-full animate-bounce"
+                            style={{ animationDelay: "0ms" }}
+                          />
+                          <span
+                            className="w-1 h-1 bg-white rounded-full animate-bounce"
+                            style={{ animationDelay: "150ms" }}
+                          />
+                          <span
+                            className="w-1 h-1 bg-white rounded-full animate-bounce"
+                            style={{ animationDelay: "300ms" }}
+                          />
                         </span>
                       </span>
                     ) : getOtherUser(selectedChat)?.isOnline ? (
@@ -706,8 +792,18 @@ export default function AdminChat() {
                 ) : Object.keys(groupedMessages || {}).length === 0 ? (
                   <div className="flex flex-col items-center justify-center h-full text-gray-500">
                     <div className="w-24 h-24 bg-white/80 rounded-full flex items-center justify-center mb-4 shadow-sm">
-                      <svg className="w-12 h-12 text-red-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+                      <svg
+                        className="w-12 h-12 text-red-300"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={1.5}
+                          d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"
+                        />
                       </svg>
                     </div>
                     <p className="font-medium text-gray-700">No messages yet</p>
@@ -728,20 +824,28 @@ export default function AdminChat() {
                         const isMine = msg.sender?._id === auth?.user?._id;
                         const showAvatar =
                           !isMine &&
-                          (idx === 0 || messages[idx - 1]?.sender?._id !== msg.sender?._id);
+                          (idx === 0 ||
+                            messages[idx - 1]?.sender?._id !== msg.sender?._id);
 
                         return (
                           <motion.div
                             key={msg._id}
                             initial={{ opacity: 0, y: 10 }}
                             animate={{ opacity: 1, y: 0 }}
-                            className={`flex mb-1 ${isMine ? "justify-end" : "justify-start"}`}
+                            className={`flex mb-1 ${
+                              isMine ? "justify-end" : "justify-start"
+                            }`}
                           >
                             {/* Avatar */}
                             {!isMine && showAvatar && (
                               <div className="w-8 h-8 rounded-full overflow-hidden mr-2 mt-auto flex-shrink-0">
                                 <Image
-                                  src={msg.sender?.avatar && msg.sender.avatar !== "N/A" ? msg.sender.avatar : "/profile.png"}
+                                  src={
+                                    msg.sender?.avatar &&
+                                    msg.sender.avatar !== "N/A"
+                                      ? msg.sender.avatar
+                                      : "/profile.png"
+                                  }
                                   alt=""
                                   width={32}
                                   height={32}
@@ -749,7 +853,9 @@ export default function AdminChat() {
                                 />
                               </div>
                             )}
-                            {!isMine && !showAvatar && <div className="w-8 mr-2 flex-shrink-0" />}
+                            {!isMine && !showAvatar && (
+                              <div className="w-8 mr-2 flex-shrink-0" />
+                            )}
 
                             {/* Message Bubble */}
                             <div
@@ -761,32 +867,74 @@ export default function AdminChat() {
                             >
                               {/* Content */}
                               {msg.contentType === "text" ? (
-                                <p className="text-sm whitespace-pre-wrap break-words">{msg.content}</p>
+                                <p className="text-sm whitespace-pre-wrap break-words">
+                                  {msg.content}
+                                </p>
                               ) : msg.contentType === "like" ? (
                                 <span className="text-4xl">{msg.content}</span>
-                              ) : msg.contentType === "product" && msg.product ? (
+                              ) : msg.contentType === "product" &&
+                                msg.product ? (
                                 <Link
                                   href={`/dashboard/products/${msg.product._id}`}
-                                  className="block border border-gray-200 rounded-lg overflow-hidden hover:shadow-md transition-shadow bg-white min-w-[180px]"
+                                  className="block border border-gray-200 rounded-xl overflow-hidden hover:shadow-lg transition-all bg-white min-w-[220px] max-w-[260px]"
                                 >
-                                  {msg.product.thumbnail && (
-                                    <div className="w-full h-28 bg-gray-100">
-                                      <Image
-                                        src={msg.product.thumbnail}
-                                        alt={msg.product.name}
-                                        width={180}
-                                        height={112}
-                                        className="w-full h-full object-cover"
-                                      />
+                                  {/* Product Image - check thumbnails, images.gallery, variations */}
+                                  {(() => {
+                                    const productImage =
+                                      msg.product.thumbnails ||
+                                      msg.product.images?.gallery?.[0]?.url ||
+                                      msg.product.variations?.[0]?.imageURL;
+                                    return productImage ? (
+                                      <div className="relative w-full h-36 bg-gradient-to-br from-gray-100 to-gray-50">
+                                        <Image
+                                          src={productImage}
+                                          alt={msg.product.name || "Product"}
+                                          fill
+                                          className="object-cover"
+                                        />
+                                        {/* Product badge */}
+                                        <div className="absolute top-2 left-2">
+                                          <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-white/90 backdrop-blur-sm rounded-full text-[10px] font-medium text-gray-700 shadow-sm">
+                                            <IoBag className="w-3 h-3 text-red-500" />
+                                            Product
+                                          </span>
+                                        </div>
+                                      </div>
+                                    ) : (
+                                      <div className="w-full h-36 bg-gradient-to-br from-gray-100 to-gray-50 flex items-center justify-center">
+                                        <div className="text-center">
+                                          <IoBag className="w-10 h-10 text-gray-300 mx-auto mb-1" />
+                                          <span className="text-xs text-gray-400">
+                                            No image
+                                          </span>
+                                        </div>
+                                      </div>
+                                    );
+                                  })()}
+                                  <div className="p-3">
+                                    <p className="text-sm font-semibold text-gray-900 line-clamp-2 leading-tight">
+                                      {msg.product.name || "Product"}
+                                    </p>
+                                    <div className="flex items-center justify-between mt-2">
+                                      <p className="text-base font-bold text-emerald-600">
+                                        €
+                                        {msg.product.price?.toFixed(2) ||
+                                          "0.00"}
+                                      </p>
+                                      <span className="text-[10px] text-gray-400 flex items-center gap-1">
+                                        <IoStorefront className="w-3 h-3" />
+                                        View
+                                      </span>
                                     </div>
-                                  )}
-                                  <div className="p-2">
-                                    <p className="text-sm font-medium text-gray-900 line-clamp-2">{msg.product.name}</p>
-                                    <p className="text-sm font-bold text-red-600 mt-1">${msg.product.price?.toFixed(2)}</p>
                                   </div>
                                 </Link>
                               ) : msg.contentType === "Image" ? (
-                                <a href={msg.content} target="_blank" rel="noopener noreferrer" className="block">
+                                <a
+                                  href={msg.content}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="block"
+                                >
                                   <Image
                                     src={msg.content}
                                     alt="Sent image"
@@ -796,11 +944,18 @@ export default function AdminChat() {
                                   />
                                 </a>
                               ) : msg.contentType === "Video" ? (
-                                <video controls className="rounded-lg max-w-full" style={{ maxHeight: "250px" }}>
+                                <video
+                                  controls
+                                  className="rounded-lg max-w-full"
+                                  style={{ maxHeight: "250px" }}
+                                >
                                   <source src={msg.content} type="video/mp4" />
                                 </video>
                               ) : msg.contentType === "Audio" ? (
-                                <audio controls className="w-full max-w-[250px]">
+                                <audio
+                                  controls
+                                  className="w-full max-w-[250px]"
+                                >
                                   <source src={msg.content} type="audio/mpeg" />
                                 </audio>
                               ) : (
@@ -819,15 +974,20 @@ export default function AdminChat() {
                               )}
 
                               {/* Time */}
-                              <div className={`flex items-center justify-end gap-1 mt-1 ${isMine ? "text-red-100" : "text-gray-400"}`}>
-                                <span className="text-[10px]">{formatMessageTime(msg.createdAt)}</span>
-                                {isMine && (
-                                  msg.read ? (
+                              <div
+                                className={`flex items-center justify-end gap-1 mt-1 ${
+                                  isMine ? "text-red-100" : "text-gray-400"
+                                }`}
+                              >
+                                <span className="text-[10px]">
+                                  {formatMessageTime(msg.createdAt)}
+                                </span>
+                                {isMine &&
+                                  (msg.read ? (
                                     <IoCheckmarkDone className="w-4 h-4 text-blue-300" />
                                   ) : (
                                     <IoCheckmark className="w-4 h-4" />
-                                  )
-                                )}
+                                  ))}
                               </div>
                             </div>
                           </motion.div>
@@ -849,9 +1009,18 @@ export default function AdminChat() {
                       <div className="w-8 mr-2" />
                       <div className="bg-white rounded-2xl rounded-bl-sm px-4 py-3 shadow-sm">
                         <div className="flex gap-1">
-                          <span className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: "0ms" }} />
-                          <span className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: "150ms" }} />
-                          <span className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: "300ms" }} />
+                          <span
+                            className="w-2 h-2 bg-gray-400 rounded-full animate-bounce"
+                            style={{ animationDelay: "0ms" }}
+                          />
+                          <span
+                            className="w-2 h-2 bg-gray-400 rounded-full animate-bounce"
+                            style={{ animationDelay: "150ms" }}
+                          />
+                          <span
+                            className="w-2 h-2 bg-gray-400 rounded-full animate-bounce"
+                            style={{ animationDelay: "300ms" }}
+                          />
                         </div>
                       </div>
                     </motion.div>
@@ -861,7 +1030,10 @@ export default function AdminChat() {
 
               {/* Message Input */}
               <div className="bg-gray-100 px-4 py-3">
-                <form onSubmit={handleSendMessage} className="flex items-center gap-2">
+                <form
+                  onSubmit={handleSendMessage}
+                  className="flex items-center gap-2"
+                >
                   {/* Emoji Picker */}
                   <div className="relative" ref={emojiRef}>
                     <button
@@ -910,7 +1082,13 @@ export default function AdminChat() {
                       disabled={loading}
                       className="p-2.5 hover:bg-gray-200 rounded-full transition-colors disabled:opacity-50"
                     >
-                      <IoAttach className={`w-6 h-6 ${loading ? "text-gray-300 animate-pulse" : "text-gray-500"}`} />
+                      <IoAttach
+                        className={`w-6 h-6 ${
+                          loading
+                            ? "text-gray-300 animate-pulse"
+                            : "text-gray-500"
+                        }`}
+                      />
                     </button>
 
                     <AnimatePresence>
@@ -924,13 +1102,20 @@ export default function AdminChat() {
                           <div className="bg-white rounded-xl shadow-lg border border-gray-200 py-2 w-48">
                             <label className="flex items-center gap-3 px-4 py-2.5 hover:bg-gray-50 cursor-pointer transition-colors">
                               <IoImage className="w-5 h-5 text-purple-500" />
-                              <span className="text-sm text-gray-700">Image</span>
+                              <span className="text-sm text-gray-700">
+                                Image
+                              </span>
                               <input
                                 type="file"
                                 accept="image/*"
                                 onChange={(e) => {
                                   if (e.target.files[0]) {
-                                    fileType(e.target.files[0], handleSendFiles, setLoading, setShowAttachments);
+                                    fileType(
+                                      e.target.files[0],
+                                      handleSendFiles,
+                                      setLoading,
+                                      setShowAttachments
+                                    );
                                   }
                                 }}
                                 className="hidden"
@@ -938,13 +1123,20 @@ export default function AdminChat() {
                             </label>
                             <label className="flex items-center gap-3 px-4 py-2.5 hover:bg-gray-50 cursor-pointer transition-colors">
                               <IoVideocam className="w-5 h-5 text-red-500" />
-                              <span className="text-sm text-gray-700">Video</span>
+                              <span className="text-sm text-gray-700">
+                                Video
+                              </span>
                               <input
                                 type="file"
                                 accept="video/*"
                                 onChange={(e) => {
                                   if (e.target.files[0]) {
-                                    fileType(e.target.files[0], handleSendFiles, setLoading, setShowAttachments);
+                                    fileType(
+                                      e.target.files[0],
+                                      handleSendFiles,
+                                      setLoading,
+                                      setShowAttachments
+                                    );
                                   }
                                 }}
                                 className="hidden"
@@ -952,13 +1144,20 @@ export default function AdminChat() {
                             </label>
                             <label className="flex items-center gap-3 px-4 py-2.5 hover:bg-gray-50 cursor-pointer transition-colors">
                               <IoDocument className="w-5 h-5 text-blue-500" />
-                              <span className="text-sm text-gray-700">Document</span>
+                              <span className="text-sm text-gray-700">
+                                Document
+                              </span>
                               <input
                                 type="file"
                                 accept=".pdf,.doc,.docx,.ppt,.pptx,.xls,.xlsx,.txt,.zip"
                                 onChange={(e) => {
                                   if (e.target.files[0]) {
-                                    fileType(e.target.files[0], handleSendFiles, setLoading, setShowAttachments);
+                                    fileType(
+                                      e.target.files[0],
+                                      handleSendFiles,
+                                      setLoading,
+                                      setShowAttachments
+                                    );
                                   }
                                 }}
                                 className="hidden"
@@ -1023,14 +1222,21 @@ export default function AdminChat() {
                 <div className="w-48 h-48 mx-auto mb-8 relative">
                   <div className="absolute inset-0 bg-gradient-to-br from-red-100 to-red-50 rounded-full opacity-50" />
                   <div className="absolute inset-6 bg-white rounded-full shadow-lg flex items-center justify-center">
-                    <svg className="w-20 h-20 text-red-300" fill="currentColor" viewBox="0 0 24 24">
-                      <path d="M12 2C6.48 2 2 6.48 2 12c0 1.85.5 3.58 1.36 5.07L2 22l4.93-1.36C8.42 21.5 10.15 22 12 22c5.52 0 10-4.48 10-10S17.52 2 12 2zm5.46 14.12c-.23.65-1.36 1.24-1.86 1.29-.46.04-.84.21-2.79-.58-2.32-.94-3.79-3.34-3.9-3.49-.11-.15-.89-1.18-.89-2.26 0-1.07.56-1.6.76-1.82.2-.22.44-.27.59-.27.15 0 .3 0 .43.01.14.01.33-.05.51.39.19.46.64 1.56.69 1.67.06.11.1.25.02.4-.08.15-.12.24-.23.37-.12.13-.25.29-.35.39-.12.11-.24.23-.1.45.14.22.61 1.01 1.31 1.63.9.8 1.66 1.05 1.9 1.17.23.11.37.1.51-.06.14-.16.58-.68.74-.91.16-.23.32-.19.53-.12.22.08 1.37.65 1.61.77.23.12.39.17.45.27.05.1.05.57-.18 1.22z"/>
+                    <svg
+                      className="w-20 h-20 text-red-300"
+                      fill="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path d="M12 2C6.48 2 2 6.48 2 12c0 1.85.5 3.58 1.36 5.07L2 22l4.93-1.36C8.42 21.5 10.15 22 12 22c5.52 0 10-4.48 10-10S17.52 2 12 2zm5.46 14.12c-.23.65-1.36 1.24-1.86 1.29-.46.04-.84.21-2.79-.58-2.32-.94-3.79-3.34-3.9-3.49-.11-.15-.89-1.18-.89-2.26 0-1.07.56-1.6.76-1.82.2-.22.44-.27.59-.27.15 0 .3 0 .43.01.14.01.33-.05.51.39.19.46.64 1.56.69 1.67.06.11.1.25.02.4-.08.15-.12.24-.23.37-.12.13-.25.29-.35.39-.12.11-.24.23-.1.45.14.22.61 1.01 1.31 1.63.9.8 1.66 1.05 1.9 1.17.23.11.37.1.51-.06.14-.16.58-.68.74-.91.16-.23.32-.19.53-.12.22.08 1.37.65 1.61.77.23.12.39.17.45.27.05.1.05.57-.18 1.22z" />
                     </svg>
                   </div>
                 </div>
-                <h2 className="text-2xl font-semibold text-gray-800 mb-3">Admin Chat Center</h2>
+                <h2 className="text-2xl font-semibold text-gray-800 mb-3">
+                  Admin Chat Center
+                </h2>
                 <p className="text-gray-500 mb-6">
-                  Manage customer conversations and provide support. Select a chat from the sidebar to start messaging.
+                  Manage customer conversations and provide support. Select a
+                  chat from the sidebar to start messaging.
                 </p>
                 <button
                   onClick={() => setShowSidebar(true)}
