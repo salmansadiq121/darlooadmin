@@ -517,21 +517,21 @@ export default function AdminChat() {
   };
 
   return (
-    <div className="h-screen w-full bg-gray-100 overflow-hidden">
-      <div className="h-full max-w-[1800px] mx-auto flex">
+    <div className="w-full h-[calc(100vh-0rem)] bg-gray-100 overflow-hidden flex flex-col">
+      <div className="flex-1 w-full flex min-h-0 h-screen">
         {/* Sidebar */}
         <aside
           className={`
             ${showSidebar ? "translate-x-0" : "-translate-x-full"}
             lg:translate-x-0
-            fixed lg:static
+            fixed lg:relative
             z-50 lg:z-0
             w-[85%] sm:w-[380px] lg:w-[320px] xl:w-[350px]
             h-full
             bg-white
             border-r border-gray-200
             transition-transform duration-300
-            flex flex-col
+            flex flex-col flex-shrink-0
             shadow-xl lg:shadow-none
           `}
         >
@@ -570,7 +570,7 @@ export default function AdminChat() {
           </div>
 
           {/* Chat List */}
-          <div className="flex-1 overflow-y-auto bg-white">
+          <div className="flex-1 overflow-y-auto bg-white min-h-[calc(100vh-6rem)] ">
             {chatLoad ? (
               <ChatSkeleton />
             ) : filteredChats.length === 0 ? (
@@ -594,7 +594,7 @@ export default function AdminChat() {
                 </p>
               </div>
             ) : (
-              <div className="divide-y divide-gray-100">
+              <div className="divide-y divide-gray-100 ">
                 {filteredChats.map((chat) => {
                   const otherUser = getOtherUser(chat);
                   const isSelected = selectedChat?._id === chat._id;
@@ -676,7 +676,7 @@ export default function AdminChat() {
         )}
 
         {/* Chat Area */}
-        <main className="flex-1 flex flex-col h-full bg-[#efeae2]">
+        <main className="flex-1 flex flex-col min-h-0 h-full bg-[#efeae2]">
           {selectedChat ? (
             <>
               {/* Chat Header */}
@@ -1209,7 +1209,7 @@ export default function AdminChat() {
             </>
           ) : (
             /* No Chat Selected */
-            <div className="flex-1 flex flex-col items-center justify-center text-gray-500 px-4">
+            <div className="flex-1 flex flex-col items-center justify-center text-gray-500 px-4 h-full min-h-0">
               {/* Mobile menu button */}
               <button
                 onClick={() => setShowSidebar(true)}

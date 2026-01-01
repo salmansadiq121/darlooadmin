@@ -119,18 +119,16 @@ const validateAccess = (user, menuId) => {
 
   // Additional validation for sellers
   if (role === "seller") {
-    if (!user.isSeller) {
-      return { hasAccess: false, reason: "Seller account not found" };
+    // Allow sellers to access profile to complete verification even if not yet approved
+    if (menuId === "profile") {
+      return { hasAccess: true, priority: menuPermission.priority };
     }
-    // If seller is not verified, only allow access to profile section
-    if (user.sellerStatus !== "approved") {
-      // Only allow profile access for unverified sellers
-      if (menuId === "profile") {
-        return { hasAccess: true, priority: menuPermission.priority };
-      }
+
+    // For other menu items, check if seller is verified
+    if (!user.isSeller || user.sellerStatus !== "approved") {
       return {
         hasAccess: false,
-        reason: `Please complete verification to access this section. Current status: ${
+        reason: `Please complete seller verification to access this section. Current status: ${
           user.sellerStatus || "pending"
         }`,
       };

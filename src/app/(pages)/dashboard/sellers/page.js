@@ -1,35 +1,55 @@
 "use client";
-import React, {
-  useEffect,
-  useMemo,
-  useRef,
-  useState,
-  useCallback,
-} from "react";
+import React, { useEffect, useMemo, useState, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import axios from "axios";
 import Loader from "@/app/utils/Loader";
 import dynamic from "next/dynamic";
-import { IoClose, IoSearch, IoGrid, IoList, IoEye } from "react-icons/io5";
-import { CiCircleChevLeft, CiCircleChevRight } from "react-icons/ci";
+import {
+  IoClose,
+  IoSearch,
+  IoGrid,
+  IoList,
+  IoEye,
+  IoChatbubbleEllipses,
+  IoStorefront,
+  IoTrendingUp,
+  IoCheckmarkCircle,
+  IoTimeOutline,
+  IoCloseCircle,
+  IoEllipsisHorizontal,
+  IoChevronForward,
+  IoChevronBack,
+  IoFilter,
+  IoSparkles,
+  IoMail,
+  IoCall,
+  IoLocation,
+  IoGlobe,
+  IoLogoFacebook,
+  IoLogoInstagram,
+  IoLogoTwitter,
+  IoCalendar,
+  IoStatsChart,
+  IoPerson,
+  IoSend,
+  IoShieldCheckmark,
+  IoWarning,
+  IoBan,
+  IoTrash,
+  IoRefresh,
+} from "react-icons/io5";
 import { format } from "date-fns";
 import Image from "next/image";
-import {
-  MdModeEditOutline,
-  MdDelete,
-  MdCheckCircle,
-  MdCancel,
-  MdVerified,
-  MdTrendingUp,
-} from "react-icons/md";
-import { Style } from "@/app/utils/CommonStyle";
+import { MdVerified, MdOutlineStorefront } from "react-icons/md";
+import { HiSparkles, HiOutlineExternalLink } from "react-icons/hi2";
+import { TbCurrencyEuro, TbShieldCheck, TbShieldX } from "react-icons/tb";
+import { FaStar, FaStarHalf } from "react-icons/fa6";
+import { BiMessageSquareDetail, BiPackage } from "react-icons/bi";
+import { RiVipCrownFill, RiVerifiedBadgeFill } from "react-icons/ri";
 import toast from "react-hot-toast";
 import Swal from "sweetalert2";
 import { useAuth } from "@/app/context/authContext";
-import { HiSwitchHorizontal, HiOutlineExternalLink } from "react-icons/hi";
-import { TbShieldCheck, TbShieldX, TbPackage, TbCurrencyEuro } from "react-icons/tb";
-import { FaStore, FaUserCheck, FaStar, FaBoxOpen, FaChartLine, FaMapMarkerAlt, FaGlobe, FaEnvelope, FaPhone } from "react-icons/fa";
-import { BiPackage } from "react-icons/bi";
+import { useRouter } from "next/navigation";
 import {
   Table,
   TableHeader,
@@ -47,17 +67,798 @@ const Breadcrumb = dynamic(() => import("./../../../utils/Breadcrumb"), {
   ssr: false,
 });
 
+// Animated Background Component
+const AnimatedBackground = () => (
+  <div className="fixed inset-0 -z-10 overflow-hidden pointer-events-none">
+    <div className="absolute inset-0 bg-gradient-to-br from-slate-50 via-white to-gray-100" />
+    <motion.div
+      className="absolute top-0 right-0 w-[800px] h-[800px] rounded-full"
+      style={{
+        background:
+          "radial-gradient(circle, rgba(198, 8, 10, 0.03) 0%, transparent 70%)",
+      }}
+      animate={{
+        x: [0, 50, 0],
+        y: [0, 30, 0],
+        scale: [1, 1.1, 1],
+      }}
+      transition={{ duration: 20, repeat: Infinity, ease: "easeInOut" }}
+    />
+    <motion.div
+      className="absolute bottom-0 left-0 w-[600px] h-[600px] rounded-full"
+      style={{
+        background:
+          "radial-gradient(circle, rgba(59, 130, 246, 0.03) 0%, transparent 70%)",
+      }}
+      animate={{
+        x: [0, -30, 0],
+        y: [0, -50, 0],
+        scale: [1, 1.2, 1],
+      }}
+      transition={{ duration: 25, repeat: Infinity, ease: "easeInOut" }}
+    />
+  </div>
+);
+
+// Modern Stat Card Component
+const StatCard = ({ label, value, icon: Icon, gradient, delay }) => (
+  <motion.div
+    initial={{ opacity: 0, y: 20, scale: 0.95 }}
+    animate={{ opacity: 1, y: 0, scale: 1 }}
+    transition={{ delay, type: "spring", stiffness: 300, damping: 25 }}
+    whileHover={{ y: -4, scale: 1.02 }}
+    className="relative group"
+  >
+    <div
+      className="absolute inset-0 bg-gradient-to-r opacity-0 group-hover:opacity-100 transition-opacity duration-500 rounded-2xl blur-xl"
+      style={{ background: gradient }}
+    />
+    <div className="relative bg-white/80 backdrop-blur-xl rounded-2xl p-5 border border-gray-200/50 shadow-lg shadow-gray-200/20 hover:shadow-xl hover:border-gray-300/50 transition-all duration-300">
+      <div className="flex items-center justify-between">
+        <div>
+          <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1">
+            {label}
+          </p>
+          <p className="text-3xl font-bold bg-gradient-to-r from-gray-900 to-gray-700 bg-clip-text text-transparent">
+            {value}
+          </p>
+        </div>
+        <div
+          className={`w-14 h-14 rounded-2xl flex items-center justify-center shadow-lg`}
+          style={{ background: gradient }}
+        >
+          <Icon className="text-white text-2xl" />
+        </div>
+      </div>
+      <div
+        className="absolute bottom-0 left-0 right-0 h-1 bg-gradient-to-r rounded-b-2xl opacity-0 group-hover:opacity-100 transition-opacity"
+        style={{ background: gradient }}
+      />
+    </div>
+  </motion.div>
+);
+
+// Modern Seller Card Component
+const SellerCard = ({
+  seller,
+  index,
+  onView,
+  onChat,
+  onApprove,
+  onReject,
+  onSuspend,
+  onToggleStatus,
+  isAdmin,
+}) => {
+  const [showActions, setShowActions] = useState(false);
+
+  const getStatusConfig = (status, isActive) => {
+    if (!isActive) return { color: "gray", label: "Inactive", icon: IoBan };
+    const configs = {
+      approved: {
+        color: "emerald",
+        label: "Verified",
+        icon: IoShieldCheckmark,
+      },
+      pending: { color: "amber", label: "Pending", icon: IoTimeOutline },
+      rejected: { color: "red", label: "Rejected", icon: IoCloseCircle },
+      suspended: { color: "gray", label: "Suspended", icon: IoWarning },
+    };
+    return configs[status] || configs.pending;
+  };
+
+  const statusConfig = getStatusConfig(
+    seller.verificationStatus,
+    seller.isActive
+  );
+  const StatusIcon = statusConfig.icon;
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 30 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{
+        delay: index * 0.05,
+        type: "spring",
+        stiffness: 300,
+        damping: 30,
+      }}
+      whileHover={{ y: -8 }}
+      className="group relative"
+    >
+      {/* Card Glow Effect */}
+      <div className="absolute -inset-0.5 bg-gradient-to-r from-[#c6080a] via-rose-500 to-orange-500 rounded-3xl opacity-0 group-hover:opacity-20 blur-xl transition-all duration-500" />
+
+      <div className="relative bg-white/90 backdrop-blur-xl rounded-3xl overflow-hidden border border-gray-200/60 shadow-xl shadow-gray-200/30 hover:shadow-2xl hover:border-gray-300/60 transition-all duration-500">
+        {/* Banner Section */}
+        <div className="relative h-32 overflow-hidden">
+          {seller.storeBanner ? (
+            <Image
+              src={seller.storeBanner}
+              alt={seller.storeName}
+              fill
+              className="object-cover transition-transform duration-700 group-hover:scale-110"
+            />
+          ) : (
+            <div className="absolute inset-0 bg-gradient-to-br from-[#c6080a] via-rose-500 to-orange-500">
+              <div
+                className="absolute inset-0 opacity-30"
+                style={{
+                  backgroundImage:
+                    "url(\"data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.1'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E\")",
+                }}
+              />
+            </div>
+          )}
+          <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent" />
+
+          {/* Active Toggle */}
+          <div className="absolute top-3 left-3 z-10">
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                onToggleStatus(seller);
+              }}
+              className={`relative w-12 h-6 rounded-full transition-all duration-300 shadow-lg ${
+                seller.isActive
+                  ? "bg-gradient-to-r from-emerald-400 to-emerald-500"
+                  : "bg-gray-400"
+              }`}
+            >
+              <motion.div
+                className="absolute top-1 w-4 h-4 bg-white rounded-full shadow-md"
+                animate={{
+                  left: seller.isActive ? "calc(100% - 20px)" : "4px",
+                }}
+                transition={{ type: "spring", stiffness: 500, damping: 30 }}
+              />
+            </button>
+          </div>
+
+          {/* Status Badge */}
+          <div className="absolute top-3 right-3 z-10">
+            <motion.div
+              initial={{ scale: 0 }}
+              animate={{ scale: 1 }}
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold shadow-lg backdrop-blur-sm ${
+                statusConfig.color === "emerald"
+                  ? "bg-emerald-500/90 text-white"
+                  : statusConfig.color === "amber"
+                  ? "bg-amber-500/90 text-white"
+                  : statusConfig.color === "red"
+                  ? "bg-red-500/90 text-white"
+                  : "bg-gray-500/90 text-white"
+              }`}
+            >
+              <StatusIcon className="text-sm" />
+              {statusConfig.label}
+            </motion.div>
+          </div>
+
+          {/* Store Logo */}
+          <div className="absolute -bottom-10 left-5 z-20">
+            <motion.div
+              whileHover={{ scale: 1.05, rotate: 2 }}
+              className="relative w-20 h-20 rounded-2xl bg-white shadow-xl border-4 border-white overflow-hidden"
+            >
+              {seller.storeLogo ? (
+                <Image
+                  src={seller.storeLogo}
+                  alt={seller.storeName}
+                  fill
+                  className="object-cover"
+                />
+              ) : (
+                <div className="w-full h-full bg-gradient-to-br from-[#c6080a] to-rose-500 flex items-center justify-center">
+                  <IoStorefront className="text-white text-3xl" />
+                </div>
+              )}
+              {seller.verificationStatus === "approved" && (
+                <div className="absolute -bottom-1 -right-1 w-6 h-6 bg-blue-500 rounded-full flex items-center justify-center border-2 border-white">
+                  <RiVerifiedBadgeFill className="text-white text-xs" />
+                </div>
+              )}
+            </motion.div>
+          </div>
+        </div>
+
+        {/* Content */}
+        <div className="pt-12 px-5 pb-5">
+          {/* Store Name & Slug */}
+          <div className="mb-4">
+            <div className="flex items-center gap-2">
+              <h3 className="text-lg font-bold text-gray-900 group-hover:text-[#c6080a] transition-colors truncate">
+                {seller.storeName}
+              </h3>
+              {seller.verificationStatus === "approved" && (
+                <MdVerified className="text-blue-500 text-lg flex-shrink-0" />
+              )}
+            </div>
+            <p className="text-xs text-gray-400 font-medium">
+              /{seller.storeSlug}
+            </p>
+          </div>
+
+          {/* Owner Info */}
+          {seller.user && (
+            <div className="flex items-center gap-3 p-3 bg-gradient-to-r from-gray-50 to-gray-100/50 rounded-xl mb-4 border border-gray-100">
+              <div className="relative">
+                {seller.user.avatar ? (
+                  <Image
+                    src={seller.user.avatar}
+                    alt={seller.user.name}
+                    width={44}
+                    height={44}
+                    className="w-11 h-11 rounded-xl object-cover ring-2 ring-white shadow-md"
+                  />
+                ) : (
+                  <div className="w-11 h-11 rounded-xl bg-gradient-to-br from-violet-500 to-purple-600 flex items-center justify-center text-white font-bold shadow-md ring-2 ring-white">
+                    {seller.user.name?.charAt(0) || "U"}
+                  </div>
+                )}
+                {seller.user.isOnline && (
+                  <div className="absolute -bottom-0.5 -right-0.5 w-3.5 h-3.5 bg-emerald-500 rounded-full border-2 border-white" />
+                )}
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-semibold text-gray-900 truncate">
+                  {seller.user.name}
+                </p>
+                <p className="text-xs text-gray-500 truncate">
+                  {seller.user.email}
+                </p>
+              </div>
+            </div>
+          )}
+
+          {/* Stats Grid */}
+          <div className="grid grid-cols-3 gap-2 mb-4">
+            {[
+              {
+                icon: BiPackage,
+                value: seller.totalProducts || 0,
+                label: "Products",
+                color: "blue",
+              },
+              {
+                icon: IoTrendingUp,
+                value: seller.totalSales || 0,
+                label: "Sales",
+                color: "emerald",
+              },
+              {
+                icon: FaStar,
+                value: `${(seller.rating?.average || 0).toFixed(1)}`,
+                label: `${seller.rating?.totalReviews || 0} reviews`,
+                color: "amber",
+                isStar: true,
+              },
+            ].map((stat, i) => (
+              <motion.div
+                key={i}
+                whileHover={{ scale: 1.05, y: -2 }}
+                className={`text-center p-3 rounded-xl transition-all cursor-default ${
+                  stat.color === "blue"
+                    ? "bg-blue-50 hover:bg-blue-100"
+                    : stat.color === "emerald"
+                    ? "bg-emerald-50 hover:bg-emerald-100"
+                    : "bg-amber-50 hover:bg-amber-100"
+                }`}
+              >
+                <stat.icon
+                  className={`mx-auto mb-1 text-lg ${
+                    stat.color === "blue"
+                      ? "text-blue-500"
+                      : stat.color === "emerald"
+                      ? "text-emerald-500"
+                      : "text-amber-500"
+                  }`}
+                />
+                <p className="text-base font-bold text-gray-900 flex items-center justify-center gap-0.5">
+                  {stat.value}
+                  {stat.isStar && <FaStar className="text-amber-400 text-xs" />}
+                </p>
+                <p className="text-[10px] text-gray-500 uppercase font-medium tracking-wide">
+                  {stat.label}
+                </p>
+              </motion.div>
+            ))}
+          </div>
+
+          {/* Revenue Card */}
+          <motion.div
+            whileHover={{ scale: 1.02 }}
+            className="flex items-center justify-between p-3 bg-gradient-to-r from-emerald-50 via-green-50 to-teal-50 rounded-xl mb-4 border border-emerald-100"
+          >
+            <div className="flex items-center gap-2">
+              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-emerald-500 to-green-600 flex items-center justify-center shadow-lg shadow-emerald-200">
+                <TbCurrencyEuro className="text-white text-xl" />
+              </div>
+              <span className="text-sm font-semibold text-gray-700">
+                Revenue
+              </span>
+            </div>
+            <span className="text-xl font-bold bg-gradient-to-r from-emerald-600 to-green-600 bg-clip-text text-transparent">
+              €{(seller.totalRevenue || 0).toLocaleString()}
+            </span>
+          </motion.div>
+
+          {/* Location */}
+          {seller.storeAddress?.city && (
+            <div className="flex items-center gap-2 text-sm text-gray-500 mb-4">
+              <IoLocation className="text-gray-400" />
+              <span>
+                {seller.storeAddress.city}, {seller.storeAddress.country}
+              </span>
+            </div>
+          )}
+
+          {/* Action Buttons */}
+          <div className="flex items-center gap-2 pt-3 border-t border-gray-100">
+            <motion.button
+              whileHover={{ scale: 1.03 }}
+              whileTap={{ scale: 0.97 }}
+              onClick={() => onView(seller)}
+              className="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-xl text-sm font-semibold transition-all"
+            >
+              <IoEye className="text-base" />
+              View
+            </motion.button>
+
+            {/* Chat Button */}
+            <motion.button
+              whileHover={{ scale: 1.1 }}
+              whileTap={{ scale: 0.95 }}
+              onClick={() => onChat(seller)}
+              className="p-2.5 bg-gradient-to-br from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 text-white rounded-xl shadow-lg shadow-blue-200 transition-all"
+              title="Chat with Seller"
+            >
+              <IoChatbubbleEllipses className="text-lg" />
+            </motion.button>
+
+            {isAdmin && (
+              <>
+                <motion.button
+                  whileHover={{ scale: 1.1 }}
+                  whileTap={{ scale: 0.95 }}
+                  onClick={() => onApprove(seller)}
+                  className="p-2.5 bg-emerald-100 hover:bg-emerald-200 text-emerald-700 rounded-xl transition-all"
+                  title="Approve"
+                >
+                  <TbShieldCheck className="text-lg" />
+                </motion.button>
+                <motion.button
+                  whileHover={{ scale: 1.1 }}
+                  whileTap={{ scale: 0.95 }}
+                  onClick={() => onReject(seller)}
+                  className="p-2.5 bg-red-100 hover:bg-red-200 text-red-700 rounded-xl transition-all"
+                  title="Reject"
+                >
+                  <TbShieldX className="text-lg" />
+                </motion.button>
+
+                {/* More Actions */}
+                <div className="relative">
+                  <motion.button
+                    whileHover={{ scale: 1.1 }}
+                    whileTap={{ scale: 0.95 }}
+                    onClick={() => setShowActions(!showActions)}
+                    className="p-2.5 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-xl transition-all"
+                  >
+                    <IoEllipsisHorizontal className="text-lg" />
+                  </motion.button>
+
+                  <AnimatePresence>
+                    {showActions && (
+                      <motion.div
+                        initial={{ opacity: 0, scale: 0.95, y: 10 }}
+                        animate={{ opacity: 1, scale: 1, y: 0 }}
+                        exit={{ opacity: 0, scale: 0.95, y: 10 }}
+                        className="absolute bottom-full right-0 mb-2 w-40 bg-white rounded-xl shadow-xl border border-gray-200 overflow-hidden z-50"
+                      >
+                        <button
+                          onClick={() => {
+                            onSuspend(seller);
+                            setShowActions(false);
+                          }}
+                          className="w-full flex items-center gap-2 px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
+                        >
+                          <IoWarning className="text-amber-500" />
+                          Suspend
+                        </button>
+                        <button
+                          onClick={() => {
+                            // Handle delete
+                            setShowActions(false);
+                          }}
+                          className="w-full flex items-center gap-2 px-4 py-2.5 text-sm text-red-600 hover:bg-red-50 transition-colors"
+                        >
+                          <IoTrash />
+                          Delete
+                        </button>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+                </div>
+              </>
+            )}
+          </div>
+        </div>
+      </div>
+    </motion.div>
+  );
+};
+
+// Seller Detail Modal Component
+const SellerDetailModal = ({ seller, isOpen, onClose, onChat }) => {
+  if (!seller) return null;
+
+  const statusConfig = {
+    approved: {
+      color: "emerald",
+      label: "Verified Seller",
+      icon: IoShieldCheckmark,
+    },
+    pending: { color: "amber", label: "Pending Review", icon: IoTimeOutline },
+    rejected: { color: "red", label: "Rejected", icon: IoCloseCircle },
+    suspended: { color: "gray", label: "Suspended", icon: IoWarning },
+  };
+
+  const config =
+    statusConfig[seller.verificationStatus] || statusConfig.pending;
+
+  return (
+    <AnimatePresence>
+      {isOpen && (
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/60 backdrop-blur-md p-4 overflow-y-auto"
+          onClick={onClose}
+        >
+          <motion.div
+            initial={{ opacity: 0, scale: 0.9, y: 50 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            exit={{ opacity: 0, scale: 0.9, y: 50 }}
+            transition={{ type: "spring", damping: 25, stiffness: 300 }}
+            onClick={(e) => e.stopPropagation()}
+            className="w-full max-w-3xl bg-white rounded-3xl shadow-2xl overflow-hidden my-8"
+          >
+            {/* Modal Header with Banner */}
+            <div className="relative h-44">
+              {seller.storeBanner ? (
+                <Image
+                  src={seller.storeBanner}
+                  alt={seller.storeName}
+                  fill
+                  className="object-cover"
+                />
+              ) : (
+                <div className="absolute inset-0 bg-gradient-to-br from-[#c6080a] via-rose-500 to-orange-500">
+                  <div
+                    className="absolute inset-0 opacity-20"
+                    style={{
+                      backgroundImage:
+                        "url(\"data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.1'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E\")",
+                    }}
+                  />
+                </div>
+              )}
+              <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/30 to-transparent" />
+
+              {/* Close Button */}
+              <motion.button
+                whileHover={{ scale: 1.1, rotate: 90 }}
+                whileTap={{ scale: 0.9 }}
+                onClick={onClose}
+                className="absolute top-4 right-4 w-10 h-10 bg-white/20 backdrop-blur-md rounded-full flex items-center justify-center text-white hover:bg-white/30 transition-colors"
+              >
+                <IoClose className="text-xl" />
+              </motion.button>
+
+              {/* Status Badge */}
+              <div className="absolute top-4 left-4">
+                <div
+                  className={`flex items-center gap-2 px-4 py-2 rounded-full backdrop-blur-md ${
+                    config.color === "emerald"
+                      ? "bg-emerald-500/90"
+                      : config.color === "amber"
+                      ? "bg-amber-500/90"
+                      : config.color === "red"
+                      ? "bg-red-500/90"
+                      : "bg-gray-500/90"
+                  } text-white text-sm font-semibold shadow-lg`}
+                >
+                  <config.icon />
+                  {config.label}
+                </div>
+              </div>
+
+              {/* Store Logo */}
+              <div className="absolute -bottom-14 left-8">
+                <motion.div
+                  initial={{ scale: 0 }}
+                  animate={{ scale: 1 }}
+                  transition={{ delay: 0.2, type: "spring" }}
+                  className="w-28 h-28 rounded-3xl bg-white shadow-2xl border-4 border-white overflow-hidden"
+                >
+                  {seller.storeLogo ? (
+                    <Image
+                      src={seller.storeLogo}
+                      alt={seller.storeName}
+                      fill
+                      className="object-cover"
+                    />
+                  ) : (
+                    <div className="w-full h-full bg-gradient-to-br from-[#c6080a] to-rose-500 flex items-center justify-center">
+                      <IoStorefront className="text-white text-4xl" />
+                    </div>
+                  )}
+                </motion.div>
+              </div>
+
+              {/* Chat Button - Prominent Position */}
+              <motion.button
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                onClick={() => onChat(seller)}
+                className="absolute bottom-4 right-4 flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 text-white rounded-xl font-semibold shadow-lg shadow-blue-500/30 transition-all"
+              >
+                <IoChatbubbleEllipses className="text-lg" />
+                Message Seller
+              </motion.button>
+            </div>
+
+            {/* Content */}
+            <div className="pt-16 px-8 pb-8">
+              {/* Store Info */}
+              <div className="flex items-start justify-between mb-6">
+                <div>
+                  <div className="flex items-center gap-3">
+                    <h2 className="text-2xl font-bold text-gray-900">
+                      {seller.storeName}
+                    </h2>
+                    {seller.verificationStatus === "approved" && (
+                      <MdVerified className="text-blue-500 text-2xl" />
+                    )}
+                  </div>
+                  <p className="text-sm text-gray-500 font-medium">
+                    /{seller.storeSlug}
+                  </p>
+                </div>
+                {seller.storeAddress?.city && (
+                  <div className="flex items-center gap-2 text-sm text-gray-500 bg-gray-100 px-3 py-1.5 rounded-lg">
+                    <IoLocation />
+                    {seller.storeAddress.city}, {seller.storeAddress.country}
+                  </div>
+                )}
+              </div>
+
+              {seller.storeDescription && (
+                <p className="text-gray-600 leading-relaxed mb-6 p-4 bg-gray-50 rounded-xl">
+                  {seller.storeDescription}
+                </p>
+              )}
+
+              {/* Stats Grid */}
+              <div className="grid grid-cols-4 gap-4 mb-6">
+                {[
+                  {
+                    label: "Products",
+                    value: seller.totalProducts || 0,
+                    icon: BiPackage,
+                    color: "blue",
+                  },
+                  {
+                    label: "Total Sales",
+                    value: seller.totalSales || 0,
+                    icon: IoTrendingUp,
+                    color: "emerald",
+                  },
+                  {
+                    label: "Revenue",
+                    value: `€${(seller.totalRevenue || 0).toLocaleString()}`,
+                    icon: TbCurrencyEuro,
+                    color: "green",
+                  },
+                  {
+                    label: "Rating",
+                    value: `${(seller.rating?.average || 0).toFixed(1)} ★`,
+                    sub: `${seller.rating?.totalReviews || 0} reviews`,
+                    icon: FaStar,
+                    color: "amber",
+                  },
+                ].map((stat, i) => (
+                  <motion.div
+                    key={i}
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.1 + i * 0.05 }}
+                    className={`text-center p-4 rounded-2xl ${
+                      stat.color === "blue"
+                        ? "bg-blue-50"
+                        : stat.color === "emerald"
+                        ? "bg-emerald-50"
+                        : stat.color === "green"
+                        ? "bg-green-50"
+                        : "bg-amber-50"
+                    }`}
+                  >
+                    <stat.icon
+                      className={`mx-auto mb-2 text-2xl ${
+                        stat.color === "blue"
+                          ? "text-blue-500"
+                          : stat.color === "emerald"
+                          ? "text-emerald-500"
+                          : stat.color === "green"
+                          ? "text-green-500"
+                          : "text-amber-500"
+                      }`}
+                    />
+                    <p className="text-2xl font-bold text-gray-900">
+                      {stat.value}
+                    </p>
+                    <p className="text-xs text-gray-500 uppercase font-semibold">
+                      {stat.sub || stat.label}
+                    </p>
+                  </motion.div>
+                ))}
+              </div>
+
+              {/* Owner & Contact */}
+              <div className="grid grid-cols-2 gap-4 mb-6">
+                {/* Owner */}
+                {seller.user && (
+                  <div className="p-4 bg-gradient-to-br from-gray-50 to-gray-100/50 rounded-2xl border border-gray-100">
+                    <div className="flex items-center gap-2 mb-3">
+                      <IoPerson className="text-gray-400" />
+                      <p className="text-xs font-bold text-gray-500 uppercase">
+                        Store Owner
+                      </p>
+                    </div>
+                    <div className="flex items-center gap-3">
+                      {seller.user.avatar ? (
+                        <Image
+                          src={seller.user.avatar}
+                          alt={seller.user.name}
+                          width={48}
+                          height={48}
+                          className="w-12 h-12 rounded-xl object-cover shadow-md"
+                        />
+                      ) : (
+                        <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-violet-500 to-purple-600 flex items-center justify-center text-white font-bold text-lg shadow-md">
+                          {seller.user.name?.charAt(0) || "U"}
+                        </div>
+                      )}
+                      <div>
+                        <p className="font-semibold text-gray-900">
+                          {seller.user.name}
+                        </p>
+                        <p className="text-sm text-gray-500">
+                          {seller.user.email}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* Contact */}
+                <div className="p-4 bg-gradient-to-br from-gray-50 to-gray-100/50 rounded-2xl border border-gray-100">
+                  <div className="flex items-center gap-2 mb-3">
+                    <IoMail className="text-gray-400" />
+                    <p className="text-xs font-bold text-gray-500 uppercase">
+                      Contact Info
+                    </p>
+                  </div>
+                  <div className="space-y-2">
+                    {seller.contactEmail && (
+                      <div className="flex items-center gap-2 text-sm text-gray-600">
+                        <IoMail className="text-gray-400" />
+                        <span className="truncate">{seller.contactEmail}</span>
+                      </div>
+                    )}
+                    {seller.contactPhone && (
+                      <div className="flex items-center gap-2 text-sm text-gray-600">
+                        <IoCall className="text-gray-400" />
+                        <span>{seller.contactPhone}</span>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              {/* Social Links */}
+              {(seller.socialLinks?.website ||
+                seller.socialLinks?.facebook ||
+                seller.socialLinks?.instagram) && (
+                <div className="mb-6">
+                  <p className="text-xs font-bold text-gray-500 uppercase mb-3">
+                    Social Links
+                  </p>
+                  <div className="flex items-center gap-2">
+                    {seller.socialLinks?.website && (
+                      <a
+                        href={seller.socialLinks.website}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="p-3 bg-gray-100 hover:bg-gray-200 rounded-xl transition-colors"
+                      >
+                        <IoGlobe className="text-gray-600 text-lg" />
+                      </a>
+                    )}
+                    {seller.socialLinks?.facebook && (
+                      <a
+                        href={seller.socialLinks.facebook}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="p-3 bg-blue-50 hover:bg-blue-100 rounded-xl transition-colors"
+                      >
+                        <IoLogoFacebook className="text-blue-600 text-lg" />
+                      </a>
+                    )}
+                    {seller.socialLinks?.instagram && (
+                      <a
+                        href={seller.socialLinks.instagram}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="p-3 bg-pink-50 hover:bg-pink-100 rounded-xl transition-colors"
+                      >
+                        <IoLogoInstagram className="text-pink-600 text-lg" />
+                      </a>
+                    )}
+                  </div>
+                </div>
+              )}
+
+              {/* Joined Date */}
+              <div className="flex items-center gap-2 text-sm text-gray-500 pt-4 border-t border-gray-200">
+                <IoCalendar />
+                Joined: {format(new Date(seller.createdAt), "MMMM dd, yyyy")}
+              </div>
+            </div>
+          </motion.div>
+        </motion.div>
+      )}
+    </AnimatePresence>
+  );
+};
+
+// Main Component
 export default function Sellers() {
   const { auth } = useAuth();
+  const router = useRouter();
   const [currentUrl, setCurrentUrl] = useState("");
   const [sellerData, setSellerData] = useState([]);
-  const [filterSellers, setFilterSellers] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
-  const [rowSelection, setRowSelection] = useState({});
   const [activeTab, setActiveTab] = useState("All");
   const [searchQuery, setSearchQuery] = useState("");
+  const [debouncedSearchQuery, setDebouncedSearchQuery] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
+  const [viewMode, setViewMode] = useState("table");
+  const [selectedSeller, setSelectedSeller] = useState(null);
+  const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
   const [stats, setStats] = useState({
     total: 0,
     active: 0,
@@ -65,72 +866,65 @@ export default function Sellers() {
     approved: 0,
     rejected: 0,
   });
-  const itemsPerPage = 20;
-  const [verificationStatus, setVerificationStatus] = useState("");
-  const [debouncedSearchQuery, setDebouncedSearchQuery] = useState("");
-
-  // Suspension modal state
   const [suspensionModalOpen, setSuspensionModalOpen] = useState(false);
   const [suspensionSeller, setSuspensionSeller] = useState(null);
   const [suspensionReason, setSuspensionReason] = useState("");
-  const [isSuspensionSubmitting, setIsSuspensionSubmitting] = useState(false);
-  const [viewMode, setViewMode] = useState("card"); // "card" or "table"
-  const [selectedSeller, setSelectedSeller] = useState(null);
-  const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
+  const [isChatLoading, setIsChatLoading] = useState(false);
+  const itemsPerPage = 12;
 
-  const fetchSellers = async (page = 1, filters = {}) => {
-    setIsLoading(true);
-    try {
-      const params = new URLSearchParams({
-        page: page.toString(),
-        limit: itemsPerPage.toString(),
-        ...filters,
-      });
+  const isAdmin =
+    auth?.user?.role === "superadmin" || auth?.user?.role === "admin";
 
-      const { data } = await axios.get(
-        `${process.env.NEXT_PUBLIC_SERVER_URI}/api/v1/seller/all?${params}`,
-        {
-          headers: {
-            Authorization: auth?.token,
-          },
-        }
-      );
-
-      if (data?.success) {
-        setSellerData(data.sellers || []);
-        setFilterSellers(data.sellers || []);
-        setTotalPages(data.pagination?.pages || 1);
-        setStats({
-          total: data.pagination?.total || 0,
-          active: data.sellers?.filter((s) => s.isActive)?.length || 0,
-          pending:
-            data.sellers?.filter((s) => s.verificationStatus === "pending")
-              ?.length || 0,
-          approved:
-            data.sellers?.filter((s) => s.verificationStatus === "approved")
-              ?.length || 0,
-          rejected:
-            data.sellers?.filter((s) => s.verificationStatus === "rejected")
-              ?.length || 0,
+  // Fetch Sellers
+  const fetchSellers = useCallback(
+    async (page = 1, filters = {}) => {
+      setIsLoading(true);
+      try {
+        const params = new URLSearchParams({
+          page: page.toString(),
+          limit: itemsPerPage.toString(),
+          ...filters,
         });
+
+        const { data } = await axios.get(
+          `${process.env.NEXT_PUBLIC_SERVER_URI}/api/v1/seller/all?${params}`,
+          { headers: { Authorization: auth?.token } }
+        );
+
+        if (data?.success) {
+          setSellerData(data.sellers || []);
+          setTotalPages(data.pagination?.pages || 1);
+          setStats({
+            total: data.pagination?.total || 0,
+            active: data.sellers?.filter((s) => s.isActive)?.length || 0,
+            pending:
+              data.sellers?.filter((s) => s.verificationStatus === "pending")
+                ?.length || 0,
+            approved:
+              data.sellers?.filter((s) => s.verificationStatus === "approved")
+                ?.length || 0,
+            rejected:
+              data.sellers?.filter((s) => s.verificationStatus === "rejected")
+                ?.length || 0,
+          });
+        }
+      } catch (error) {
+        console.error("Error fetching sellers:", error);
+        toast.error(error.response?.data?.message || "Failed to fetch sellers");
+      } finally {
+        setIsLoading(false);
       }
-    } catch (error) {
-      console.error("Error fetching sellers:", error);
-      toast.error(error.response?.data?.message || "Failed to fetch sellers");
-    } finally {
-      setIsLoading(false);
-    }
-  };
+    },
+    [auth?.token]
+  );
 
-  // Debounce search query
+  // Debounce search
   useEffect(() => {
-    const timer = setTimeout(() => {
-      setDebouncedSearchQuery(searchQuery);
-    }, 500);
-
+    const timer = setTimeout(() => setDebouncedSearchQuery(searchQuery), 500);
     return () => clearTimeout(timer);
   }, [searchQuery]);
 
+  // Fetch on filters change
   useEffect(() => {
     if (auth?.token) {
       const filters = {};
@@ -143,97 +937,13 @@ export default function Sellers() {
       if (debouncedSearchQuery) filters.search = debouncedSearchQuery;
       fetchSellers(currentPage, filters);
     }
-  }, [auth?.token, currentPage, activeTab, debouncedSearchQuery]);
+  }, [auth?.token, currentPage, activeTab, debouncedSearchQuery, fetchSellers]);
 
   useEffect(() => {
-    if (typeof window !== "undefined") {
-      setCurrentUrl(window.location.pathname);
-    }
+    if (typeof window !== "undefined") setCurrentUrl(window.location.pathname);
   }, []);
 
-  const handleSearch = (value) => {
-    setSearchQuery(value);
-    setCurrentPage(1);
-  };
-
-  const handleTabClick = (tab) => {
-    setActiveTab(tab);
-    setCurrentPage(1);
-  };
-
-  const handlePageChange = (direction) => {
-    if (direction === "next" && currentPage < totalPages) {
-      setCurrentPage((prev) => prev + 1);
-    } else if (direction === "prev" && currentPage > 1) {
-      setCurrentPage((prev) => prev - 1);
-    }
-  };
-
-  const handleDeleteConfirmation = (sellerId) => {
-    Swal.fire({
-      title: "Are you sure?",
-      text: "You won't be able to revert this seller!",
-      icon: "warning",
-      showCancelButton: true,
-      confirmButtonColor: "#c6080a",
-      cancelButtonColor: "#d33",
-      confirmButtonText: "Yes, delete it!",
-    }).then((result) => {
-      if (result.isConfirmed) {
-        handleDelete(sellerId);
-      }
-    });
-  };
-
-  const handleDelete = async (id) => {
-    try {
-      // Note: You may need to add a delete seller endpoint
-      toast.success("Delete functionality - implement API endpoint");
-      fetchSellers(currentPage);
-    } catch (error) {
-      console.error(error);
-      toast.error(error.response?.data?.message || "Failed to delete seller");
-    }
-  };
-
-  const handleBulkDelete = () => {
-    const selectedIds = Object.keys(rowSelection);
-    if (selectedIds.length === 0) {
-      toast.error("Please select at least one seller");
-      return;
-    }
-
-    Swal.fire({
-      title: "Are you sure?",
-      text: `You are about to delete ${selectedIds.length} seller(s)!`,
-      icon: "warning",
-      showCancelButton: true,
-      confirmButtonColor: "#c6080a",
-      cancelButtonColor: "#d33",
-      confirmButtonText: "Yes, delete them!",
-    }).then((result) => {
-      if (result.isConfirmed) {
-        // Implement bulk delete
-        toast.success("Bulk delete - implement API endpoint");
-        setRowSelection({});
-        fetchSellers(currentPage);
-      }
-    });
-  };
-
-  const openSuspensionModal = (seller) => {
-    setSuspensionSeller(seller);
-    setSuspensionReason(seller.suspensionReason || "");
-    setSuspensionModalOpen(true);
-  };
-
-  const closeSuspensionModal = () => {
-    setSuspensionModalOpen(false);
-    setSuspensionSeller(null);
-    setSuspensionReason("");
-    setIsSuspensionSubmitting(false);
-  };
-
+  // Handle Status Update
   const handleStatusUpdate = async (
     sellerId,
     verificationStatus,
@@ -244,11 +954,7 @@ export default function Sellers() {
       const { data } = await axios.put(
         `${process.env.NEXT_PUBLIC_SERVER_URI}/api/v1/seller/status/${sellerId}`,
         { verificationStatus, isActive, suspensionReason },
-        {
-          headers: {
-            Authorization: auth?.token,
-          },
-        }
+        { headers: { Authorization: auth?.token } }
       );
 
       if (data?.success) {
@@ -261,1266 +967,642 @@ export default function Sellers() {
     }
   };
 
-  const getStatusBadge = (status, isActive) => {
-    if (!isActive) {
-      return (
-        <motion.span
-          initial={{ opacity: 0, scale: 0.8 }}
-          animate={{ opacity: 1, scale: 1 }}
-          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold bg-gradient-to-r from-gray-100 to-gray-200 text-gray-700 border border-gray-300 shadow-sm"
-        >
-          <div className="w-2 h-2 rounded-full bg-gray-500" />
-          Inactive
-        </motion.span>
+  // Handle Chat with Seller
+  const handleChatWithSeller = async (seller) => {
+    if (!seller?.user?._id) {
+      toast.error("Unable to start chat. Seller information not available.");
+      return;
+    }
+
+    setIsChatLoading(true);
+    try {
+      const { data } = await axios.post(
+        `${process.env.NEXT_PUBLIC_SERVER_URI}/api/v1/chat/create`,
+        { userId: seller.user._id },
+        { headers: { Authorization: auth?.token } }
       );
-    }
 
-    const statusConfig = {
-      approved: {
-        bg: "from-emerald-100 to-emerald-200",
-        text: "text-emerald-800",
-        border: "border-emerald-400",
-        dot: "bg-emerald-600",
-        label: "Approved",
-        icon: TbShieldCheck,
-      },
-      pending: {
-        bg: "from-amber-100 to-amber-200",
-        text: "text-amber-800",
-        border: "border-amber-400",
-        dot: "bg-amber-600",
-        label: "Pending",
-        icon: HiSwitchHorizontal,
-      },
-      rejected: {
-        bg: "from-red-100 to-red-200",
-        text: "text-red-800",
-        border: "border-red-400",
-        dot: "bg-red-600",
-        label: "Rejected",
-        icon: TbShieldX,
-      },
-      suspended: {
-        bg: "from-gray-100 to-gray-200",
-        text: "text-gray-800",
-        border: "border-gray-400",
-        dot: "bg-gray-600",
-        label: "Suspended",
-        icon: MdCancel,
-      },
-    };
-
-    const config = statusConfig[status] || statusConfig.pending;
-    const Icon = config.icon;
-
-    return (
-      <motion.span
-        initial={{ opacity: 0, scale: 0.8 }}
-        animate={{ opacity: 1, scale: 1 }}
-        className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold bg-gradient-to-r ${config.bg} ${config.text} border ${config.border} shadow-sm`}
-      >
-        <Icon className="text-xs" />
-        {config.label}
-      </motion.span>
-    );
-  };
-
-  const columns = useMemo(
-    () => [
-      {
-        accessorKey: "storeLogo",
-        minSize: 60,
-        maxSize: 100,
-        size: 70,
-        grow: false,
-        Header: "LOGO",
-        Cell: ({ cell, row }) => {
-          const logo = cell.getValue();
-          const storeName = row.original?.storeName || "";
-
-          return (
-            <div className="w-12 h-12 relative rounded-lg bg-gradient-to-br from-[#c6080a] to-[#e63946] overflow-hidden flex items-center justify-center">
-              {logo ? (
-                <Image
-                  src={logo}
-                  alt={storeName}
-                  fill
-                  className="object-cover"
-                  sizes="48px"
-                />
-              ) : (
-                <FaStore className="text-white text-xl" />
-              )}
-            </div>
-          );
-        },
-      },
-      {
-        accessorKey: "storeName",
-        minSize: 150,
-        maxSize: 250,
-        size: 200,
-        Header: "STORE NAME",
-        Cell: ({ cell, row }) => {
-          const name = cell.getValue();
-          const slug = row.original?.storeSlug || "";
-
-          return (
-            <div className="flex flex-col">
-              <span className="font-semibold text-gray-900">{name}</span>
-              <span className="text-xs text-gray-500">/{slug}</span>
-            </div>
-          );
-        },
-      },
-      {
-        accessorKey: "user",
-        minSize: 150,
-        maxSize: 200,
-        size: 180,
-        Header: "OWNER",
-        Cell: ({ cell }) => {
-          const user = cell.getValue();
-          if (!user) return <span className="text-gray-400">N/A</span>;
-
-          return (
-            <div className="flex items-center gap-3">
-              {user.avatar ? (
-                <div className="w-9 h-9 rounded-full overflow-hidden flex-shrink-0 bg-gray-100">
-                  <Image
-                    src={user.avatar}
-                    alt={user.name}
-                    width={36}
-                    height={36}
-                    className="w-full h-full object-cover"
-                  />
-                </div>
-              ) : (
-                <div className="w-9 h-9 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-white font-semibold text-sm flex-shrink-0">
-                  {user.name?.charAt(0) || "U"}
-                </div>
-              )}
-              <div className="flex flex-col">
-                <span className="text-sm font-medium text-gray-900">
-                  {user.name}
-                </span>
-                <span className="text-xs text-gray-500">{user.email}</span>
-              </div>
-            </div>
-          );
-        },
-      },
-      {
-        accessorKey: "verificationStatus",
-        minSize: 120,
-        maxSize: 150,
-        size: 130,
-        Header: "VERIFICATION",
-        Cell: ({ cell, row }) => {
-          const status = cell.getValue();
-          const isActive = row.original?.isActive || false;
-          return getStatusBadge(status, isActive);
-        },
-      },
-      {
-        accessorKey: "rating.average",
-        minSize: 140,
-        maxSize: 180,
-        size: 160,
-        Header: "RATING",
-        Cell: ({ cell, row }) => {
-          const rating = cell.getValue() || 0;
-          const reviews = row.original?.rating?.totalReviews || 0;
-          const roundedRating = Math.round(rating * 10) / 10;
-
-          return (
-            <div className="flex flex-col gap-1.5">
-              <div className="flex items-center gap-2">
-                {/* Rating Number */}
-                <div className="flex items-center justify-center w-10 h-10 rounded-lg bg-gradient-to-br from-amber-400 to-amber-500 text-white font-bold text-sm shadow-md">
-                  {roundedRating.toFixed(1)}
-                </div>
-
-                {/* Stars */}
-                <div className="flex items-center gap-0.5">
-                  {[...Array(5)].map((_, i) => {
-                    const isFilled = i < Math.floor(rating);
-                    const isHalfFilled = !isFilled && i < rating;
-
-                    return (
-                      <div key={i} className="relative">
-                        <FaStar
-                          className={`text-xs ${
-                            isFilled
-                              ? "text-amber-400 fill-amber-400"
-                              : "text-gray-300 fill-gray-300"
-                          } transition-colors duration-200`}
-                        />
-                        {isHalfFilled && (
-                          <div className="absolute inset-0 overflow-hidden w-1/2">
-                            <FaStar className="text-xs text-amber-400 fill-amber-400" />
-                          </div>
-                        )}
-                      </div>
-                    );
-                  })}
-                </div>
-              </div>
-
-              {/* Review Count */}
-              <div className="flex items-center gap-1">
-                <span className="text-xs font-medium text-gray-600">
-                  {reviews}
-                </span>
-                <span className="text-xs text-gray-400">
-                  {reviews === 1 ? "review" : "reviews"}
-                </span>
-              </div>
-            </div>
-          );
-        },
-      },
-      {
-        accessorKey: "totalProducts",
-        minSize: 100,
-        maxSize: 120,
-        size: 110,
-        Header: "PRODUCTS",
-        Cell: ({ cell }) => {
-          const count = cell.getValue() || 0;
-          return <span className="font-semibold text-gray-700">{count}</span>;
-        },
-      },
-      {
-        accessorKey: "totalSales",
-        minSize: 100,
-        maxSize: 120,
-        size: 110,
-        Header: "SALES",
-        Cell: ({ cell }) => {
-          const sales = cell.getValue() || 0;
-          return <span className="font-semibold text-gray-700">{sales}</span>;
-        },
-      },
-      {
-        accessorKey: "totalRevenue",
-        minSize: 120,
-        maxSize: 150,
-        size: 130,
-        Header: "REVENUE",
-        Cell: ({ cell }) => {
-          const revenue = cell.getValue() || 0;
-          return (
-            <span className="font-semibold text-green-600">
-              €{revenue.toLocaleString()}
-            </span>
-          );
-        },
-      },
-      {
-        accessorKey: "isActive",
-        minSize: 100,
-        maxSize: 120,
-        size: 110,
-        Header: "STATUS",
-        Cell: ({ cell, row }) => {
-          const isActive = cell.getValue() || false;
-
-          const handleToggle = async (e) => {
-            if (e) {
-              e.stopPropagation();
-              e.preventDefault();
-            }
-            const newStatus = !isActive;
-            await handleStatusUpdate(
-              row.original._id,
-              row.original.verificationStatus,
-              newStatus,
-              undefined
-            );
-          };
-
-          return (
-            <div className="flex items-center gap-3">
-              <button
-                type="button"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  e.preventDefault();
-                  handleToggle(e);
-                }}
-                className={`relative inline-flex h-7 w-12 items-center rounded-full transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-[#c6080a] focus:ring-offset-2 shadow-inner cursor-pointer ${
-                  isActive
-                    ? "bg-gradient-to-r from-emerald-500 to-emerald-600"
-                    : "bg-gray-300"
-                }`}
-              >
-                <span
-                  className={`absolute inline-block h-5 w-5 rounded-full bg-white shadow-lg transition-transform duration-300 ease-in-out ${
-                    isActive ? "translate-x-6" : "translate-x-1"
-                  }`}
-                />
-              </button>
-              <span className="text-xs font-semibold text-gray-700">
-                {isActive ? "Active" : "Inactive"}
-              </span>
-            </div>
-          );
-        },
-      },
-      {
-        accessorKey: "createdAt",
-        minSize: 120,
-        maxSize: 150,
-        size: 130,
-        Header: "JOINED",
-        Cell: ({ cell }) => {
-          const date = cell.getValue();
-          return (
-            <span className="text-sm text-gray-600">
-              {format(new Date(date), "MMM dd, yyyy")}
-            </span>
-          );
-        },
-      },
-      ...(auth.user?.role === "superadmin" || auth.user?.role === "admin"
-        ? [
-            {
-              accessorKey: "Actions",
-              minSize: 150,
-              maxSize: 180,
-              size: 160,
-              Header: "ACTIONS",
-              Cell: ({ row }) => {
-                const seller = row.original;
-
-                return (
-                  <div className="flex items-center gap-2">
-                    <motion.button
-                      whileHover={{ scale: 1.1, y: -2 }}
-                      whileTap={{ scale: 0.9 }}
-                      onClick={() =>
-                        handleStatusUpdate(
-                          seller._id,
-                          "approved",
-                          seller.isActive,
-                          undefined
-                        )
-                      }
-                      className="p-2.5 bg-gradient-to-br from-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-700 text-white rounded-xl transition-all duration-200 shadow-md hover:shadow-lg"
-                      title="Approve Seller"
-                    >
-                      <TbShieldCheck className="text-lg" />
-                    </motion.button>
-                    <motion.button
-                      whileHover={{ scale: 1.1, y: -2 }}
-                      whileTap={{ scale: 0.9 }}
-                      onClick={() =>
-                        handleStatusUpdate(
-                          seller._id,
-                          "rejected",
-                          seller.isActive,
-                          undefined
-                        )
-                      }
-                      className="p-2.5 bg-gradient-to-br from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 text-white rounded-xl transition-all duration-200 shadow-md hover:shadow-lg"
-                      title="Reject Seller"
-                    >
-                      <TbShieldX className="text-lg" />
-                    </motion.button>
-                    <motion.button
-                      whileHover={{ scale: 1.1, y: -2 }}
-                      whileTap={{ scale: 0.9 }}
-                      onClick={() => openSuspensionModal(seller)}
-                      className="p-2.5 bg-gradient-to-br from-gray-500 to-gray-700 hover:from-gray-600 hover:to-gray-800 text-white rounded-xl transition-all duration-200 shadow-md hover:shadow-lg"
-                      title="Suspend Seller"
-                    >
-                      <MdCancel className="text-lg" />
-                    </motion.button>
-                    <motion.button
-                      whileHover={{ scale: 1.1, y: -2 }}
-                      whileTap={{ scale: 0.9 }}
-                      onClick={() => handleDeleteConfirmation(seller._id)}
-                      className="p-2.5 bg-gradient-to-br from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 text-white rounded-xl transition-all duration-200 shadow-md hover:shadow-lg"
-                      title="Delete Seller"
-                    >
-                      <MdDelete className="text-lg" />
-                    </motion.button>
-                  </div>
-                );
-              },
-            },
-          ]
-        : []),
-    ],
-    [auth.user?.role, rowSelection]
-  );
-
-  // Ensure columns is always an array
-  const safeColumns = useMemo(() => {
-    if (!columns || !Array.isArray(columns)) return [];
-    return columns.filter(
-      (col) => col && typeof col === "object" && col.accessorKey
-    );
-  }, [columns]);
-
-  // Ensure data is always an array
-  const safeData = useMemo(() => {
-    if (!filterSellers || !Array.isArray(filterSellers)) return [];
-    return filterSellers.filter((item) => item && typeof item === "object");
-  }, [filterSellers]);
-
-  // Helpers
-  const getValue = (row, accessor) => {
-    if (!row || !accessor) return "";
-    if (accessor.includes(".")) {
-      return accessor.split(".").reduce((acc, key) => acc?.[key], row) ?? "";
-    }
-    return row[accessor] ?? "";
-  };
-
-  const renderCell = (col, row) => {
-    const value = getValue(row, col.accessorKey);
-    if (typeof col.Cell === "function") {
-      return col.Cell({
-        cell: { getValue: () => value },
-        row: { original: row },
-      });
-    }
-    return value;
-  };
-
-  // Selection handling for bulk actions
-  const allRowIds = safeData.map((row, idx) =>
-    String(row?._id || row?.id || idx)
-  );
-  const toggleSelectAll = () => {
-    if (allRowIds.every((id) => rowSelection[id])) {
-      setRowSelection({});
-    } else {
-      const next = {};
-      allRowIds.forEach((id) => {
-        next[id] = true;
-      });
-      setRowSelection(next);
-    }
-  };
-
-  const toggleSelectRow = (id) => {
-    setRowSelection((prev) => {
-      const next = { ...prev };
-      if (next[id]) {
-        delete next[id];
-      } else {
-        next[id] = true;
+      if (data?.success || data?._id || data?.fullChat) {
+        toast.success("Chat created! Redirecting...");
+        // Navigate to chat page with the chat/user ID
+        const chatId = data?.fullChat?._id || data?._id;
+        router.push(`/dashboard/chat?chatId=${chatId}`);
       }
-      return next;
-    });
+    } catch (error) {
+      console.error("Error creating chat:", error);
+      toast.error(error.response?.data?.message || "Failed to create chat");
+    } finally {
+      setIsChatLoading(false);
+    }
   };
+
+  // Tab configurations
+  const tabs = [
+    { id: "All", label: "All Sellers", icon: IoStorefront },
+    { id: "Active", label: "Active", icon: IoCheckmarkCircle },
+    { id: "Pending", label: "Pending", icon: IoTimeOutline },
+    { id: "Approved", label: "Verified", icon: IoShieldCheckmark },
+    { id: "Rejected", label: "Rejected", icon: IoCloseCircle },
+  ];
 
   return (
     <MainLayout
-      title="Sellers Management - Admin Dashboard"
+      title="Sellers Management - Darloo Admin"
       description="Manage sellers, verifications, and store settings"
       keywords="sellers, marketplace, admin, management"
     >
-      <div className="relative min-h-screen bg-gradient-to-br from-gray-50 via-white to-gray-50 p-4 sm:p-6 h-full w-full flex flex-col">
+      <AnimatedBackground />
+
+      <div className="relative min-h-screen p-4 sm:p-6">
         <Breadcrumb path={currentUrl} />
 
-        <div className="flex flex-col gap-6 mt-0">
-          {/* Header Section */}
+        <div className="flex flex-col gap-6 mt-2">
+          {/* Header */}
           <motion.div
             initial={{ opacity: 0, y: -20 }}
             animate={{ opacity: 1, y: 0 }}
-            className="flex items-center justify-between flex-wrap gap-4 pb-6 border-b border-gray-200"
+            className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-4"
           >
             <div className="flex items-center gap-4">
-              <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-[#c6080a] via-[#e63946] to-rose-500 flex items-center justify-center shadow-xl shadow-red-500/30">
-                <FaStore className="text-white text-xl" />
-              </div>
+              <motion.div
+                whileHover={{ scale: 1.05, rotate: 5 }}
+                className="w-16 h-16 rounded-2xl bg-gradient-to-br from-[#c6080a] via-rose-500 to-orange-500 flex items-center justify-center shadow-xl shadow-red-500/25"
+              >
+                <MdOutlineStorefront className="text-white text-3xl" />
+              </motion.div>
               <div>
-                <h1 className="text-3xl sm:text-4xl font-bold bg-gradient-to-r from-[#c6080a] via-[#e63946] to-rose-600 bg-clip-text text-transparent">
-                  Sellers Management
+                <h1 className="text-3xl sm:text-4xl font-bold bg-gradient-to-r from-gray-900 via-gray-800 to-gray-700 bg-clip-text text-transparent">
+                  Sellers Hub
                 </h1>
-                <p className="text-gray-600 mt-1.5 text-sm sm:text-base">
-                  Manage seller accounts, verifications, and store settings
+                <p className="text-gray-500 mt-1 flex items-center gap-2">
+                  <HiSparkles className="text-amber-500" />
+                  Manage and connect with your marketplace sellers
                 </p>
               </div>
             </div>
-            {(auth.user?.role === "superadmin" ||
-              auth.user?.role === "admin") && (
-              <div className="flex items-center gap-3">
-                {Object.keys(rowSelection).length > 0 && (
-                  <motion.button
-                    initial={{ opacity: 0, scale: 0.9 }}
-                    animate={{ opacity: 1, scale: 1 }}
-                    whileHover={{ scale: 1.05 }}
-                    whileTap={{ scale: 0.95 }}
-                    onClick={handleBulkDelete}
-                    className="flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 text-white rounded-xl font-semibold transition-all duration-200 shadow-lg hover:shadow-xl"
-                  >
-                    <MdDelete className="text-lg" />
-                    <span>
-                      Delete Selected ({Object.keys(rowSelection).length})
-                    </span>
-                  </motion.button>
-                )}
+
+            {/* Quick Stats Pills */}
+            <div className="flex items-center gap-2 flex-wrap">
+              <div className="px-4 py-2 bg-white/80 backdrop-blur-sm rounded-full border border-gray-200 shadow-sm">
+                <span className="text-2xl font-bold text-gray-900">
+                  {stats.total}
+                </span>
+                <span className="text-sm text-gray-500 ml-2">Total</span>
               </div>
-            )}
+              <div className="px-4 py-2 bg-emerald-50 rounded-full border border-emerald-200">
+                <span className="text-2xl font-bold text-emerald-600">
+                  {stats.approved}
+                </span>
+                <span className="text-sm text-emerald-600 ml-2">Verified</span>
+              </div>
+              <div className="px-4 py-2 bg-amber-50 rounded-full border border-amber-200">
+                <span className="text-2xl font-bold text-amber-600">
+                  {stats.pending}
+                </span>
+                <span className="text-sm text-amber-600 ml-2">Pending</span>
+              </div>
+            </div>
           </motion.div>
 
-          {/* Enhanced Stats Cards */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
-            {[
-              {
-                label: "Total Sellers",
-                value: stats.total,
-                color: "from-blue-500 to-blue-600",
-                bgColor: "from-blue-50 to-blue-100/50",
-                icon: FaStore,
-              },
-              {
-                label: "Active",
-                value: stats.active,
-                color: "from-emerald-500 to-emerald-600",
-                bgColor: "from-emerald-50 to-emerald-100/50",
-                icon: MdCheckCircle,
-              },
-              {
-                label: "Pending",
-                value: stats.pending,
-                color: "from-amber-500 to-amber-600",
-                bgColor: "from-amber-50 to-amber-100/50",
-                icon: HiSwitchHorizontal,
-              },
-              {
-                label: "Approved",
-                value: stats.approved,
-                color: "from-green-500 to-green-600",
-                bgColor: "from-green-50 to-green-100/50",
-                icon: TbShieldCheck,
-              },
-              {
-                label: "Rejected",
-                value: stats.rejected,
-                color: "from-red-500 to-red-600",
-                bgColor: "from-red-50 to-red-100/50",
-                icon: TbShieldX,
-              },
-            ].map((stat, index) => {
-              const Icon = stat.icon;
-              return (
-                <motion.div
-                  key={stat.label}
-                  initial={{ opacity: 0, y: 20, scale: 0.9 }}
-                  animate={{ opacity: 1, y: 0, scale: 1 }}
-                  transition={{
-                    delay: index * 0.1,
-                    type: "spring",
-                    stiffness: 200,
-                  }}
-                  whileHover={{ scale: 1.05, y: -4 }}
-                  className="relative overflow-hidden group bg-white rounded-2xl p-5 shadow-lg border border-gray-200/60 hover:shadow-2xl transition-all duration-300"
-                >
-                  {/* Background gradient */}
-                  <div
-                    className={`absolute inset-0 bg-gradient-to-br ${stat.bgColor} opacity-0 group-hover:opacity-100 transition-opacity duration-300`}
+          {/* Stats Cards */}
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4">
+            <StatCard
+              label="Total Sellers"
+              value={stats.total}
+              icon={IoStorefront}
+              gradient="linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%)"
+              delay={0}
+            />
+            <StatCard
+              label="Active"
+              value={stats.active}
+              icon={IoCheckmarkCircle}
+              gradient="linear-gradient(135deg, #10b981 0%, #059669 100%)"
+              delay={0.05}
+            />
+            <StatCard
+              label="Pending"
+              value={stats.pending}
+              icon={IoTimeOutline}
+              gradient="linear-gradient(135deg, #f59e0b 0%, #d97706 100%)"
+              delay={0.1}
+            />
+            <StatCard
+              label="Verified"
+              value={stats.approved}
+              icon={IoShieldCheckmark}
+              gradient="linear-gradient(135deg, #22c55e 0%, #16a34a 100%)"
+              delay={0.15}
+            />
+            <StatCard
+              label="Rejected"
+              value={stats.rejected}
+              icon={IoCloseCircle}
+              gradient="linear-gradient(135deg, #ef4444 0%, #dc2626 100%)"
+              delay={0.2}
+            />
+          </div>
+
+          {/* Tabs & Search */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.2 }}
+            className="bg-white/80 backdrop-blur-xl rounded-2xl border border-gray-200/60 shadow-lg shadow-gray-200/20 p-4"
+          >
+            <div className="flex flex-col xl:flex-row items-stretch xl:items-center justify-between gap-4">
+              {/* Tabs */}
+              <div className="flex items-center gap-1 p-1 bg-gray-100 rounded-xl overflow-x-auto scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-transparent flex-shrink-0">
+                {tabs.map((tab) => {
+                  const isActive = activeTab === tab.id;
+                  return (
+                    <motion.button
+                      key={tab.id}
+                      whileHover={{ scale: 1.02 }}
+                      whileTap={{ scale: 0.98 }}
+                      onClick={() => {
+                        setActiveTab(tab.id);
+                        setCurrentPage(1);
+                      }}
+                      className={`relative flex items-center gap-1.5 px-3 py-2 rounded-lg font-semibold text-xs sm:text-sm whitespace-nowrap transition-all ${
+                        isActive
+                          ? "text-white"
+                          : "text-gray-600 hover:text-gray-900"
+                      }`}
+                    >
+                      {isActive && (
+                        <motion.div
+                          layoutId="activeSellerTab"
+                          className="absolute inset-0 bg-gradient-to-r from-[#c6080a] to-rose-500 rounded-lg shadow-lg"
+                          transition={{
+                            type: "spring",
+                            stiffness: 500,
+                            damping: 30,
+                          }}
+                        />
+                      )}
+                      <tab.icon className="relative z-10 text-sm sm:text-base" />
+                      <span className="relative z-10 hidden sm:inline">{tab.label}</span>
+                    </motion.button>
+                  );
+                })}
+              </div>
+
+              {/* Search & Controls */}
+              <div className="flex items-center gap-2 sm:gap-3 flex-1 xl:flex-initial">
+                <div className="relative flex-1 min-w-0 sm:min-w-[200px] xl:min-w-[280px]">
+                  <IoSearch className="absolute left-3 sm:left-4 top-1/2 -translate-y-1/2 text-gray-400 text-base sm:text-lg" />
+                  <input
+                    type="search"
+                    value={searchQuery}
+                    onChange={(e) => {
+                      setSearchQuery(e.target.value);
+                      setCurrentPage(1);
+                    }}
+                    placeholder="Search sellers..."
+                    className="w-full pl-9 sm:pl-11 pr-3 sm:pr-4 py-2 sm:py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#c6080a]/20 focus:border-[#c6080a] transition-all text-sm"
                   />
-                  <div className="relative flex items-center justify-between">
-                    <div className="flex-1">
-                      <p className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">
-                        {stat.label}
-                      </p>
-                      <p className="text-3xl font-bold text-gray-900 mb-1">
-                        {stat.value}
-                      </p>
-                    </div>
-                    <div
-                      className={`w-12 h-12 rounded-xl bg-gradient-to-br ${stat.color} flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform duration-300`}
-                    >
-                      <Icon className="text-white text-xl" />
-                    </div>
-                  </div>
-                  {/* Decorative element */}
-                  <div className="absolute bottom-0 right-0 w-20 h-20 bg-gradient-to-tr from-transparent to-white/20 rounded-tl-full opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-                </motion.div>
-              );
-            })}
-          </div>
+                </div>
 
-          {/* Enhanced Tabs */}
-          <div className="relative bg-white rounded-2xl shadow-lg border border-gray-200/60 p-2 flex items-center gap-2 overflow-x-auto">
-            {["All", "Active", "Pending", "Approved", "Rejected"].map((tab) => {
-              const isActive = activeTab === tab;
-              return (
+                {/* View Toggle */}
+                <div className="flex items-center bg-gray-100 rounded-xl p-1">
+                  <button
+                    onClick={() => setViewMode("card")}
+                    className={`p-2.5 rounded-lg transition-all ${
+                      viewMode === "card"
+                        ? "bg-white shadow-md text-[#c6080a]"
+                        : "text-gray-500"
+                    }`}
+                  >
+                    <IoGrid className="text-lg" />
+                  </button>
+                  <button
+                    onClick={() => setViewMode("table")}
+                    className={`p-2.5 rounded-lg transition-all ${
+                      viewMode === "table"
+                        ? "bg-white shadow-md text-[#c6080a]"
+                        : "text-gray-500"
+                    }`}
+                  >
+                    <IoList className="text-lg" />
+                  </button>
+                </div>
+
+                {/* Refresh */}
                 <motion.button
-                  key={tab}
-                  onClick={() => handleTabClick(tab)}
                   whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.95 }}
-                  className={`relative px-5 py-2.5 rounded-xl font-semibold transition-all duration-300 whitespace-nowrap ${
-                    isActive
-                      ? "text-white"
-                      : "text-gray-700 hover:text-gray-900 hover:bg-gray-50"
-                  }`}
+                  whileTap={{ scale: 0.95, rotate: 180 }}
+                  onClick={() => fetchSellers(currentPage)}
+                  className="p-2.5 bg-gray-100 hover:bg-gray-200 rounded-xl transition-colors"
                 >
-                  {isActive && (
-                    <motion.div
-                      layoutId="activeTab"
-                      className="absolute inset-0 bg-gradient-to-r from-[#c6080a] via-[#e63946] to-rose-500 rounded-xl shadow-lg"
-                      transition={{
-                        type: "spring",
-                        stiffness: 500,
-                        damping: 30,
-                      }}
-                    />
-                  )}
-                  <span className="relative z-10">{tab}</span>
-                </motion.button>
-              );
-            })}
-          </div>
-
-          {/* Enhanced Search and Pagination */}
-          <div className="bg-white rounded-2xl shadow-lg border border-gray-200/60 p-5 flex items-center justify-between gap-4 flex-wrap">
-            <div className="relative flex-1 min-w-[280px]">
-              <div className="absolute inset-0 bg-gradient-to-r from-[#c6080a]/5 to-transparent rounded-xl opacity-0 hover:opacity-100 transition-opacity duration-300" />
-              <IoSearch className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 text-xl z-10" />
-              <input
-                type="search"
-                value={searchQuery}
-                onChange={(e) => handleSearch(e.target.value)}
-                placeholder="Search sellers by name, email, or store..."
-                className="relative w-full pl-12 pr-4 py-3 border-2 border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#c6080a]/20 focus:border-[#c6080a] transition-all duration-200 bg-gray-50/50 hover:bg-white"
-              />
-            </div>
-            <div className="flex items-center gap-4">
-              {/* View Toggle */}
-              <div className="flex items-center bg-gray-100 rounded-xl p-1">
-                <motion.button
-                  whileTap={{ scale: 0.95 }}
-                  onClick={() => setViewMode("card")}
-                  className={`p-2.5 rounded-lg transition-all ${
-                    viewMode === "card"
-                      ? "bg-white shadow-md text-[#c6080a]"
-                      : "text-gray-500 hover:text-gray-700"
-                  }`}
-                  title="Card View"
-                >
-                  <IoGrid className="text-lg" />
-                </motion.button>
-                <motion.button
-                  whileTap={{ scale: 0.95 }}
-                  onClick={() => setViewMode("table")}
-                  className={`p-2.5 rounded-lg transition-all ${
-                    viewMode === "table"
-                      ? "bg-white shadow-md text-[#c6080a]"
-                      : "text-gray-500 hover:text-gray-700"
-                  }`}
-                  title="Table View"
-                >
-                  <IoList className="text-lg" />
-                </motion.button>
-              </div>
-              <div className="flex items-center gap-2 px-4 py-2 bg-gray-50 rounded-xl border border-gray-200">
-                <span className="text-sm font-semibold text-gray-700">
-                  Page {currentPage} of {totalPages}
-                </span>
-              </div>
-              <div className="flex items-center gap-2">
-                <motion.button
-                  whileHover={{ scale: 1.1 }}
-                  whileTap={{ scale: 0.9 }}
-                  onClick={() => handlePageChange("prev")}
-                  disabled={currentPage === 1}
-                  className="p-2.5 rounded-xl disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-100 transition-colors disabled:hover:bg-transparent"
-                >
-                  <CiCircleChevLeft className="text-2xl text-[#c6080a]" />
-                </motion.button>
-                <motion.button
-                  whileHover={{ scale: 1.1 }}
-                  whileTap={{ scale: 0.9 }}
-                  onClick={() => handlePageChange("next")}
-                  disabled={currentPage === totalPages}
-                  className="p-2.5 rounded-xl disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-100 transition-colors disabled:hover:bg-transparent"
-                >
-                  <CiCircleChevRight className="text-2xl text-[#c6080a]" />
+                  <IoRefresh className="text-lg text-gray-600" />
                 </motion.button>
               </div>
             </div>
-          </div>
+          </motion.div>
 
-          {/* Suspension Reason Modal */}
-          <AnimatePresence>
-            {suspensionModalOpen && suspensionSeller && (
-              <motion.div
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                exit={{ opacity: 0 }}
-                className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4"
-                onClick={closeSuspensionModal}
-              >
-                <motion.div
-                  initial={{ opacity: 0, y: 30, scale: 0.95 }}
-                  animate={{ opacity: 1, y: 0, scale: 1 }}
-                  exit={{ opacity: 0, y: 20, scale: 0.95 }}
-                  transition={{ duration: 0.25, ease: [0.16, 1, 0.3, 1] }}
-                  onClick={(e) => e.stopPropagation()}
-                  className="w-full max-w-lg rounded-2xl bg-white shadow-2xl border border-gray-200 overflow-hidden"
-                >
-                  <div className="px-6 py-4 border-b border-gray-200 flex items-center justify-between bg-gradient-to-r from-red-700 via-red-600 to-red-700 text-white">
-                    <div>
-                      <h3 className="text-sm sm:text-base font-semibold">
-                        Suspend Seller
-                      </h3>
-                      <p className="text-xs text-gray-200 mt-0.5 truncate max-w-xs">
-                        {suspensionSeller.storeName}
-                      </p>
-                    </div>
-                    <button
-                      type="button"
-                      onClick={closeSuspensionModal}
-                      className="w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center text-gray-100 hover:text-white transition-colors"
-                    >
-                      <IoClose className="text-base" />
-                    </button>
-                  </div>
-                  <div className="px-6 py-5 space-y-4">
-                    <p className="text-xs text-gray-600">
-                      Please provide a clear reason for suspending this seller.
-                      This reason will be visible on the seller&apos;s profile.
-                    </p>
-                    <textarea
-                      value={suspensionReason}
-                      onChange={(e) => setSuspensionReason(e.target.value)}
-                      rows={4}
-                      placeholder="Enter suspension reason..."
-                      className="w-full px-3 py-2 text-sm border-2 border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#c6080a]/20 focus:border-[#c6080a] resize-none"
-                    />
-                  </div>
-                  <div className="px-6 py-4 border-t border-gray-200 bg-gray-50 flex items-center justify-end gap-3">
-                    <button
-                      type="button"
-                      onClick={closeSuspensionModal}
-                      className="px-4 py-2 text-xs sm:text-sm rounded-xl border border-gray-300 text-gray-700 hover:bg-white"
-                      disabled={isSuspensionSubmitting}
-                    >
-                      Cancel
-                    </button>
-                    <button
-                      type="button"
-                      onClick={async () => {
-                        if (!suspensionReason.trim()) {
-                          toast.error("Suspension reason is required");
-                          return;
-                        }
-                        try {
-                          setIsSuspensionSubmitting(true);
-                          await handleStatusUpdate(
-                            suspensionSeller._id,
-                            "suspended",
-                            false,
-                            suspensionReason.trim()
-                          );
-                          closeSuspensionModal();
-                        } catch (error) {
-                          console.error(error);
-                        } finally {
-                          setIsSuspensionSubmitting(false);
-                        }
-                      }}
-                      className="px-5 py-2 text-xs sm:text-sm rounded-xl font-semibold text-white bg-gradient-to-r from-red-700 to-red-600 hover:from-red-600 hover:to-red-700 shadow-lg hover:shadow-xl disabled:opacity-60 disabled:cursor-not-allowed flex items-center gap-2"
-                      disabled={isSuspensionSubmitting}
-                    >
-                      {isSuspensionSubmitting
-                        ? "Saving..."
-                        : "Confirm Suspension"}
-                    </button>
-                  </div>
-                </motion.div>
-              </motion.div>
-            )}
-          </AnimatePresence>
-
-          {/* Content View - Card or Table */}
+          {/* Content */}
           {isLoading ? (
-            <div className="flex items-center justify-center h-96 bg-white rounded-2xl shadow-lg border border-gray-200/60">
+            <div className="flex items-center justify-center h-96 bg-white/80 backdrop-blur-xl rounded-3xl border border-gray-200/60 shadow-lg">
               <Loader />
             </div>
           ) : viewMode === "card" ? (
-            /* Card View */
-            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
-              {safeData.length === 0 ? (
-                <div className="col-span-full flex flex-col items-center justify-center py-20 text-gray-400 bg-white rounded-2xl shadow-lg border border-gray-200/60">
-                  <FaStore className="text-5xl mb-4 opacity-30" />
-                  <p className="text-lg font-medium">No sellers found</p>
-                  <p className="text-sm mt-1">Try adjusting your search or filters</p>
-                </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-6">
+              {sellerData.length === 0 ? (
+                <motion.div
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  className="col-span-full flex flex-col items-center justify-center py-20 bg-white/80 backdrop-blur-xl rounded-3xl border border-gray-200/60"
+                >
+                  <IoStorefront className="text-6xl text-gray-300 mb-4" />
+                  <p className="text-xl font-semibold text-gray-500">
+                    No sellers found
+                  </p>
+                  <p className="text-sm text-gray-400 mt-1">
+                    Try adjusting your search or filters
+                  </p>
+                </motion.div>
               ) : (
-                safeData.map((seller, idx) => (
-                  <motion.div
+                sellerData.map((seller, idx) => (
+                  <SellerCard
                     key={seller._id}
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: idx * 0.05 }}
-                    whileHover={{ y: -4 }}
-                    className="group relative bg-white rounded-2xl shadow-lg border border-gray-200/60 overflow-hidden hover:shadow-2xl transition-all duration-300"
-                  >
-                    {/* Banner/Header */}
-                    <div className="relative h-28 bg-gradient-to-br from-[#c6080a] via-[#e63946] to-rose-500 overflow-hidden">
-                      {seller.storeBanner ? (
-                        <Image
-                          src={seller.storeBanner}
-                          alt={seller.storeName}
-                          fill
-                          className="object-cover"
-                        />
-                      ) : (
-                        <div className="absolute inset-0 opacity-20">
-                          <div className="absolute inset-0 bg-[radial-gradient(circle_at_30%_50%,rgba(255,255,255,0.2),transparent_50%)]" />
-                        </div>
-                      )}
-                      {/* Verification Badge */}
-                      <div className="absolute top-3 right-3">
-                        {getStatusBadge(seller.verificationStatus, seller.isActive)}
-                      </div>
-                      {/* Store Logo - Positioned at bottom */}
-                      <div className="absolute -bottom-10 left-5 z-10">
-                        <div className="w-20 h-20 rounded-2xl bg-white shadow-xl border-4 border-white overflow-hidden flex items-center justify-center">
-                          {seller.storeLogo ? (
-                            <Image
-                              src={seller.storeLogo}
-                              alt={seller.storeName}
-                              width={80}
-                              height={80}
-                              className="w-full h-full object-cover"
-                            />
-                          ) : (
-                            <div className="w-full h-full bg-gradient-to-br from-[#c6080a] to-[#e63946] flex items-center justify-center">
-                              <FaStore className="text-white text-2xl" />
-                            </div>
-                          )}
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* Content */}
-                    <div className="pt-12 px-5 pb-5">
-                      {/* Store Name */}
-                      <div className="mb-4">
-                        <h3 className="text-lg font-bold text-gray-900 group-hover:text-[#c6080a] transition-colors flex items-center gap-2">
-                          {seller.storeName}
-                          {seller.verificationStatus === "approved" && (
-                            <MdVerified className="text-blue-500 text-lg" />
-                          )}
-                        </h3>
-                        <p className="text-xs text-gray-500">/{seller.storeSlug}</p>
-                      </div>
-
-                      {/* Owner Info */}
-                      {seller.user && (
-                        <div className="flex items-center gap-3 mb-4 p-3 bg-gray-50 rounded-xl">
-                          {seller.user.avatar ? (
-                            <Image
-                              src={seller.user.avatar}
-                              alt={seller.user.name}
-                              width={40}
-                              height={40}
-                              className="w-10 h-10 rounded-full object-cover"
-                            />
-                          ) : (
-                            <div className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-white font-bold">
-                              {seller.user.name?.charAt(0) || "U"}
-                            </div>
-                          )}
-                          <div className="flex-1 min-w-0">
-                            <p className="text-sm font-semibold text-gray-900 truncate">{seller.user.name}</p>
-                            <p className="text-xs text-gray-500 truncate">{seller.user.email}</p>
-                          </div>
-                        </div>
-                      )}
-
-                      {/* Stats Grid */}
-                      <div className="grid grid-cols-3 gap-3 mb-4">
-                        <div className="text-center p-2 bg-blue-50 rounded-xl">
-                          <div className="flex items-center justify-center gap-1 text-blue-600 mb-1">
-                            <BiPackage className="text-sm" />
-                          </div>
-                          <p className="text-lg font-bold text-gray-900">{seller.totalProducts || 0}</p>
-                          <p className="text-[10px] text-gray-500 uppercase font-medium">Products</p>
-                        </div>
-                        <div className="text-center p-2 bg-emerald-50 rounded-xl">
-                          <div className="flex items-center justify-center gap-1 text-emerald-600 mb-1">
-                            <FaChartLine className="text-sm" />
-                          </div>
-                          <p className="text-lg font-bold text-gray-900">{seller.totalSales || 0}</p>
-                          <p className="text-[10px] text-gray-500 uppercase font-medium">Sales</p>
-                        </div>
-                        <div className="text-center p-2 bg-amber-50 rounded-xl">
-                          <div className="flex items-center justify-center gap-1 text-amber-600 mb-1">
-                            <FaStar className="text-sm" />
-                          </div>
-                          <div className="flex items-center justify-center gap-1">
-                            <p className="text-lg font-bold text-gray-900">{(seller.rating?.average || 0).toFixed(1)}</p>
-                            <FaStar className="text-amber-400 text-xs" />
-                          </div>
-                          <p className="text-[10px] text-gray-500">{seller.rating?.totalReviews || 0} reviews</p>
-                        </div>
-                      </div>
-
-                      {/* Revenue */}
-                      <div className="flex items-center justify-between p-3 bg-gradient-to-r from-green-50 to-emerald-50 rounded-xl mb-4">
-                        <div className="flex items-center gap-2">
-                          <div className="w-8 h-8 rounded-lg bg-emerald-500 flex items-center justify-center">
-                            <TbCurrencyEuro className="text-white text-lg" />
-                          </div>
-                          <span className="text-sm font-medium text-gray-700">Revenue</span>
-                        </div>
-                        <span className="text-lg font-bold text-emerald-600">
-                          €{(seller.totalRevenue || 0).toLocaleString()}
-                        </span>
-                      </div>
-
-                      {/* Location */}
-                      {seller.storeAddress?.city && (
-                        <div className="flex items-center gap-2 text-sm text-gray-500 mb-4">
-                          <FaMapMarkerAlt className="text-gray-400" />
-                          <span>{seller.storeAddress.city}, {seller.storeAddress.country}</span>
-                        </div>
-                      )}
-
-                      {/* Actions */}
-                      <div className="flex items-center gap-2 pt-3 border-t border-gray-100">
-                        <motion.button
-                          whileHover={{ scale: 1.05 }}
-                          whileTap={{ scale: 0.95 }}
-                          onClick={() => {
-                            setSelectedSeller(seller);
-                            setIsDetailModalOpen(true);
-                          }}
-                          className="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-xl text-sm font-semibold transition-colors"
-                        >
-                          <IoEye className="text-base" />
-                          View
-                        </motion.button>
-                        {(auth.user?.role === "superadmin" || auth.user?.role === "admin") && (
-                          <>
-                            <motion.button
-                              whileHover={{ scale: 1.05 }}
-                              whileTap={{ scale: 0.95 }}
-                              onClick={() => handleStatusUpdate(seller._id, "approved", seller.isActive, undefined)}
-                              className="p-2.5 bg-emerald-100 hover:bg-emerald-200 text-emerald-700 rounded-xl transition-colors"
-                              title="Approve"
-                            >
-                              <TbShieldCheck className="text-lg" />
-                            </motion.button>
-                            <motion.button
-                              whileHover={{ scale: 1.05 }}
-                              whileTap={{ scale: 0.95 }}
-                              onClick={() => handleStatusUpdate(seller._id, "rejected", seller.isActive, undefined)}
-                              className="p-2.5 bg-red-100 hover:bg-red-200 text-red-700 rounded-xl transition-colors"
-                              title="Reject"
-                            >
-                              <TbShieldX className="text-lg" />
-                            </motion.button>
-                            <motion.button
-                              whileHover={{ scale: 1.05 }}
-                              whileTap={{ scale: 0.95 }}
-                              onClick={() => openSuspensionModal(seller)}
-                              className="p-2.5 bg-gray-200 hover:bg-gray-300 text-gray-700 rounded-xl transition-colors"
-                              title="Suspend"
-                            >
-                              <MdCancel className="text-lg" />
-                            </motion.button>
-                          </>
-                        )}
-                      </div>
-                    </div>
-
-                    {/* Active Status Toggle */}
-                    <div className="absolute top-3 left-3">
-                      <button
-                        type="button"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleStatusUpdate(seller._id, seller.verificationStatus, !seller.isActive, undefined);
-                        }}
-                        className={`relative inline-flex h-6 w-10 items-center rounded-full transition-colors duration-200 focus:outline-none shadow-inner ${
-                          seller.isActive ? "bg-emerald-500" : "bg-gray-400"
-                        }`}
-                      >
-                        <span className={`absolute inline-block h-4 w-4 rounded-full bg-white shadow-lg transition-transform duration-300 ease-in-out ${
-                          seller.isActive ? "translate-x-5" : "translate-x-1"
-                        }`} />
-                      </button>
-                    </div>
-                  </motion.div>
+                    seller={seller}
+                    index={idx}
+                    onView={(s) => {
+                      setSelectedSeller(s);
+                      setIsDetailModalOpen(true);
+                    }}
+                    onChat={handleChatWithSeller}
+                    onApprove={(s) =>
+                      handleStatusUpdate(s._id, "approved", s.isActive)
+                    }
+                    onReject={(s) =>
+                      handleStatusUpdate(s._id, "rejected", s.isActive)
+                    }
+                    onSuspend={(s) => {
+                      setSuspensionSeller(s);
+                      setSuspensionModalOpen(true);
+                    }}
+                    onToggleStatus={(s) =>
+                      handleStatusUpdate(
+                        s._id,
+                        s.verificationStatus,
+                        !s.isActive
+                      )
+                    }
+                    isAdmin={isAdmin}
+                  />
                 ))
               )}
             </div>
           ) : (
-            /* Table View */
-            <div className="bg-white rounded-2xl shadow-lg border border-gray-200/60 overflow-hidden">
-              {safeColumns.length > 0 ? (
-                <div className="overflow-x-auto">
-                  <Table className="min-w-full">
-                    <TableHeader>
-                      <TableRow className="bg-gradient-to-r from-gray-50 to-gray-100/50 border-b-2 border-gray-200">
-                        <TableHead className="w-12">
-                          <input
-                            type="checkbox"
-                            onChange={toggleSelectAll}
-                            checked={
-                              allRowIds.length > 0 &&
-                              allRowIds.every((id) => rowSelection[id])
-                            }
-                            className="w-4 h-4 rounded border-gray-300 text-[#c6080a] focus:ring-2 focus:ring-[#c6080a]/20 cursor-pointer"
-                          />
-                        </TableHead>
-                        {safeColumns.map((col) => (
-                          <TableHead
-                            key={col.accessorKey}
-                            className="text-xs font-bold text-gray-700 uppercase tracking-wider py-4"
-                          >
-                            {col.Header || col.accessorKey}
-                          </TableHead>
-                        ))}
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {safeData.length === 0 ? (
-                        <TableRow>
-                          <TableCell colSpan={safeColumns.length + 1}>
-                            <div className="flex flex-col items-center justify-center py-20 text-gray-400">
-                              <FaStore className="text-5xl mb-4 opacity-30" />
-                              <p className="text-lg font-medium">No sellers found</p>
-                              <p className="text-sm mt-1">Try adjusting your search or filters</p>
-                            </div>
-                          </TableCell>
-                        </TableRow>
-                      ) : (
-                        safeData.map((row, idx) => {
-                          const rowId = String(row?._id || row?.id || idx);
-                          return (
-                            <motion.tr
-                              key={rowId}
-                              initial={{ opacity: 0, x: -20 }}
-                              animate={{ opacity: 1, x: 0 }}
-                              transition={{ delay: idx * 0.02 }}
-                              className="border-b border-gray-100 hover:bg-gradient-to-r hover:from-[#c6080a]/5 hover:to-transparent transition-all duration-200 group"
-                            >
-                              <TableCell className="py-4">
-                                <input
-                                  type="checkbox"
-                                  className="w-4 h-4 rounded border-gray-300 text-[#c6080a] focus:ring-2 focus:ring-[#c6080a]/20 cursor-pointer"
-                                  checked={!!rowSelection[rowId]}
-                                  onChange={() => toggleSelectRow(rowId)}
+            /* Table View - Similar to cards but in table format */
+            <div className="bg-white/80 backdrop-blur-xl rounded-3xl border border-gray-200/60 shadow-lg overflow-hidden">
+              <div className="overflow-x-auto">
+                <table className="w-full">
+                  <thead className="bg-gradient-to-r from-gray-50 to-gray-100/50 border-b border-gray-200">
+                    <tr>
+                      <th className="text-left px-6 py-4 text-xs font-bold text-gray-500 uppercase">
+                        Store
+                      </th>
+                      <th className="text-left px-6 py-4 text-xs font-bold text-gray-500 uppercase">
+                        Owner
+                      </th>
+                      <th className="text-left px-6 py-4 text-xs font-bold text-gray-500 uppercase">
+                        Status
+                      </th>
+                      <th className="text-left px-6 py-4 text-xs font-bold text-gray-500 uppercase">
+                        Stats
+                      </th>
+                      <th className="text-left px-6 py-4 text-xs font-bold text-gray-500 uppercase">
+                        Revenue
+                      </th>
+                      <th className="text-left px-6 py-4 text-xs font-bold text-gray-500 uppercase">
+                        Actions
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-gray-100">
+                    {sellerData.map((seller, idx) => (
+                      <motion.tr
+                        key={seller._id}
+                        initial={{ opacity: 0, x: -20 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        transition={{ delay: idx * 0.02 }}
+                        className="hover:bg-gray-50/50 transition-colors"
+                      >
+                        <td className="px-6 py-4">
+                          <div className="flex items-center gap-3">
+                            <div className="w-12 h-12 rounded-xl overflow-hidden bg-gray-100 flex-shrink-0">
+                              {seller.storeLogo ? (
+                                <Image
+                                  src={seller.storeLogo}
+                                  alt={seller.storeName}
+                                  width={48}
+                                  height={48}
+                                  className="w-full h-full object-cover"
                                 />
-                              </TableCell>
-                              {safeColumns.map((col) => (
-                                <TableCell
-                                  key={col.accessorKey}
-                                  className="py-4 group-hover:text-gray-900 transition-colors"
+                              ) : (
+                                <div className="w-full h-full bg-gradient-to-br from-[#c6080a] to-rose-500 flex items-center justify-center">
+                                  <IoStorefront className="text-white text-xl" />
+                                </div>
+                              )}
+                            </div>
+                            <div>
+                              <div className="flex items-center gap-1.5">
+                                <span className="font-semibold text-gray-900">
+                                  {seller.storeName}
+                                </span>
+                                {seller.verificationStatus === "approved" && (
+                                  <MdVerified className="text-blue-500" />
+                                )}
+                              </div>
+                              <span className="text-xs text-gray-500">
+                                /{seller.storeSlug}
+                              </span>
+                            </div>
+                          </div>
+                        </td>
+                        <td className="px-6 py-4">
+                          {seller.user && (
+                            <div className="flex items-center gap-2">
+                              {seller.user.avatar ? (
+                                <Image
+                                  src={seller.user.avatar}
+                                  alt={seller.user.name}
+                                  width={32}
+                                  height={32}
+                                  className="w-8 h-8 rounded-lg object-cover"
+                                />
+                              ) : (
+                                <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-violet-500 to-purple-600 flex items-center justify-center text-white text-sm font-bold">
+                                  {seller.user.name?.charAt(0)}
+                                </div>
+                              )}
+                              <div>
+                                <p className="text-sm font-medium text-gray-900">
+                                  {seller.user.name}
+                                </p>
+                                <p className="text-xs text-gray-500">
+                                  {seller.user.email}
+                                </p>
+                              </div>
+                            </div>
+                          )}
+                        </td>
+                        <td className="px-6 py-4">
+                          <span
+                            className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold ${
+                              seller.verificationStatus === "approved"
+                                ? "bg-emerald-100 text-emerald-700"
+                                : seller.verificationStatus === "pending"
+                                ? "bg-amber-100 text-amber-700"
+                                : seller.verificationStatus === "rejected"
+                                ? "bg-red-100 text-red-700"
+                                : "bg-gray-100 text-gray-700"
+                            }`}
+                          >
+                            {seller.verificationStatus === "approved" ? (
+                              <IoShieldCheckmark />
+                            ) : seller.verificationStatus === "pending" ? (
+                              <IoTimeOutline />
+                            ) : (
+                              <IoCloseCircle />
+                            )}
+                            {seller.verificationStatus}
+                          </span>
+                        </td>
+                        <td className="px-6 py-4">
+                          <div className="flex items-center gap-4 text-sm">
+                            <span className="text-gray-600">
+                              <strong>{seller.totalProducts || 0}</strong>{" "}
+                              products
+                            </span>
+                            <span className="text-gray-600">
+                              <strong>{seller.totalSales || 0}</strong> sales
+                            </span>
+                            <span className="text-amber-600 flex items-center gap-1">
+                              <FaStar className="text-amber-400" />
+                              {(seller.rating?.average || 0).toFixed(1)}
+                            </span>
+                          </div>
+                        </td>
+                        <td className="px-6 py-4">
+                          <span className="text-lg font-bold text-emerald-600">
+                            €{(seller.totalRevenue || 0).toLocaleString()}
+                          </span>
+                        </td>
+                        <td className="px-6 py-4">
+                          <div className="flex items-center gap-2">
+                            <button
+                              onClick={() => {
+                                setSelectedSeller(seller);
+                                setIsDetailModalOpen(true);
+                              }}
+                              className="p-2 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors"
+                            >
+                              <IoEye className="text-gray-600" />
+                            </button>
+                            <button
+                              onClick={() => handleChatWithSeller(seller)}
+                              className="p-2 bg-blue-100 hover:bg-blue-200 text-blue-600 rounded-lg transition-colors"
+                            >
+                              <IoChatbubbleEllipses />
+                            </button>
+                            {isAdmin && (
+                              <>
+                                <button
+                                  onClick={() =>
+                                    handleStatusUpdate(
+                                      seller._id,
+                                      "approved",
+                                      seller.isActive
+                                    )
+                                  }
+                                  className="p-2 bg-emerald-100 hover:bg-emerald-200 text-emerald-600 rounded-lg transition-colors"
                                 >
-                                  {renderCell(col, row)}
-                                </TableCell>
-                              ))}
-                            </motion.tr>
-                          );
-                        })
-                      )}
-                    </TableBody>
-                  </Table>
-                </div>
-              ) : (
-                <div className="flex flex-col items-center justify-center h-96 text-gray-400">
-                  <FaStore className="text-5xl mb-4 opacity-30" />
-                  <p className="text-lg font-medium">No sellers found</p>
-                </div>
-              )}
+                                  <TbShieldCheck />
+                                </button>
+                                <button
+                                  onClick={() =>
+                                    handleStatusUpdate(
+                                      seller._id,
+                                      "rejected",
+                                      seller.isActive
+                                    )
+                                  }
+                                  className="p-2 bg-red-100 hover:bg-red-200 text-red-600 rounded-lg transition-colors"
+                                >
+                                  <TbShieldX />
+                                </button>
+                              </>
+                            )}
+                          </div>
+                        </td>
+                      </motion.tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
             </div>
           )}
 
-          {/* Seller Detail Modal */}
-          <AnimatePresence>
-            {isDetailModalOpen && selectedSeller && (
-              <motion.div
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                exit={{ opacity: 0 }}
-                className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4 overflow-y-auto"
-                onClick={() => setIsDetailModalOpen(false)}
+          {/* Pagination */}
+          {totalPages > 1 && (
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              className="flex items-center justify-center gap-2"
+            >
+              <button
+                onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+                disabled={currentPage === 1}
+                className="flex items-center gap-2 px-4 py-2 bg-white border border-gray-200 rounded-xl hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
               >
-                <motion.div
-                  initial={{ opacity: 0, y: 30, scale: 0.95 }}
-                  animate={{ opacity: 1, y: 0, scale: 1 }}
-                  exit={{ opacity: 0, y: 20, scale: 0.95 }}
-                  transition={{ duration: 0.25, ease: [0.16, 1, 0.3, 1] }}
-                  onClick={(e) => e.stopPropagation()}
-                  className="w-full max-w-2xl rounded-2xl bg-white shadow-2xl border border-gray-200 overflow-hidden my-8"
-                >
-                  {/* Modal Header with Banner */}
-                  <div className="relative h-36 bg-gradient-to-br from-[#c6080a] via-[#e63946] to-rose-500">
-                    {selectedSeller.storeBanner && (
-                      <Image
-                        src={selectedSeller.storeBanner}
-                        alt={selectedSeller.storeName}
-                        fill
-                        className="object-cover"
-                      />
-                    )}
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
+                <IoChevronBack />
+                Previous
+              </button>
+              <div className="flex items-center gap-1">
+                {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+                  const page = i + 1;
+                  return (
                     <button
-                      type="button"
-                      onClick={() => setIsDetailModalOpen(false)}
-                      className="absolute top-4 right-4 w-10 h-10 rounded-full bg-white/20 backdrop-blur-sm hover:bg-white/30 flex items-center justify-center text-white transition-colors"
+                      key={page}
+                      onClick={() => setCurrentPage(page)}
+                      className={`w-10 h-10 rounded-xl font-semibold transition-all ${
+                        currentPage === page
+                          ? "bg-gradient-to-r from-[#c6080a] to-rose-500 text-white shadow-lg"
+                          : "bg-white border border-gray-200 hover:bg-gray-50"
+                      }`}
                     >
-                      <IoClose className="text-xl" />
+                      {page}
                     </button>
-                    {/* Store Logo */}
-                    <div className="absolute -bottom-12 left-6">
-                      <div className="w-24 h-24 rounded-2xl bg-white shadow-xl border-4 border-white overflow-hidden">
-                        {selectedSeller.storeLogo ? (
-                          <Image
-                            src={selectedSeller.storeLogo}
-                            alt={selectedSeller.storeName}
-                            width={96}
-                            height={96}
-                            className="w-full h-full object-cover"
-                          />
-                        ) : (
-                          <div className="w-full h-full bg-gradient-to-br from-[#c6080a] to-[#e63946] flex items-center justify-center">
-                            <FaStore className="text-white text-3xl" />
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                    {/* Status Badge */}
-                    <div className="absolute bottom-4 right-4">
-                      {getStatusBadge(selectedSeller.verificationStatus, selectedSeller.isActive)}
-                    </div>
-                  </div>
-
-                  {/* Modal Content */}
-                  <div className="pt-16 px-6 pb-6">
-                    {/* Store Info */}
-                    <div className="mb-6">
-                      <h2 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
-                        {selectedSeller.storeName}
-                        {selectedSeller.verificationStatus === "approved" && (
-                          <MdVerified className="text-blue-500" />
-                        )}
-                      </h2>
-                      <p className="text-sm text-gray-500">/{selectedSeller.storeSlug}</p>
-                      {selectedSeller.storeDescription && (
-                        <p className="mt-3 text-sm text-gray-600 leading-relaxed">
-                          {selectedSeller.storeDescription}
-                        </p>
-                      )}
-                    </div>
-
-                    {/* Stats */}
-                    <div className="grid grid-cols-4 gap-3 mb-6">
-                      <div className="text-center p-4 bg-blue-50 rounded-xl">
-                        <BiPackage className="text-blue-500 text-xl mx-auto mb-2" />
-                        <p className="text-2xl font-bold text-gray-900">{selectedSeller.totalProducts || 0}</p>
-                        <p className="text-xs text-gray-500 uppercase">Products</p>
-                      </div>
-                      <div className="text-center p-4 bg-emerald-50 rounded-xl">
-                        <FaChartLine className="text-emerald-500 text-xl mx-auto mb-2" />
-                        <p className="text-2xl font-bold text-gray-900">{selectedSeller.totalSales || 0}</p>
-                        <p className="text-xs text-gray-500 uppercase">Sales</p>
-                      </div>
-                      <div className="text-center p-4 bg-green-50 rounded-xl">
-                        <TbCurrencyEuro className="text-green-500 text-xl mx-auto mb-2" />
-                        <p className="text-2xl font-bold text-gray-900">€{(selectedSeller.totalRevenue || 0).toLocaleString()}</p>
-                        <p className="text-xs text-gray-500 uppercase">Revenue</p>
-                      </div>
-                      <div className="text-center p-4 bg-amber-50 rounded-xl">
-                        <FaStar className="text-amber-500 text-xl mx-auto mb-2" />
-                        <p className="text-2xl font-bold text-gray-900">{(selectedSeller.rating?.average || 0).toFixed(1)}</p>
-                        <p className="text-xs text-gray-500 uppercase">{selectedSeller.rating?.totalReviews || 0} Reviews</p>
-                      </div>
-                    </div>
-
-                    {/* Owner & Contact Info */}
-                    <div className="grid grid-cols-2 gap-4 mb-6">
-                      {/* Owner */}
-                      {selectedSeller.user && (
-                        <div className="p-4 bg-gray-50 rounded-xl">
-                          <p className="text-xs font-bold text-gray-500 uppercase mb-3">Store Owner</p>
-                          <div className="flex items-center gap-3">
-                            {selectedSeller.user.avatar ? (
-                              <Image
-                                src={selectedSeller.user.avatar}
-                                alt={selectedSeller.user.name}
-                                width={48}
-                                height={48}
-                                className="w-12 h-12 rounded-full object-cover"
-                              />
-                            ) : (
-                              <div className="w-12 h-12 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-white font-bold text-lg">
-                                {selectedSeller.user.name?.charAt(0) || "U"}
-                              </div>
-                            )}
-                            <div>
-                              <p className="font-semibold text-gray-900">{selectedSeller.user.name}</p>
-                              <p className="text-xs text-gray-500">{selectedSeller.user.email}</p>
-                            </div>
-                          </div>
-                        </div>
-                      )}
-
-                      {/* Contact */}
-                      <div className="p-4 bg-gray-50 rounded-xl">
-                        <p className="text-xs font-bold text-gray-500 uppercase mb-3">Contact Info</p>
-                        <div className="space-y-2">
-                          {selectedSeller.contactEmail && (
-                            <div className="flex items-center gap-2 text-sm text-gray-600">
-                              <FaEnvelope className="text-gray-400" />
-                              <span className="truncate">{selectedSeller.contactEmail}</span>
-                            </div>
-                          )}
-                          {selectedSeller.contactPhone && (
-                            <div className="flex items-center gap-2 text-sm text-gray-600">
-                              <FaPhone className="text-gray-400" />
-                              <span>{selectedSeller.contactPhone}</span>
-                            </div>
-                          )}
-                          {selectedSeller.storeAddress?.city && (
-                            <div className="flex items-center gap-2 text-sm text-gray-600">
-                              <FaMapMarkerAlt className="text-gray-400" />
-                              <span>{selectedSeller.storeAddress.city}, {selectedSeller.storeAddress.country}</span>
-                            </div>
-                          )}
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* Social Links */}
-                    {(selectedSeller.socialLinks?.website || selectedSeller.socialLinks?.facebook || selectedSeller.socialLinks?.instagram) && (
-                      <div className="mb-6">
-                        <p className="text-xs font-bold text-gray-500 uppercase mb-3">Social Links</p>
-                        <div className="flex items-center gap-2">
-                          {selectedSeller.socialLinks?.website && (
-                            <a href={selectedSeller.socialLinks.website} target="_blank" rel="noopener noreferrer" className="p-2.5 bg-gray-100 hover:bg-gray-200 rounded-xl transition-colors">
-                              <FaGlobe className="text-gray-600" />
-                            </a>
-                          )}
-                        </div>
-                      </div>
-                    )}
-
-                    {/* Joined Date */}
-                    <div className="text-sm text-gray-500 pt-4 border-t border-gray-200">
-                      Joined: {format(new Date(selectedSeller.createdAt), "MMMM dd, yyyy")}
-                    </div>
-                  </div>
-                </motion.div>
-              </motion.div>
-            )}
-          </AnimatePresence>
+                  );
+                })}
+                {totalPages > 5 && (
+                  <span className="px-2 text-gray-400">...</span>
+                )}
+              </div>
+              <button
+                onClick={() =>
+                  setCurrentPage((p) => Math.min(totalPages, p + 1))
+                }
+                disabled={currentPage === totalPages}
+                className="flex items-center gap-2 px-4 py-2 bg-white border border-gray-200 rounded-xl hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+              >
+                Next
+                <IoChevronForward />
+              </button>
+            </motion.div>
+          )}
         </div>
+
+        {/* Seller Detail Modal */}
+        <SellerDetailModal
+          seller={selectedSeller}
+          isOpen={isDetailModalOpen}
+          onClose={() => setIsDetailModalOpen(false)}
+          onChat={handleChatWithSeller}
+        />
+
+        {/* Suspension Modal */}
+        <AnimatePresence>
+          {suspensionModalOpen && suspensionSeller && (
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/60 backdrop-blur-md p-4"
+              onClick={() => setSuspensionModalOpen(false)}
+            >
+              <motion.div
+                initial={{ scale: 0.9, opacity: 0 }}
+                animate={{ scale: 1, opacity: 1 }}
+                exit={{ scale: 0.9, opacity: 0 }}
+                onClick={(e) => e.stopPropagation()}
+                className="w-full max-w-md bg-white rounded-2xl shadow-2xl overflow-hidden"
+              >
+                <div className="bg-gradient-to-r from-amber-500 to-orange-500 px-6 py-4 flex items-center justify-between">
+                  <div>
+                    <h3 className="text-lg font-bold text-white">
+                      Suspend Seller
+                    </h3>
+                    <p className="text-sm text-white/80">
+                      {suspensionSeller.storeName}
+                    </p>
+                  </div>
+                  <button
+                    onClick={() => setSuspensionModalOpen(false)}
+                    className="p-2 bg-white/20 rounded-full hover:bg-white/30 transition-colors"
+                  >
+                    <IoClose className="text-white text-lg" />
+                  </button>
+                </div>
+                <div className="p-6">
+                  <p className="text-sm text-gray-600 mb-4">
+                    Please provide a reason for suspension. This will be visible
+                    to the seller.
+                  </p>
+                  <textarea
+                    value={suspensionReason}
+                    onChange={(e) => setSuspensionReason(e.target.value)}
+                    rows={4}
+                    placeholder="Enter suspension reason..."
+                    className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 resize-none"
+                  />
+                </div>
+                <div className="px-6 py-4 bg-gray-50 flex items-center justify-end gap-3">
+                  <button
+                    onClick={() => setSuspensionModalOpen(false)}
+                    className="px-4 py-2 text-gray-600 hover:bg-gray-100 rounded-xl transition-colors"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    onClick={async () => {
+                      if (!suspensionReason.trim()) {
+                        toast.error("Please provide a suspension reason");
+                        return;
+                      }
+                      await handleStatusUpdate(
+                        suspensionSeller._id,
+                        "suspended",
+                        false,
+                        suspensionReason
+                      );
+                      setSuspensionModalOpen(false);
+                      setSuspensionReason("");
+                    }}
+                    className="px-5 py-2 bg-gradient-to-r from-amber-500 to-orange-500 text-white font-semibold rounded-xl hover:shadow-lg transition-all"
+                  >
+                    Confirm Suspension
+                  </button>
+                </div>
+              </motion.div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        {/* Chat Loading Overlay */}
+        <AnimatePresence>
+          {isChatLoading && (
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="fixed inset-0 z-[99999] flex items-center justify-center bg-black/50 backdrop-blur-sm"
+            >
+              <motion.div
+                initial={{ scale: 0.9 }}
+                animate={{ scale: 1 }}
+                className="bg-white rounded-2xl p-8 shadow-2xl flex flex-col items-center gap-4"
+              >
+                <div className="w-16 h-16 border-4 border-blue-500 border-t-transparent rounded-full animate-spin" />
+                <p className="text-gray-600 font-medium">Creating chat...</p>
+              </motion.div>
+            </motion.div>
+          )}
+        </AnimatePresence>
       </div>
     </MainLayout>
   );
