@@ -98,7 +98,7 @@ export default function Dashboard() {
   const router = useRouter();
   const [currentUrl, setCurrentUrl] = useState("");
   const [activeTab, setActiveTab] = useState("overview");
-  const [period, setPeriod] = useState("month");
+  const [period, setPeriod] = useState("all");
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
 
