@@ -1,7 +1,7 @@
 "use client";
 import React, { useRef, useMemo, useState, useEffect, Suspense } from "react";
-import { Canvas, useFrame, useThree } from "@react-three/fiber";
-import { OrbitControls, useTexture, Sphere, Html } from "@react-three/drei";
+import { Canvas, useFrame, useThree, useLoader } from "@react-three/fiber";
+import { OrbitControls, Html, useTexture } from "@react-three/drei";
 import * as THREE from "three";
 
 // Country coordinates mapping (latitude, longitude)
@@ -73,83 +73,77 @@ const latLngToVector3 = (lat, lng, radius) => {
   return new THREE.Vector3(x, y, z);
 };
 
-// Animated connection arc between two points
-function ConnectionArc({ start, end, color = "#10b981" }) {
-  const curve = useMemo(() => {
-    const midPoint = new THREE.Vector3().addVectors(start, end).multiplyScalar(0.5);
-    midPoint.normalize().multiplyScalar(1.3);
-    return new THREE.QuadraticBezierCurve3(start, midPoint, end);
-  }, [start, end]);
-
-  const points = curve.getPoints(50);
-  const geometry = new THREE.BufferGeometry().setFromPoints(points);
-
-  return (
-    <line geometry={geometry}>
-      <lineBasicMaterial color={color} transparent opacity={0.4} />
-    </line>
-  );
-}
-
 // Pulsing marker for countries
 function CountryMarker({ position, country, orderCount, userCount, isSelected, onClick }) {
   const markerRef = useRef();
-  const ringRef = useRef();
+  const outerRingRef = useRef();
   const [hovered, setHovered] = useState(false);
 
   useFrame((state) => {
+    const time = state.clock.elapsedTime;
+
     if (markerRef.current) {
-      // Pulse animation
-      const pulse = 1 + Math.sin(state.clock.elapsedTime * 3) * 0.15;
+      const pulse = 1 + Math.sin(time * 2.5) * 0.15;
       markerRef.current.scale.setScalar(hovered || isSelected ? pulse * 1.3 : pulse);
     }
-    if (ringRef.current) {
-      // Expanding ring animation
-      const scale = 1 + ((state.clock.elapsedTime * 0.5) % 1) * 2;
-      const opacity = 1 - ((state.clock.elapsedTime * 0.5) % 1);
-      ringRef.current.scale.setScalar(scale);
-      ringRef.current.material.opacity = opacity * 0.5;
+
+    if (outerRingRef.current) {
+      const wave = (time * 0.6) % 1.5;
+      const scale = 1 + wave * 2;
+      const opacity = Math.max(0, 0.5 - wave * 0.4);
+      outerRingRef.current.scale.setScalar(scale);
+      outerRingRef.current.material.opacity = opacity;
     }
   });
 
-  // Size and color based on order count
-  const baseSize = Math.max(0.015, Math.min(0.05, 0.015 + (orderCount / 200) * 0.035));
-  const color = orderCount > 50 ? "#ef4444" : orderCount > 20 ? "#f59e0b" : "#10b981";
+  const baseSize = Math.max(0.02, Math.min(0.05, 0.02 + (orderCount / 100) * 0.03));
+
+  const getColor = () => {
+    if (orderCount > 50) return { main: "#ef4444", glow: "#fca5a5" };
+    if (orderCount > 20) return { main: "#f59e0b", glow: "#fcd34d" };
+    return { main: "#10b981", glow: "#6ee7b7" };
+  };
+  const colors = getColor();
 
   return (
     <group position={position}>
-      {/* Main marker dot */}
+      {/* Outer ring wave */}
+      <mesh ref={outerRingRef} rotation={[Math.PI / 2, 0, 0]}>
+        <ringGeometry args={[baseSize * 1.5, baseSize * 2.2, 32]} />
+        <meshBasicMaterial color={colors.glow} transparent opacity={0.4} side={THREE.DoubleSide} depthWrite={false} />
+      </mesh>
+
+      {/* Glow */}
+      <mesh scale={2.2}>
+        <sphereGeometry args={[baseSize, 16, 16]} />
+        <meshBasicMaterial color={colors.glow} transparent opacity={0.2} depthWrite={false} />
+      </mesh>
+
+      {/* Main marker */}
       <mesh
         ref={markerRef}
-        onPointerOver={(e) => { e.stopPropagation(); setHovered(true); }}
-        onPointerOut={() => setHovered(false)}
+        onPointerOver={(e) => { e.stopPropagation(); setHovered(true); document.body.style.cursor = 'pointer'; }}
+        onPointerOut={() => { setHovered(false); document.body.style.cursor = 'auto'; }}
         onClick={(e) => { e.stopPropagation(); onClick?.(); }}
       >
-        <sphereGeometry args={[baseSize, 16, 16]} />
-        <meshBasicMaterial color={color} />
+        <sphereGeometry args={[baseSize, 20, 20]} />
+        <meshStandardMaterial color={colors.main} emissive={colors.main} emissiveIntensity={0.8} roughness={0.2} metalness={0.3} />
       </mesh>
 
-      {/* Glow effect */}
-      <mesh scale={2}>
-        <sphereGeometry args={[baseSize, 16, 16]} />
-        <meshBasicMaterial color={color} transparent opacity={0.3} />
+      {/* Bright center */}
+      <mesh scale={0.4}>
+        <sphereGeometry args={[baseSize, 12, 12]} />
+        <meshBasicMaterial color="#ffffff" transparent opacity={0.9} />
       </mesh>
 
-      {/* Pulsing ring */}
-      <mesh ref={ringRef} rotation={[Math.PI / 2, 0, 0]}>
-        <ringGeometry args={[baseSize * 1.5, baseSize * 2, 32]} />
-        <meshBasicMaterial color={color} transparent opacity={0.5} side={THREE.DoubleSide} />
-      </mesh>
-
-      {/* Tooltip - Small compact card */}
+      {/* Tooltip */}
       {(hovered || isSelected) && (
-        <Html distanceFactor={10} style={{ pointerEvents: "none" }}>
-          <div className="bg-gray-900/95 backdrop-blur-sm text-white px-2.5 py-1.5 rounded-lg shadow-lg border border-gray-700 whitespace-nowrap transform -translate-x-1/2">
-            <p className="font-semibold text-xs capitalize">{country}</p>
-            <div className="flex items-center gap-2 mt-0.5 text-[10px]">
-              <span className="text-emerald-400">{userCount}</span>
-              <span className="text-gray-500">|</span>
-              <span className="text-blue-400">{orderCount}</span>
+        <Html distanceFactor={6} style={{ pointerEvents: "none" }}>
+          <div className="bg-gray-900/95 backdrop-blur-xl text-white px-3 py-2 rounded-lg shadow-2xl border border-gray-600/50 whitespace-nowrap transform -translate-x-1/2 -translate-y-full -mt-3">
+            <p className="font-bold text-sm capitalize">{country}</p>
+            <div className="flex items-center gap-3 text-xs mt-1">
+              <span className="text-emerald-400">{userCount} users</span>
+              <span className="text-blue-400">{orderCount} orders</span>
             </div>
           </div>
         </Html>
@@ -158,142 +152,309 @@ function CountryMarker({ position, country, orderCount, userCount, isSelected, o
   );
 }
 
-// Earth component with realistic textures
-function Earth({ userData, selectedCountry, onSelectCountry }) {
-  const earthRef = useRef();
-  const atmosphereRef = useRef();
-  const { gl } = useThree();
+// Create realistic Earth texture that looks like actual Earth
+function createEarthTexture() {
+  const canvas = document.createElement("canvas");
+  canvas.width = 2048;
+  canvas.height = 1024;
+  const ctx = canvas.getContext("2d");
 
-  // Create Earth texture
-  const earthTexture = useMemo(() => {
-    const canvas = document.createElement("canvas");
-    canvas.width = 2048;
-    canvas.height = 1024;
-    const ctx = canvas.getContext("2d");
+  // Ocean gradient - realistic blue
+  const oceanGradient = ctx.createLinearGradient(0, 0, 0, canvas.height);
+  oceanGradient.addColorStop(0, "#1a4c7c");
+  oceanGradient.addColorStop(0.15, "#1565a8");
+  oceanGradient.addColorStop(0.35, "#1976c2");
+  oceanGradient.addColorStop(0.5, "#1e88d0");
+  oceanGradient.addColorStop(0.65, "#1976c2");
+  oceanGradient.addColorStop(0.85, "#1565a8");
+  oceanGradient.addColorStop(1, "#1a4c7c");
+  ctx.fillStyle = oceanGradient;
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-    // Create gradient ocean
-    const oceanGradient = ctx.createRadialGradient(1024, 512, 0, 1024, 512, 1200);
-    oceanGradient.addColorStop(0, "#1a365d");
-    oceanGradient.addColorStop(0.5, "#1e3a5f");
-    oceanGradient.addColorStop(1, "#0f172a");
-    ctx.fillStyle = oceanGradient;
-    ctx.fillRect(0, 0, canvas.width, canvas.height);
+  // Ocean texture - subtle variation
+  for (let i = 0; i < 8000; i++) {
+    const x = Math.random() * canvas.width;
+    const y = Math.random() * canvas.height;
+    const alpha = Math.random() * 0.1;
+    const brightness = Math.random() > 0.5 ? 255 : 0;
+    ctx.fillStyle = `rgba(${brightness}, ${brightness}, ${brightness}, ${alpha})`;
+    ctx.beginPath();
+    ctx.arc(x, y, Math.random() * 4 + 1, 0, Math.PI * 2);
+    ctx.fill();
+  }
 
-    // Add subtle ocean texture
-    ctx.globalAlpha = 0.1;
-    for (let i = 0; i < 5000; i++) {
-      ctx.fillStyle = `rgba(59, 130, 246, ${Math.random() * 0.3})`;
-      ctx.fillRect(
-        Math.random() * canvas.width,
-        Math.random() * canvas.height,
-        Math.random() * 3 + 1,
-        Math.random() * 3 + 1
-      );
+  // Draw realistic continents
+  const drawLand = (path, baseColor, darkColor, lightColor) => {
+    // Main fill
+    ctx.fillStyle = baseColor;
+    ctx.beginPath();
+    ctx.moveTo(path[0][0], path[0][1]);
+    for (let i = 1; i < path.length; i++) {
+      ctx.lineTo(path[i][0], path[i][1]);
     }
-    ctx.globalAlpha = 1;
-
-    // Draw continents with more detail
-    ctx.fillStyle = "#1f4d3a";
-
-    // North America
-    ctx.beginPath();
-    ctx.moveTo(150, 180);
-    ctx.bezierCurveTo(200, 120, 350, 100, 400, 150);
-    ctx.bezierCurveTo(420, 200, 380, 280, 350, 320);
-    ctx.bezierCurveTo(320, 380, 280, 400, 250, 380);
-    ctx.bezierCurveTo(200, 350, 160, 300, 150, 250);
     ctx.closePath();
     ctx.fill();
 
-    // South America
-    ctx.beginPath();
-    ctx.moveTo(320, 420);
-    ctx.bezierCurveTo(380, 400, 400, 450, 390, 520);
-    ctx.bezierCurveTo(380, 600, 350, 700, 310, 750);
-    ctx.bezierCurveTo(280, 780, 260, 720, 270, 650);
-    ctx.bezierCurveTo(280, 580, 290, 500, 320, 420);
-    ctx.closePath();
-    ctx.fill();
+    // Add terrain variation
+    ctx.save();
+    ctx.clip();
 
-    // Europe
-    ctx.beginPath();
-    ctx.moveTo(980, 150);
-    ctx.bezierCurveTo(1050, 130, 1120, 150, 1150, 180);
-    ctx.bezierCurveTo(1180, 220, 1160, 280, 1120, 300);
-    ctx.bezierCurveTo(1080, 320, 1020, 310, 980, 280);
-    ctx.bezierCurveTo(950, 250, 940, 200, 980, 150);
-    ctx.closePath();
-    ctx.fill();
+    // Dark areas (mountains/forests)
+    for (let i = 0; i < 40; i++) {
+      const idx = Math.floor(Math.random() * path.length);
+      const x = path[idx][0] + (Math.random() - 0.5) * 100;
+      const y = path[idx][1] + (Math.random() - 0.5) * 80;
+      const gradient = ctx.createRadialGradient(x, y, 0, x, y, Math.random() * 40 + 20);
+      gradient.addColorStop(0, darkColor);
+      gradient.addColorStop(1, "transparent");
+      ctx.fillStyle = gradient;
+      ctx.fillRect(x - 60, y - 60, 120, 120);
+    }
 
-    // Africa
-    ctx.beginPath();
-    ctx.moveTo(1000, 340);
-    ctx.bezierCurveTo(1080, 320, 1140, 360, 1160, 420);
-    ctx.bezierCurveTo(1180, 500, 1150, 600, 1100, 680);
-    ctx.bezierCurveTo(1050, 720, 980, 700, 950, 640);
-    ctx.bezierCurveTo(920, 580, 930, 500, 960, 420);
-    ctx.bezierCurveTo(980, 360, 1000, 340, 1000, 340);
-    ctx.closePath();
-    ctx.fill();
-
-    // Asia
-    ctx.beginPath();
-    ctx.moveTo(1200, 150);
-    ctx.bezierCurveTo(1350, 120, 1550, 150, 1700, 200);
-    ctx.bezierCurveTo(1800, 250, 1850, 350, 1800, 420);
-    ctx.bezierCurveTo(1750, 480, 1600, 500, 1500, 480);
-    ctx.bezierCurveTo(1400, 460, 1300, 420, 1250, 380);
-    ctx.bezierCurveTo(1180, 320, 1150, 250, 1200, 150);
-    ctx.closePath();
-    ctx.fill();
-
-    // Australia
-    ctx.beginPath();
-    ctx.moveTo(1650, 580);
-    ctx.bezierCurveTo(1750, 560, 1850, 600, 1880, 680);
-    ctx.bezierCurveTo(1900, 750, 1850, 800, 1780, 800);
-    ctx.bezierCurveTo(1700, 800, 1620, 750, 1600, 680);
-    ctx.bezierCurveTo(1580, 620, 1600, 580, 1650, 580);
-    ctx.closePath();
-    ctx.fill();
-
-    // Add continent highlights
-    ctx.fillStyle = "#2d6a4f";
-    ctx.globalAlpha = 0.5;
-    for (let i = 0; i < 200; i++) {
-      const x = Math.random() * canvas.width;
-      const y = Math.random() * canvas.height;
+    // Light areas (plains/deserts)
+    for (let i = 0; i < 30; i++) {
+      const idx = Math.floor(Math.random() * path.length);
+      const x = path[idx][0] + (Math.random() - 0.5) * 80;
+      const y = path[idx][1] + (Math.random() - 0.5) * 60;
+      ctx.fillStyle = `rgba(180, 160, 120, ${Math.random() * 0.3})`;
       ctx.beginPath();
-      ctx.arc(x, y, Math.random() * 15 + 5, 0, Math.PI * 2);
+      ctx.arc(x, y, Math.random() * 25 + 10, 0, Math.PI * 2);
       ctx.fill();
     }
-    ctx.globalAlpha = 1;
 
-    // Add country borders effect
-    ctx.strokeStyle = "#3d8b67";
-    ctx.lineWidth = 1;
-    ctx.globalAlpha = 0.3;
-    for (let i = 0; i < 100; i++) {
-      ctx.beginPath();
-      ctx.moveTo(Math.random() * canvas.width, Math.random() * canvas.height);
-      ctx.lineTo(Math.random() * canvas.width, Math.random() * canvas.height);
-      ctx.stroke();
-    }
-    ctx.globalAlpha = 1;
+    ctx.restore();
 
-    const texture = new THREE.CanvasTexture(canvas);
-    texture.needsUpdate = true;
-    return texture;
-  }, []);
+    // Coastline
+    ctx.strokeStyle = "rgba(100, 180, 100, 0.4)";
+    ctx.lineWidth = 2;
+    ctx.stroke();
+  };
 
-  // Slow rotation
-  useFrame((state, delta) => {
-    if (earthRef.current) {
-      earthRef.current.rotation.y += delta * 0.05;
+  // Continent colors
+  const green1 = "#3d7c47";  // Forest green
+  const green2 = "#2d5a34";  // Dark forest
+  const green3 = "#5a9c64";  // Light green
+  const brown = "#8b7355";   // Desert/mountain
+  const darkBrown = "#5c4a3d";
+
+  // North America
+  drawLand([
+    [85, 95], [140, 75], [220, 65], [300, 75], [380, 95], [420, 130],
+    [440, 180], [430, 220], [400, 260], [380, 300], [340, 340], [300, 360],
+    [260, 370], [220, 360], [180, 340], [150, 300], [130, 250], [100, 200],
+    [85, 150]
+  ], green1, green2, green3);
+
+  // Alaska
+  drawLand([
+    [50, 110], [90, 90], [130, 100], [120, 140], [80, 150], [50, 140]
+  ], green2, darkBrown, green1);
+
+  // Greenland
+  drawLand([
+    [380, 50], [440, 40], [480, 55], [490, 100], [470, 130], [420, 140], [380, 110]
+  ], "#e8e8e8", "#c0c0c0", "#f5f5f5");
+
+  // Central America & Caribbean
+  drawLand([
+    [240, 380], [280, 370], [310, 390], [300, 420], [270, 440], [240, 430], [220, 400]
+  ], green1, green2, green3);
+
+  // South America
+  drawLand([
+    [300, 460], [360, 440], [400, 470], [420, 530], [400, 620], [360, 720],
+    [320, 800], [280, 820], [260, 780], [250, 700], [260, 600], [280, 520]
+  ], green1, green2, green3);
+
+  // Europe
+  drawLand([
+    [940, 120], [1000, 100], [1060, 110], [1100, 140], [1120, 180],
+    [1100, 220], [1060, 250], [1000, 260], [960, 240], [930, 200], [920, 160]
+  ], green1, green2, green3);
+
+  // Scandinavia
+  drawLand([
+    [980, 60], [1020, 45], [1060, 55], [1070, 100], [1040, 130], [1000, 120], [970, 90]
+  ], green2, darkBrown, green1);
+
+  // British Isles
+  drawLand([
+    [900, 130], [930, 120], [940, 145], [930, 180], [905, 185], [890, 160]
+  ], green1, green2, green3);
+
+  // Iceland
+  drawLand([
+    [850, 70], [880, 65], [895, 80], [885, 100], [860, 100], [845, 85]
+  ], green2, "#a0a0a0", green1);
+
+  // Africa
+  drawLand([
+    [960, 290], [1040, 270], [1100, 290], [1140, 350], [1150, 440],
+    [1130, 550], [1080, 650], [1020, 700], [960, 680], [920, 600],
+    [910, 500], [920, 400], [940, 330]
+  ], "#c4a55a", brown, "#d4b56a");
+
+  // Madagascar
+  drawLand([
+    [1160, 580], [1175, 570], [1185, 600], [1180, 660], [1165, 680], [1150, 650], [1150, 600]
+  ], green1, green2, green3);
+
+  // Middle East
+  drawLand([
+    [1100, 260], [1160, 250], [1200, 280], [1220, 340], [1180, 380], [1120, 360], [1100, 310]
+  ], "#c4a55a", brown, "#b89a4a");
+
+  // Russia/Asia North
+  drawLand([
+    [1080, 80], [1300, 60], [1550, 70], [1750, 100], [1850, 150],
+    [1850, 200], [1750, 220], [1550, 200], [1300, 180], [1100, 160]
+  ], green2, darkBrown, green1);
+
+  // Asia Main
+  drawLand([
+    [1200, 220], [1350, 200], [1500, 220], [1620, 280], [1680, 360],
+    [1650, 420], [1550, 450], [1400, 440], [1280, 400], [1220, 340]
+  ], green1, green2, "#b89a4a");
+
+  // India
+  drawLand([
+    [1320, 340], [1380, 320], [1420, 360], [1410, 450], [1370, 520],
+    [1320, 500], [1300, 440], [1300, 380]
+  ], green1, brown, green3);
+
+  // Southeast Asia
+  drawLand([
+    [1450, 400], [1520, 380], [1560, 420], [1540, 500], [1490, 540], [1450, 500], [1440, 450]
+  ], green1, green2, green3);
+
+  // Japan
+  drawLand([
+    [1720, 240], [1750, 230], [1760, 270], [1750, 320], [1720, 310], [1710, 270]
+  ], green1, green2, green3);
+
+  // Korea
+  drawLand([
+    [1660, 260], [1685, 255], [1690, 300], [1670, 330], [1650, 310], [1650, 280]
+  ], green1, green2, green3);
+
+  // Philippines
+  drawLand([
+    [1620, 420], [1640, 410], [1650, 450], [1640, 500], [1620, 490], [1610, 450]
+  ], green1, green2, green3);
+
+  // Indonesia islands
+  const indonesiaIslands = [
+    [[1500, 540], [1540, 530], [1560, 555], [1530, 575], [1500, 565]],
+    [[1570, 545], [1610, 535], [1630, 560], [1600, 585], [1565, 570]],
+    [[1640, 550], [1680, 545], [1700, 570], [1680, 595], [1640, 585]],
+    [[1520, 590], [1560, 585], [1575, 610], [1550, 630], [1515, 615]],
+  ];
+  indonesiaIslands.forEach(island => drawLand(island, green1, green2, green3));
+
+  // Australia
+  drawLand([
+    [1600, 620], [1720, 600], [1820, 640], [1860, 720], [1820, 820],
+    [1720, 860], [1620, 840], [1560, 780], [1560, 700]
+  ], "#c4955a", brown, "#d4a56a");
+
+  // New Zealand
+  drawLand([
+    [1920, 780], [1940, 770], [1955, 810], [1945, 860], [1920, 850], [1910, 810]
+  ], green1, green2, green3);
+
+  // Tasmania
+  drawLand([
+    [1780, 860], [1810, 855], [1820, 880], [1800, 905], [1775, 895], [1770, 870]
+  ], green1, green2, green3);
+
+  // Papua New Guinea
+  drawLand([
+    [1750, 540], [1810, 530], [1850, 560], [1830, 600], [1770, 600], [1740, 570]
+  ], green1, green2, green3);
+
+  // Antarctica hint (ice)
+  ctx.fillStyle = "#e0e8f0";
+  ctx.fillRect(0, 950, canvas.width, 74);
+  ctx.fillStyle = "#d0d8e0";
+  for (let i = 0; i < 100; i++) {
+    ctx.beginPath();
+    ctx.arc(Math.random() * canvas.width, 970 + Math.random() * 40, Math.random() * 30 + 10, 0, Math.PI * 2);
+    ctx.fill();
+  }
+
+  // Arctic ice
+  ctx.fillStyle = "#e8f0f8";
+  ctx.beginPath();
+  ctx.ellipse(canvas.width / 2, 0, 300, 50, 0, 0, Math.PI);
+  ctx.fill();
+
+  const texture = new THREE.CanvasTexture(canvas);
+  texture.needsUpdate = true;
+  return texture;
+}
+
+// Cloud texture
+function createCloudTexture() {
+  const canvas = document.createElement("canvas");
+  canvas.width = 2048;
+  canvas.height = 1024;
+  const ctx = canvas.getContext("2d");
+
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+  // Cloud patterns
+  for (let i = 0; i < 400; i++) {
+    const x = Math.random() * canvas.width;
+    const y = Math.random() * canvas.height;
+    const size = Math.random() * 80 + 30;
+    const opacity = Math.random() * 0.4 + 0.1;
+
+    const gradient = ctx.createRadialGradient(x, y, 0, x, y, size);
+    gradient.addColorStop(0, `rgba(255, 255, 255, ${opacity})`);
+    gradient.addColorStop(0.6, `rgba(255, 255, 255, ${opacity * 0.4})`);
+    gradient.addColorStop(1, "transparent");
+
+    ctx.fillStyle = gradient;
+    ctx.beginPath();
+    ctx.ellipse(x, y, size * 1.5, size * 0.7, Math.random() * Math.PI, 0, Math.PI * 2);
+    ctx.fill();
+  }
+
+  // Weather bands
+  [200, 400, 600, 800].forEach(y => {
+    for (let i = 0; i < 15; i++) {
+      const x = Math.random() * canvas.width;
+      const gradient = ctx.createRadialGradient(x, y, 0, x, y, 60);
+      gradient.addColorStop(0, "rgba(255, 255, 255, 0.25)");
+      gradient.addColorStop(1, "transparent");
+      ctx.fillStyle = gradient;
+      ctx.fillRect(x - 80, y - 30, 160, 60);
     }
   });
 
-  // Convert user data to markers
+  const texture = new THREE.CanvasTexture(canvas);
+  texture.needsUpdate = true;
+  return texture;
+}
+
+// Earth component
+function Earth({ userData, selectedCountry, onSelectCountry }) {
+  const earthRef = useRef();
+  const cloudsRef = useRef();
+
+  const [earthTexture, cloudTexture] = useMemo(() => {
+    return [createEarthTexture(), createCloudTexture()];
+  }, []);
+
+  useFrame((state, delta) => {
+    if (earthRef.current) {
+      earthRef.current.rotation.y += delta * 0.02;
+    }
+    if (cloudsRef.current) {
+      cloudsRef.current.rotation.y += delta * 0.025;
+    }
+  });
+
   const markers = useMemo(() => {
     if (!userData || userData.length === 0) return [];
     return userData.map((user, index) => {
@@ -301,7 +462,7 @@ function Earth({ userData, selectedCountry, onSelectCountry }) {
         key => key.toLowerCase() === user.country?.toLowerCase()
       ) || "Unknown";
       const coords = countryCoordinates[countryKey] || countryCoordinates["Unknown"];
-      const position = latLngToVector3(coords.lat, coords.lng, 1.01);
+      const position = latLngToVector3(coords.lat, coords.lng, 1.015);
       return { ...user, position, key: `${user.country}-${index}` };
     });
   }, [userData]);
@@ -313,19 +474,62 @@ function Earth({ userData, selectedCountry, onSelectCountry }) {
         <sphereGeometry args={[1, 64, 64]} />
         <meshStandardMaterial
           map={earthTexture}
-          roughness={0.9}
+          roughness={0.8}
           metalness={0.1}
         />
       </mesh>
 
-      {/* Atmosphere glow */}
-      <mesh ref={atmosphereRef} scale={1.15}>
-        <sphereGeometry args={[1, 64, 64]} />
+      {/* Clouds */}
+      <mesh ref={cloudsRef} scale={1.008}>
+        <sphereGeometry args={[1, 48, 48]} />
+        <meshStandardMaterial
+          map={cloudTexture}
+          transparent
+          opacity={0.4}
+          depthWrite={false}
+        />
+      </mesh>
+
+      {/* Atmosphere */}
+      <mesh scale={1.12}>
+        <sphereGeometry args={[1, 48, 48]} />
         <shaderMaterial
           transparent
           side={THREE.BackSide}
+          depthWrite={false}
           uniforms={{
-            glowColor: { value: new THREE.Color("#60a5fa") },
+            glowColor: { value: new THREE.Color("#4da6ff") },
+          }}
+          vertexShader={`
+            varying vec3 vNormal;
+            varying vec3 vPosition;
+            void main() {
+              vNormal = normalize(normalMatrix * normal);
+              vPosition = normalize((modelViewMatrix * vec4(position, 1.0)).xyz);
+              gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+            }
+          `}
+          fragmentShader={`
+            uniform vec3 glowColor;
+            varying vec3 vNormal;
+            varying vec3 vPosition;
+            void main() {
+              float intensity = pow(0.6 - dot(vNormal, vPosition), 2.5);
+              gl_FragColor = vec4(glowColor, intensity * 0.7);
+            }
+          `}
+        />
+      </mesh>
+
+      {/* Outer glow */}
+      <mesh scale={1.2}>
+        <sphereGeometry args={[1, 32, 32]} />
+        <shaderMaterial
+          transparent
+          side={THREE.BackSide}
+          depthWrite={false}
+          uniforms={{
+            glowColor: { value: new THREE.Color("#87ceeb") },
           }}
           vertexShader={`
             varying vec3 vNormal;
@@ -335,17 +539,17 @@ function Earth({ userData, selectedCountry, onSelectCountry }) {
             }
           `}
           fragmentShader={`
-            varying vec3 vNormal;
             uniform vec3 glowColor;
+            varying vec3 vNormal;
             void main() {
-              float intensity = pow(0.7 - dot(vNormal, vec3(0.0, 0.0, 1.0)), 2.0);
-              gl_FragColor = vec4(glowColor, intensity * 0.4);
+              float intensity = pow(0.5 - dot(vNormal, vec3(0.0, 0.0, 1.0)), 3.0);
+              gl_FragColor = vec4(glowColor, intensity * 0.3);
             }
           `}
         />
       </mesh>
 
-      {/* Country markers */}
+      {/* Markers */}
       {markers.map((marker) => (
         <CountryMarker
           key={marker.key}
@@ -361,47 +565,53 @@ function Earth({ userData, selectedCountry, onSelectCountry }) {
   );
 }
 
-// Stars background
+// Stars
 function Stars() {
   const starsRef = useRef();
 
-  const starPositions = useMemo(() => {
-    const positions = [];
-    for (let i = 0; i < 2000; i++) {
-      const radius = 50 + Math.random() * 50;
+  const [positions, colors] = useMemo(() => {
+    const pos = [];
+    const col = [];
+    const starTypes = [
+      [1, 1, 1],
+      [0.9, 0.95, 1],
+      [1, 0.95, 0.85],
+      [0.85, 0.9, 1],
+    ];
+
+    for (let i = 0; i < 3000; i++) {
+      const radius = 30 + Math.random() * 50;
       const theta = Math.random() * Math.PI * 2;
       const phi = Math.acos(2 * Math.random() - 1);
-      positions.push(
+      pos.push(
         radius * Math.sin(phi) * Math.cos(theta),
         radius * Math.sin(phi) * Math.sin(theta),
         radius * Math.cos(phi)
       );
+      const color = starTypes[Math.floor(Math.random() * starTypes.length)];
+      col.push(color[0], color[1], color[2]);
     }
-    return new Float32Array(positions);
+    return [new Float32Array(pos), new Float32Array(col)];
   }, []);
 
-  useFrame((state) => {
+  useFrame(() => {
     if (starsRef.current) {
-      starsRef.current.rotation.y += 0.0001;
+      starsRef.current.rotation.y += 0.00003;
     }
   });
 
   return (
     <points ref={starsRef}>
       <bufferGeometry>
-        <bufferAttribute
-          attach="attributes-position"
-          count={starPositions.length / 3}
-          array={starPositions}
-          itemSize={3}
-        />
+        <bufferAttribute attach="attributes-position" count={positions.length / 3} array={positions} itemSize={3} />
+        <bufferAttribute attach="attributes-color" count={colors.length / 3} array={colors} itemSize={3} />
       </bufferGeometry>
-      <pointsMaterial size={0.15} color="#ffffff" transparent opacity={0.8} sizeAttenuation />
+      <pointsMaterial size={0.12} vertexColors transparent opacity={0.85} sizeAttenuation blending={THREE.AdditiveBlending} />
     </points>
   );
 }
 
-// Main Globe component
+// Main component
 export default function EarthGlobe({ userData = [], onCountrySelect, loading = false }) {
   const [selectedCountry, setSelectedCountry] = useState(null);
 
@@ -410,7 +620,6 @@ export default function EarthGlobe({ userData = [], onCountrySelect, loading = f
     onCountrySelect?.(country);
   };
 
-  // Calculate totals
   const totals = useMemo(() => {
     return userData.reduce(
       (acc, item) => ({
@@ -422,35 +631,38 @@ export default function EarthGlobe({ userData = [], onCountrySelect, loading = f
   }, [userData]);
 
   return (
-    <div className="relative w-full h-[500px] bg-gradient-to-b from-[#0a0f1a] via-[#0d1424] to-[#0a0f1a] rounded-2xl overflow-hidden border border-gray-800/50">
+    <div className="relative w-full h-[550px] bg-gradient-to-b from-[#000510] via-[#001030] to-[#000510] rounded-2xl overflow-hidden border border-gray-800/30 shadow-2xl">
       {/* Header */}
       <div className="absolute top-5 left-5 z-10">
         <div className="flex items-center gap-2 mb-1">
-          <div className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse"></div>
+          <div className="relative">
+            <div className="w-2.5 h-2.5 bg-emerald-500 rounded-full animate-pulse"></div>
+            <div className="absolute inset-0 w-2.5 h-2.5 bg-emerald-500 rounded-full animate-ping opacity-75"></div>
+          </div>
           <h3 className="text-white font-semibold text-lg">Global Reach</h3>
         </div>
         <p className="text-gray-500 text-sm">Real-time customer distribution</p>
       </div>
 
-      {/* Stats Cards */}
+      {/* Stats */}
       <div className="absolute top-5 right-5 z-10 flex gap-2">
-        <div className="bg-white/5 backdrop-blur-md rounded-xl px-4 py-2 border border-white/10">
-          <p className="text-gray-400 text-xs">Countries</p>
-          <p className="text-white text-xl font-bold">{userData.length}</p>
+        <div className="bg-white/5 backdrop-blur-xl rounded-xl px-4 py-2.5 border border-white/10">
+          <p className="text-gray-400 text-xs font-medium">Countries</p>
+          <p className="text-white text-2xl font-bold">{userData.length}</p>
         </div>
-        <div className="bg-white/5 backdrop-blur-md rounded-xl px-4 py-2 border border-white/10">
-          <p className="text-gray-400 text-xs">Users</p>
-          <p className="text-emerald-400 text-xl font-bold">{totals.users.toLocaleString()}</p>
+        <div className="bg-white/5 backdrop-blur-xl rounded-xl px-4 py-2.5 border border-white/10">
+          <p className="text-gray-400 text-xs font-medium">Users</p>
+          <p className="text-emerald-400 text-2xl font-bold">{totals.users.toLocaleString()}</p>
         </div>
-        <div className="bg-white/5 backdrop-blur-md rounded-xl px-4 py-2 border border-white/10">
-          <p className="text-gray-400 text-xs">Orders</p>
-          <p className="text-blue-400 text-xl font-bold">{totals.orders.toLocaleString()}</p>
+        <div className="bg-white/5 backdrop-blur-xl rounded-xl px-4 py-2.5 border border-white/10">
+          <p className="text-gray-400 text-xs font-medium">Orders</p>
+          <p className="text-blue-400 text-2xl font-bold">{totals.orders.toLocaleString()}</p>
         </div>
       </div>
 
-      {/* Loading State */}
+      {/* Loading */}
       {loading && (
-        <div className="absolute inset-0 z-20 flex items-center justify-center bg-[#0a0f1a]/90">
+        <div className="absolute inset-0 z-20 flex items-center justify-center bg-[#000510]/95">
           <div className="flex flex-col items-center gap-4">
             <div className="relative w-16 h-16">
               <div className="absolute inset-0 border-4 border-emerald-500/20 rounded-full"></div>
@@ -461,79 +673,75 @@ export default function EarthGlobe({ userData = [], onCountrySelect, loading = f
         </div>
       )}
 
-      {/* 3D Canvas */}
+      {/* Canvas */}
       <Canvas
-        camera={{ position: [0, 0, 2.8], fov: 45 }}
+        camera={{ position: [0, 0, 2.5], fov: 50 }}
         gl={{ antialias: true, alpha: true, powerPreference: "high-performance" }}
         dpr={[1, 2]}
       >
-        <color attach="background" args={["#0a0f1a"]} />
+        <color attach="background" args={["#000510"]} />
+        <fog attach="fog" args={["#000510", 25, 60]} />
 
-        {/* Lighting */}
-        <ambientLight intensity={0.2} />
-        <directionalLight position={[5, 3, 5]} intensity={1.2} color="#ffffff" />
-        <directionalLight position={[-5, -3, -5]} intensity={0.3} color="#60a5fa" />
-        <pointLight position={[0, 0, 3]} intensity={0.5} color="#ffffff" />
+        <ambientLight intensity={0.25} />
+        <directionalLight position={[5, 3, 5]} intensity={1.5} color="#ffffff" />
+        <directionalLight position={[-5, -2, -5]} intensity={0.3} color="#4da6ff" />
+        <pointLight position={[0, 0, 3]} intensity={0.3} color="#ffffff" />
 
         <Suspense fallback={null}>
           <Stars />
-          <Earth
-            userData={userData}
-            selectedCountry={selectedCountry}
-            onSelectCountry={handleCountrySelect}
-          />
+          <Earth userData={userData} selectedCountry={selectedCountry} onSelectCountry={handleCountrySelect} />
         </Suspense>
 
         <OrbitControls
           enableZoom={true}
           enablePan={false}
-          minDistance={1.8}
+          minDistance={1.5}
           maxDistance={4}
-          autoRotate={false}
-          rotateSpeed={0.5}
+          rotateSpeed={0.4}
           zoomSpeed={0.5}
+          enableDamping={true}
+          dampingFactor={0.05}
         />
       </Canvas>
 
-      {/* Selected Country Panel - Compact */}
+      {/* Selected Country */}
       {selectedCountry && (
-        <div className="absolute bottom-12 left-5 z-10">
-          <div className="bg-gray-900/90 backdrop-blur-sm rounded-lg px-3 py-2 border border-gray-700 flex items-center gap-3">
-            <div>
-              <p className="text-white font-semibold text-sm capitalize">{selectedCountry.country}</p>
-              <div className="flex items-center gap-2 text-xs">
-                <span className="text-emerald-400">{selectedCountry.userCount} Users</span>
-                <span className="text-gray-600">•</span>
-                <span className="text-blue-400">{selectedCountry.orderCount} Orders</span>
+        <div className="absolute bottom-16 left-5 z-10">
+          <div className="bg-gray-900/95 backdrop-blur-xl rounded-xl px-4 py-3 border border-gray-700/50">
+            <div className="flex items-center justify-between gap-4">
+              <div>
+                <p className="text-white font-semibold capitalize">{selectedCountry.country}</p>
+                <div className="flex items-center gap-3 mt-1 text-sm">
+                  <span className="text-emerald-400">{selectedCountry.userCount} Users</span>
+                  <span className="text-gray-600">•</span>
+                  <span className="text-blue-400">{selectedCountry.orderCount} Orders</span>
+                </div>
               </div>
+              <button onClick={() => setSelectedCountry(null)} className="p-1.5 hover:bg-white/10 rounded-lg">
+                <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
             </div>
-            <button
-              onClick={() => setSelectedCountry(null)}
-              className="p-1 hover:bg-white/10 rounded transition-colors"
-            >
-              <svg className="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-              </svg>
-            </button>
           </div>
         </div>
       )}
 
       {/* Legend */}
       <div className="absolute bottom-5 right-5 z-10">
-        <div className="bg-white/5 backdrop-blur-md rounded-xl p-3 border border-white/10">
-          <p className="text-gray-400 text-xs mb-2 font-medium">Activity Level</p>
-          <div className="space-y-1.5">
-            <div className="flex items-center gap-2 text-xs">
-              <div className="w-2.5 h-2.5 rounded-full bg-red-500"></div>
+        <div className="bg-white/5 backdrop-blur-xl rounded-xl p-3.5 border border-white/10">
+          <p className="text-gray-400 text-xs mb-2.5 font-semibold">Activity Level</p>
+          <div className="space-y-2">
+            <div className="flex items-center gap-2.5 text-xs">
+              <div className="w-3 h-3 rounded-full bg-red-500 shadow-lg shadow-red-500/30"></div>
               <span className="text-gray-300">High (50+)</span>
             </div>
-            <div className="flex items-center gap-2 text-xs">
-              <div className="w-2.5 h-2.5 rounded-full bg-amber-500"></div>
+            <div className="flex items-center gap-2.5 text-xs">
+              <div className="w-3 h-3 rounded-full bg-amber-500 shadow-lg shadow-amber-500/30"></div>
               <span className="text-gray-300">Medium (20-50)</span>
             </div>
-            <div className="flex items-center gap-2 text-xs">
-              <div className="w-2.5 h-2.5 rounded-full bg-emerald-500"></div>
+            <div className="flex items-center gap-2.5 text-xs">
+              <div className="w-3 h-3 rounded-full bg-emerald-500 shadow-lg shadow-emerald-500/30"></div>
               <span className="text-gray-300">Growing (1-20)</span>
             </div>
           </div>
