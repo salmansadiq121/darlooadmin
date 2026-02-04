@@ -359,9 +359,9 @@ export default function Users() {
       },
       {
         accessorKey: "number",
-        minSize: 120,
-        maxSize: 150,
-        size: 130,
+        minSize: 150,
+        maxSize: 180,
+        size: 160,
         Header: "PHONE",
         Cell: ({ cell, row }) => {
           const number = cell.getValue();
@@ -375,9 +375,9 @@ export default function Users() {
       },
       {
         accessorKey: "addressDetails.city",
-        minSize: 100,
-        maxSize: 150,
-        size: 120,
+        minSize: 200,
+        maxSize: 230,
+        size: 230,
         Header: "LOCATION",
         Cell: ({ row }) => {
           const address = row.original?.addressDetails || {};
@@ -395,9 +395,9 @@ export default function Users() {
       },
       {
         accessorKey: "role",
-        minSize: 100,
-        maxSize: 130,
-        size: 110,
+        minSize: 130,
+        maxSize: 180,
+        size: 130,
         Header: "ROLE",
         Cell: ({ cell, row }) => {
           const role = cell.getValue() || "user";
@@ -408,6 +408,14 @@ export default function Users() {
             agent: "bg-green-100 text-green-800 border-green-500",
             seller: "bg-orange-100 text-orange-800 border-orange-500",
             user: "bg-gray-100 text-gray-800 border-gray-500",
+          };
+
+          const roleLabels = {
+            superadmin: "Super Admin",
+            admin: "Admin",
+            agent: "Agent",
+            seller: "Seller",
+            user: "User",
           };
 
           const handleUpdate = async (value) => {
@@ -434,7 +442,7 @@ export default function Users() {
           };
 
           return (
-            <div className="w-full">
+            <div className="w-full min-w-[120px] flex items-center" style={{ minWidth: "120px" }}>
               <select
                 onChange={(e) => handleUpdate(e.target.value)}
                 value={role}
@@ -442,7 +450,7 @@ export default function Users() {
                   auth.user?.role !== "superadmin" &&
                   auth.user?.role !== "admin"
                 }
-                className={`w-full border rounded-md p-1 text-xs font-semibold text-center focus:outline-none focus:ring-2 focus:ring-[#c6080a] ${
+                className={`w-full min-w-[120px] border rounded-md px-2 py-1.5 text-xs font-semibold text-center focus:outline-none focus:ring-2 focus:ring-[#c6080a] whitespace-nowrap truncate ${
                   roleColors[role] || roleColors.user
                 } ${
                   auth.user?.role !== "superadmin" &&
@@ -450,6 +458,8 @@ export default function Users() {
                     ? "cursor-not-allowed opacity-75"
                     : "cursor-pointer"
                 }`}
+                style={{ minWidth: "120px" }}
+                title={roleLabels[role] || role}
               >
                 <option value="user">User</option>
                 <option value="seller">Seller</option>
@@ -547,10 +557,13 @@ export default function Users() {
         Header: "JOINED",
         Cell: ({ cell }) => {
           const date = cell.getValue();
+          const formattedDate = date ? format(new Date(date), "MMM dd, yyyy") : "N/A";
           return (
-            <span className="text-sm text-gray-600">
-              {format(new Date(date), "MMM dd, yyyy")}
-            </span>
+            <div className="w-full min-w-[120px] flex items-center" style={{ minWidth: "120px" }}>
+              <span className="text-sm text-gray-600 whitespace-nowrap">
+                {formattedDate}
+              </span>
+            </div>
           );
         },
       },
@@ -887,9 +900,9 @@ export default function Users() {
               </div>
             ) : safeColumns.length > 0 ? (
               <div className="overflow-x-auto">
-                <Table className="min-w-full">
+                <Table className="min-w-full" style={{ minWidth: "1200px" }}>
                   <TableHeader>
-                    <TableRow>
+                    <TableRow className="min-w-[1200px]">
                       <TableHead className="w-12">
                         <input
                           type="checkbox"
@@ -921,7 +934,7 @@ export default function Users() {
                       safeData.map((row, idx) => {
                         const rowId = String(row?._id || row?.id || idx);
                         return (
-                          <TableRow key={rowId}>
+                          <TableRow key={rowId} className="min-w-[1200px]">
                             <TableCell>
                               <input
                                 type="checkbox"
