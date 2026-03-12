@@ -45,6 +45,7 @@ import {
   ChevronsLeft,
   ChevronsRight,
   MoreHorizontal,
+  Store,
 } from "lucide-react";
 import Image from "next/image";
 import axios from "axios";
@@ -69,6 +70,9 @@ export default function Products() {
   const [selectedProductsIds, setSelectedProductsIds] = useState([]);
   const [jumpToPage, setJumpToPage] = useState("");
   const [showJumpInput, setShowJumpInput] = useState(false);
+  const [sellers, setSellers] = useState([]);
+  const [selectedSeller, setSelectedSeller] = useState('');
+  const [loadingSellers, setLoadingSellers] = useState(false);
 
   useEffect(() => {
     const handler = setTimeout(() => {
@@ -103,6 +107,26 @@ export default function Products() {
   useEffect(() => {
     fetchProducts();
   }, [category, page, perPage, debouncedSearch]);
+
+  // Fetch sellers for dropdown
+  useEffect(() => {
+    const fetchSellers = async () => {
+      setLoadingSellers(true);
+      try {
+        const { data } = await axios.get(
+          `${process.env.NEXT_PUBLIC_SERVER_URI}/api/v1/seller/all` 
+        );
+        if (data?.success) {
+          setSellers(data.sellers || []);
+        }
+      } catch (error) {
+        console.error('Error fetching sellers:', error);
+      } finally {
+        setLoadingSellers(false);
+      }
+    };
+    fetchSellers();
+  }, []);
 
   const handleSearch = (value) => {
     setSearchQuery(value);
@@ -157,6 +181,7 @@ export default function Products() {
         `${process.env.NEXT_PUBLIC_SERVER_URI}/api/v1/products/add/1688`,
         {
           itemIds: selectedProductsIds,
+          sellerId: selectedSeller || null,
         }
       );
       if (data) {
@@ -359,8 +384,8 @@ export default function Products() {
 
   return (
     <MainLayout
-      title="1688 Products Marketplace"
-      description="Discover and manage premium products from 1688"
+      title="Import 1688 Products"
+      description="Import products from 1688 marketplace. Select products and assign them to sellers or keep them as admin products."
     >
       <div className="min-h-screen bg-gradient-to-br from-red-50 to-white">
         <div className="container mx-auto px-4 py-8">
@@ -371,10 +396,10 @@ export default function Products() {
               </div>
               <div>
                 <h1 className="text-3xl font-bold text-balance">
-                  1688 Products Marketplace
+                  Import 1688 Products
                 </h1>
                 <p className="text-muted-foreground">
-                  Discover and manage premium products from 1688
+                  Import products from 1688 marketplace. Select products and assign them to sellers or keep them as admin products.
                 </p>
               </div>
             </div>
@@ -442,16 +467,41 @@ export default function Products() {
           </Card>
 
           {selectedProductsIds.length > 0 && (
-            <Card className="mb-6 border-red-200 bg-red-50">
+            <Card className="mb-6 border-red-200 bg-gradient-to-r from-red-50 to-orange-50 shadow-md">
               <CardContent className="p-4">
                 <div className="flex sm:items-center sm:justify-between flex-col sm:flex-row gap-4">
-                  <div className="flex items-center gap-3">
+                  <div className="flex items-center gap-3 flex-wrap">
                     <Badge
                       variant="secondary"
-                      className="bg-red-600 text-white"
+                      className="bg-red-600 text-white text-sm px-3 py-1"
                     >
                       {selectedProductsIds.length} selected
                     </Badge>
+                    
+                    {/* Seller Selection */}
+                    <div className="flex items-center gap-2">
+                      <span className="text-sm text-gray-600">Assign to:</span>
+                      <Select
+                        value={selectedSeller}
+                        onValueChange={setSelectedSeller}
+                        disabled={loadingSellers}
+                      >
+                        <SelectTrigger className="w-[200px] bg-white border-red-200">
+                          <SelectValue placeholder={loadingSellers ? "Loading sellers..." : "Select Seller (Optional)"} />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="">No Seller (Admin Product)</SelectItem>
+                          {sellers.map((seller) => (
+                            <SelectItem key={seller._id} value={seller._id}>
+                              <div className="flex items-center gap-2">
+                                <Store className="w-4 h-4" />
+                                <span>{seller.storeName || seller.name}</span>
+                              </div>
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
                   </div>
                   <div className="flex items-center gap-2">
                     <Button
@@ -818,3 +868,12 @@ export default function Products() {
     </MainLayout>
   );
 }
+
+
+
+
+
+
+
+
+

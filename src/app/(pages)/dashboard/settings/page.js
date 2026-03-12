@@ -43,6 +43,19 @@ export default function Settings() {
   const [addSetting, setAddSetting] = useState(false);
   const [type, setType] = useState("");
   const [selectedTab, setSelectedtab] = useState("Account");
+
+  // Daily Check-in Settings State
+  const [checkInSettings, setCheckInSettings] = useState({
+    enabled: true,
+    points: 1,
+    streakBonus: {
+      enabled: true,
+      bonusPerDay: 1,
+      maxBonus: 10,
+    },
+  });
+  const [checkInLoading, setCheckInLoading] = useState(false);
+  const [savingCheckIn, setSavingCheckIn] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [bannerData, setBannerData] = useState([]);
   const isInitialRender = useRef(true);
@@ -302,7 +315,61 @@ export default function Settings() {
       fetchSellers();
       fetchCategories();
     }
+    if (selectedTab === "Rewards" && isAdmin) {
+      fetchCheckInSettings();
+    }
   }, [selectedTab, isAdmin]);
+
+  // ------------Daily Check-in Settings---------->
+  const fetchCheckInSettings = async () => {
+    try {
+      setCheckInLoading(true);
+      const { data } = await axios.get(
+        `${process.env.NEXT_PUBLIC_SERVER_URI}/api/v1/rewards/settings`
+      );
+      if (data?.success) {
+        setCheckInSettings({
+          enabled: data.settings?.enabled ?? true,
+          points: data.settings?.points || 1,
+          streakBonus: {
+            enabled: data.settings?.streakBonus?.enabled ?? true,
+            bonusPerDay: data.settings?.streakBonus?.bonusPerDay || 1,
+            maxBonus: data.settings?.streakBonus?.maxBonus || 10,
+          },
+        });
+      }
+    } catch (error) {
+      console.log(error);
+    } finally {
+      setCheckInLoading(false);
+    }
+  };
+
+  const handleSaveCheckInSettings = async () => {
+    try {
+      setSavingCheckIn(true);
+      const { data } = await axios.put(
+        `${process.env.NEXT_PUBLIC_SERVER_URI}/api/v1/rewards/admin/settings`,
+        {
+          enabled: checkInSettings.enabled,
+          points: checkInSettings.points,
+          streakBonus: checkInSettings.streakBonus,
+        },
+        {
+          headers: { Authorization: auth?.token },
+        }
+      );
+      if (data?.success) {
+        toast.success("Daily check-in settings saved successfully!");
+        fetchCheckInSettings();
+      }
+    } catch (error) {
+      console.log(error);
+      toast.error(error?.response?.data?.message || "Failed to save check-in settings");
+    } finally {
+      setSavingCheckIn(false);
+    }
+  };
 
   const handleSaveCommission = async () => {
     try {
@@ -476,6 +543,7 @@ export default function Settings() {
               Shipping
             </button>
             {isAdmin && (
+              <>
               <button
                 className={`w-[7rem] h-full py-[.3rem] text-[14px] font-normal border-l-2 border-red-600 whitespace-nowrap ${
                   selectedTab === "Commission"
@@ -486,6 +554,17 @@ export default function Settings() {
               >
                 Commission
               </button>
+              <button
+                className={`w-[7rem] h-full py-[.3rem] text-[14px] font-normal border-l-2 border-red-600 whitespace-nowrap ${
+                  selectedTab === "Rewards"
+                    ? "bg-red-600 text-white"
+                    : "text-red-600 bg-white"
+                }`}
+                onClick={() => setSelectedtab("Rewards")}
+              >
+                Rewards
+              </button>
+            </>
             )}
           </div>
           <div className="flex flex-col gap-4 mt-4 w-full h-full">
@@ -964,6 +1043,165 @@ export default function Settings() {
                           <p className="text-gray-400 text-sm mb-1">Current Rate</p>
                           <p className="text-3xl font-bold text-amber-400">{commissionSettings.defaultRate}%</p>
                           <p className="text-gray-500 text-xs mt-1">{commissionSettings.type === 'percentage' ? 'Percentage' : 'Fixed Amount'}</p>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
+            ) : selectedTab === "Rewards" && isAdmin ? (
+              <div className="flex flex-col gap-4">
+                <div className="flex items-center justify-between flex-wrap gap-4">
+                  <h1 className="text-2xl font-sans font-semibold text-black flex items-center gap-2">
+                    <SettingsIcon className="w-6 h-6 text-red-600" />
+                    Daily Check-in Settings
+                  </h1>
+                  <div className="flex items-center gap-2">
+                    <button
+                      onClick={fetchCheckInSettings}
+                      disabled={checkInLoading}
+                      className="flex items-center gap-2 px-4 py-2 text-gray-600 bg-white border border-gray-300 rounded-md hover:bg-gray-50 transition-all"
+                    >
+                      <RefreshCw className={`w-4 h-4 ${checkInLoading ? 'animate-spin' : ''}`} />
+                      Refresh
+                    </button>
+                    <button
+                      onClick={handleSaveCheckInSettings}
+                      disabled={savingCheckIn}
+                      className="flex items-center gap-2 px-4 py-2 text-white bg-red-600 rounded-md hover:bg-red-700 transition-all disabled:opacity-50"
+                    >
+                      {savingCheckIn ? (
+                        <Loader2 className="w-4 h-4 animate-spin" />
+                      ) : (
+                        <Save className="w-4 h-4" />
+                      )}
+                      Save Changes
+                    </button>
+                  </div>
+                </div>
+
+                {checkInLoading ? (
+                  <div className="flex items-center justify-center py-12">
+                    <Loader2 className="w-8 h-8 animate-spin text-red-600" />
+                  </div>
+                ) : (
+                  <div className="grid gap-4">
+                    {/* Enable/Disable Check-in */}
+                    <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-3">
+                          <div className={`w-10 h-10 rounded-lg flex items-center justify-center transition-colors ${checkInSettings.enabled ? 'bg-green-500' : 'bg-gray-300'}`}>
+                            <SettingsIcon className="w-5 h-5 text-white" />
+                          </div>
+                          <div>
+                            <h3 className="text-lg font-semibold text-gray-900">Daily Check-in</h3>
+                            <p className="text-sm text-gray-500">Enable or disable daily check-in feature</p>
+                          </div>
+                        </div>
+                        <button
+                          onClick={() => setCheckInSettings(prev => ({ ...prev, enabled: !prev.enabled }))}
+                          className={`relative inline-flex h-8 w-14 items-center rounded-full transition-colors ${checkInSettings.enabled ? 'bg-green-500' : 'bg-gray-300'}`}
+                        >
+                          <span className={`inline-block h-6 w-6 transform rounded-full bg-white transition-transform ${checkInSettings.enabled ? 'translate-x-7' : 'translate-x-1'}`} />
+                        </button>
+                      </div>
+                    </div>
+
+                    {/* Points per Check-in */}
+                    <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+                      <div className="flex items-center gap-3 mb-4">
+                        <div className="w-10 h-10 rounded-lg bg-blue-100 flex items-center justify-center">
+                          <DollarSign className="w-5 h-5 text-blue-600" />
+                        </div>
+                        <div>
+                          <h3 className="text-lg font-semibold text-gray-900">Base Points</h3>
+                          <p className="text-sm text-gray-500">Points awarded for each daily check-in</p>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-4">
+                        <input
+                          type="number"
+                          min="0"
+                          max="100"
+                          value={checkInSettings.points}
+                          onChange={(e) => setCheckInSettings(prev => ({ ...prev, points: parseInt(e.target.value) || 0 }))}
+                          className="w-32 h-11 px-4 border border-gray-200 rounded-lg focus:ring-2 focus:ring-red-500/20 focus:border-red-500 outline-none"
+                        />
+                        <span className="text-gray-500">points per check-in</span>
+                      </div>
+                    </div>
+
+                    {/* Streak Bonus Settings */}
+                    <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+                      <div className="flex items-center justify-between mb-4">
+                        <div className="flex items-center gap-3">
+                          <div className={`w-10 h-10 rounded-lg flex items-center justify-center transition-colors ${checkInSettings.streakBonus?.enabled ? 'bg-orange-500' : 'bg-gray-300'}`}>
+                            <Percent className="w-5 h-5 text-white" />
+                          </div>
+                          <div>
+                            <h3 className="text-lg font-semibold text-gray-900">Streak Bonus</h3>
+                            <p className="text-sm text-gray-500">Additional points for consecutive check-ins</p>
+                          </div>
+                        </div>
+                        <button
+                          onClick={() => setCheckInSettings(prev => ({ 
+                            ...prev, 
+                            streakBonus: { ...prev.streakBonus, enabled: !prev.streakBonus?.enabled }
+                          }))}
+                          className={`relative inline-flex h-8 w-14 items-center rounded-full transition-colors ${checkInSettings.streakBonus?.enabled ? 'bg-orange-500' : 'bg-gray-300'}`}
+                        >
+                          <span className={`inline-block h-6 w-6 transform rounded-full bg-white transition-transform ${checkInSettings.streakBonus?.enabled ? 'translate-x-7' : 'translate-x-1'}`} />
+                        </button>
+                      </div>
+
+                      {checkInSettings.streakBonus?.enabled && (
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
+                          <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-2">Bonus per Day</label>
+                            <input
+                              type="number"
+                              min="0"
+                              max="50"
+                              value={checkInSettings.streakBonus?.bonusPerDay || 1}
+                              onChange={(e) => setCheckInSettings(prev => ({ 
+                                ...prev, 
+                                streakBonus: { ...prev.streakBonus, bonusPerDay: parseInt(e.target.value) || 0 }
+                              }))}
+                              className="w-full h-11 px-4 border border-gray-200 rounded-lg focus:ring-2 focus:ring-red-500/20 focus:border-red-500 outline-none"
+                            />
+                            <p className="text-xs text-gray-500 mt-1">Additional points per consecutive day</p>
+                          </div>
+                          <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-2">Max Bonus</label>
+                            <input
+                              type="number"
+                              min="0"
+                              max="100"
+                              value={checkInSettings.streakBonus?.maxBonus || 10}
+                              onChange={(e) => setCheckInSettings(prev => ({ 
+                                ...prev, 
+                                streakBonus: { ...prev.streakBonus, maxBonus: parseInt(e.target.value) || 0 }
+                              }))}
+                              className="w-full h-11 px-4 border border-gray-200 rounded-lg focus:ring-2 focus:ring-red-500/20 focus:border-red-500 outline-none"
+                            />
+                            <p className="text-xs text-gray-500 mt-1">Maximum streak bonus cap</p>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Info Card */}
+                    <div className="bg-blue-50 rounded-xl border border-blue-200 p-4">
+                      <div className="flex items-start gap-3">
+                        <Info className="w-5 h-5 text-blue-600 mt-0.5" />
+                        <div>
+                          <h4 className="font-medium text-blue-900">How it works</h4>
+                          <p className="text-sm text-blue-700 mt-1">
+                            Users earn {checkInSettings.points} point(s) for each daily check-in. 
+                            {checkInSettings.streakBonus?.enabled 
+                              ? ` With streak bonus enabled, they earn an additional ${checkInSettings.streakBonus?.bonusPerDay || 1} point(s) per consecutive day, up to a maximum of ${checkInSettings.streakBonus?.maxBonus || 10} bonus points.` 
+                              : " Streak bonus is currently disabled."}
+                          </p>
                         </div>
                       </div>
                     </div>

@@ -18,18 +18,15 @@ import {
   Minimize2,
   RotateCcw,
   Copy,
-  Strikethrough,
-  Code,
-  Quote,
-  Heading1,
-  Heading2,
-  Heading3,
-  Undo,
-  Redo,
-  Palette,
-  Highlighter,
-  Minus,
+  Image as ImageIcon,
+  X,
+  Upload,
+  Link as LinkIcon,
+  Loader2,
+  Trash2,
 } from "lucide-react";
+import { uploadProductImage } from "@/app/utils/CommonFunction";
+import toast from "react-hot-toast";
 
 export function RichTextEditor({
   label,
@@ -44,8 +41,12 @@ export function RichTextEditor({
   const [isExpanded, setIsExpanded] = useState(false);
   const [charCount, setCharCount] = useState(0);
   const [wordCount, setWordCount] = useState(0);
-  const [showColorPicker, setShowColorPicker] = useState(false);
-  const [showBgColorPicker, setShowBgColorPicker] = useState(false);
+  const [showImageModal, setShowImageModal] = useState(false);
+  const [imageTab, setImageTab] = useState("url"); // "url" or "upload"
+  const [imageUrl, setImageUrl] = useState("");
+  const [uploadingImage, setUploadingImage] = useState(false);
+  const [selectedImage, setSelectedImage] = useState(null);
+  const fileInputRef = useRef(null);
   const editorRef = useRef(null);
 
   const isNearLimit = maxLength && charCount > maxLength * 0.8;
@@ -61,6 +62,46 @@ export function RichTextEditor({
   useEffect(() => {
     if (editorRef.current && value !== editorRef.current.innerHTML) {
       editorRef.current.innerHTML = value || "";
+      
+      // Attach click handlers to existing images and ensure proper styling
+      const images = editorRef.current.querySelectorAll("img");
+      images.forEach((img) => {
+        if (!img.classList.contains("editor-image")) {
+          img.classList.add("editor-image");
+          // Ensure image is visible and properly styled
+          if (!img.style.maxWidth) img.style.maxWidth = "100%";
+          if (!img.style.width) img.style.width = "auto";
+          if (!img.style.height) img.style.height = "auto";
+          if (!img.style.display) img.style.display = "block";
+          if (!img.style.margin) img.style.margin = "10px auto";
+          if (!img.style.borderRadius) img.style.borderRadius = "4px";
+          if (!img.style.objectFit) img.style.objectFit = "contain";
+          img.style.cursor = "pointer";
+          img.style.position = "relative";
+          
+          // Ensure image loads
+          if (!img.complete) {
+            img.onload = () => {
+              img.style.opacity = "1";
+            };
+            img.onerror = () => {
+              console.error("Failed to load image:", img.src);
+              img.style.display = "none";
+            };
+          }
+          
+          img.addEventListener("click", (e) => {
+            e.stopPropagation();
+            setSelectedImage(img);
+            document.querySelectorAll(".editor-image").forEach((el) => {
+              el.style.outline = "none";
+              el.style.boxShadow = "none";
+            });
+            img.style.outline = "2px solid #ef4444";
+            img.style.boxShadow = "0 0 0 4px rgba(239, 68, 68, 0.1)";
+          });
+        }
+      });
     }
   }, [value]);
 
@@ -125,52 +166,6 @@ export function RichTextEditor({
 
   const handleFormat = (format) => {
     execCommand(format);
-  };
-
-  const handleTextColor = (color) => {
-    document.execCommand("foreColor", false, color);
-    handleInput();
-    setShowColorPicker(false);
-    editorRef.current?.focus();
-  };
-
-  const handleBgColor = (color) => {
-    document.execCommand("backColor", false, color);
-    handleInput();
-    setShowBgColorPicker(false);
-    editorRef.current?.focus();
-  };
-
-  const handleHeading = (level) => {
-    execCommand("formatBlock", `<h${level}>`);
-  };
-
-  const handleBlockquote = () => {
-    execCommand("formatBlock", "<blockquote>");
-  };
-
-  const handleCode = () => {
-    execCommand("formatBlock", "<pre>");
-  };
-
-  const handleStrikethrough = () => {
-    execCommand("strikeThrough");
-  };
-
-  const handleHorizontalRule = () => {
-    document.execCommand("insertHorizontalRule", false);
-    handleInput();
-    editorRef.current?.focus();
-  };
-
-  const handleUndo = () => {
-    document.execCommand("undo", false);
-    handleInput();
-  };
-
-  const handleRedo = () => {
-    document.execCommand("redo", false);
-    handleInput();
   };
 
   const handleAlign = (alignment) => {
@@ -238,6 +233,178 @@ export function RichTextEditor({
     setIsExpanded(!isExpanded);
   };
 
+  const insertImage = (url, alt = "") => {
+    if (!editorRef.current) return;
+    
+    editorRef.current.focus();
+    const selection = window.getSelection();
+    const range = selection?.rangeCount > 0 ? selection.getRangeAt(0) : null;
+    
+    const img = document.createElement("img");
+    img.src = url;
+    img.alt = alt || "Image";
+    img.style.maxWidth = "100%";
+    img.style.width = "auto";
+    img.style.height = "auto";
+    img.style.display = "block";
+    img.style.margin = "10px auto";
+    img.style.borderRadius = "4px";
+    img.style.cursor = "pointer";
+    img.style.position = "relative";
+    img.style.objectFit = "contain";
+    img.style.opacity = "0";
+    img.style.transition = "opacity 0.3s";
+    img.className = "editor-image";
+    
+    // Handle image load
+    img.onload = () => {
+      // Image loaded successfully
+      img.style.opacity = "1";
+    };
+    
+    // Handle image error
+    img.onerror = () => {
+      console.error("Failed to load image:", url);
+      toast.error("Failed to load image. Please check the URL.");
+      // Show error placeholder instead of hiding
+      img.style.opacity = "1";
+      img.style.border = "2px dashed #ef4444";
+      img.style.padding = "20px";
+      img.style.backgroundColor = "#fee2e2";
+      img.alt = "Failed to load image";
+    };
+    
+    // Add click handler to select image
+    img.addEventListener("click", (e) => {
+      e.stopPropagation();
+      setSelectedImage(img);
+      // Add visual indicator
+      document.querySelectorAll(".editor-image").forEach((el) => {
+        el.style.outline = "none";
+        el.style.boxShadow = "none";
+      });
+      img.style.outline = "2px solid #ef4444";
+      img.style.boxShadow = "0 0 0 4px rgba(239, 68, 68, 0.1)";
+    });
+    
+    // Create a container div for better structure
+    const container = document.createElement("div");
+    container.style.margin = "10px 0";
+    container.style.position = "relative";
+    container.style.display = "block";
+    container.style.width = "100%";
+    container.className = "image-container";
+    container.appendChild(img);
+    
+    // Add a line break after the image for easier editing
+    const br = document.createElement("br");
+    container.appendChild(br);
+    
+    if (range) {
+      range.deleteContents();
+      range.insertNode(container);
+    } else {
+      editorRef.current.appendChild(container);
+    }
+    
+    // Move cursor after image container
+    const newRange = document.createRange();
+    newRange.setStartAfter(container);
+    newRange.collapse(true);
+    selection?.removeAllRanges();
+    selection?.addRange(newRange);
+    
+    handleInput();
+  };
+
+  const removeSelectedImage = () => {
+    if (!selectedImage || !editorRef.current) return;
+    
+    // Find the container div
+    const container = selectedImage.parentElement;
+    if (container && container.classList.contains("image-container")) {
+      container.remove();
+    } else {
+      selectedImage.remove();
+    }
+    
+    setSelectedImage(null);
+    handleInput();
+    toast.success("Image removed");
+  };
+
+  const handleImageUrlSubmit = () => {
+    if (!imageUrl.trim()) {
+      toast.error("Please enter an image URL");
+      return;
+    }
+    
+    // Basic URL validation
+    try {
+      new URL(imageUrl);
+    } catch {
+      toast.error("Please enter a valid URL");
+      return;
+    }
+    
+    insertImage(imageUrl);
+    setImageUrl("");
+    setShowImageModal(false);
+    toast.success("Image inserted successfully");
+  };
+
+  const handleImageUpload = async (event) => {
+    event.stopPropagation();
+    const file = event.target.files?.[0];
+    if (!file) {
+      // Reset file input if no file selected
+      if (fileInputRef.current) {
+        fileInputRef.current.value = "";
+      }
+      return;
+    }
+    
+    // Validate file type
+    if (!file.type.startsWith("image/")) {
+      toast.error("Please select an image file");
+      if (fileInputRef.current) {
+        fileInputRef.current.value = "";
+      }
+      return;
+    }
+    
+    // Validate file size (max 10MB)
+    if (file.size > 10 * 1024 * 1024) {
+      toast.error("Image size should be less than 10MB");
+      if (fileInputRef.current) {
+        fileInputRef.current.value = "";
+      }
+      return;
+    }
+    
+    try {
+      setUploadingImage(true);
+      const uploadedUrl = await uploadProductImage(file, setUploadingImage);
+      
+      if (uploadedUrl) {
+        insertImage(uploadedUrl);
+        setShowImageModal(false);
+        setImageTab("url"); // Reset tab
+        toast.success("Image uploaded and inserted successfully");
+      } else {
+        toast.error("Failed to upload image. Please try again.");
+      }
+    } catch (error) {
+      console.error("Error uploading image:", error);
+      toast.error("Failed to upload image");
+    } finally {
+      setUploadingImage(false);
+      if (fileInputRef.current) {
+        fileInputRef.current.value = "";
+      }
+    }
+  };
+
   return (
     <div className={cn("space-y-2", className)}>
       <div className="flex items-center justify-between">
@@ -292,7 +459,6 @@ export function RichTextEditor({
       >
         {/* Formatting Toolbar */}
         <div className="flex flex-wrap items-center gap-1 p-2 border-b border-gray-100 dark:border-gray-800 bg-gray-50/80 dark:bg-gray-900/80 backdrop-blur-sm rounded-t-lg">
-          {/* Text Formatting */}
           <div className="flex items-center gap-1">
             <Button
               variant="ghost"
@@ -300,7 +466,7 @@ export function RichTextEditor({
               onClick={() => handleFormat("bold")}
               className="h-8 w-8 p-0 hover:bg-gray-200 dark:hover:bg-gray-700"
               type="button"
-              title="Bold (Ctrl+B)"
+              title="Bold"
             >
               <Bold className="h-4 w-4" />
             </Button>
@@ -310,7 +476,7 @@ export function RichTextEditor({
               onClick={() => handleFormat("italic")}
               className="h-8 w-8 p-0 hover:bg-gray-200 dark:hover:bg-gray-700"
               type="button"
-              title="Italic (Ctrl+I)"
+              title="Italic"
             >
               <Italic className="h-4 w-4" />
             </Button>
@@ -320,81 +486,12 @@ export function RichTextEditor({
               onClick={() => handleFormat("underline")}
               className="h-8 w-8 p-0 hover:bg-gray-200 dark:hover:bg-gray-700"
               type="button"
-              title="Underline (Ctrl+U)"
+              title="Underline"
             >
               <Underline className="h-4 w-4" />
             </Button>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={handleStrikethrough}
-              className="h-8 w-8 p-0 hover:bg-gray-200 dark:hover:bg-gray-700"
-              type="button"
-              title="Strikethrough"
-            >
-              <Strikethrough className="h-4 w-4" />
-            </Button>
           </div>
           <div className="h-6 w-px bg-gray-200 dark:bg-gray-700 mx-1" />
-          {/* Undo/Redo */}
-          <div className="flex items-center gap-1">
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={handleUndo}
-              className="h-8 w-8 p-0 hover:bg-gray-200 dark:hover:bg-gray-700"
-              type="button"
-              title="Undo (Ctrl+Z)"
-            >
-              <Undo className="h-4 w-4" />
-            </Button>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={handleRedo}
-              className="h-8 w-8 p-0 hover:bg-gray-200 dark:hover:bg-gray-700"
-              type="button"
-              title="Redo (Ctrl+Y)"
-            >
-              <Redo className="h-4 w-4" />
-            </Button>
-          </div>
-          <div className="h-6 w-px bg-gray-200 dark:bg-gray-700 mx-1" />
-          {/* Headings */}
-          <div className="flex items-center gap-1">
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => handleHeading(1)}
-              className="h-8 w-8 p-0 hover:bg-gray-200 dark:hover:bg-gray-700"
-              type="button"
-              title="Heading 1"
-            >
-              <Heading1 className="h-4 w-4" />
-            </Button>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => handleHeading(2)}
-              className="h-8 w-8 p-0 hover:bg-gray-200 dark:hover:bg-gray-700"
-              type="button"
-              title="Heading 2"
-            >
-              <Heading2 className="h-4 w-4" />
-            </Button>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => handleHeading(3)}
-              className="h-8 w-8 p-0 hover:bg-gray-200 dark:hover:bg-gray-700"
-              type="button"
-              title="Heading 3"
-            >
-              <Heading3 className="h-4 w-4" />
-            </Button>
-          </div>
-          <div className="h-6 w-px bg-gray-200 dark:bg-gray-700 mx-1" />
-          {/* Alignment */}
           <div className="flex items-center gap-1">
             <Button
               variant="ghost"
@@ -428,7 +525,6 @@ export function RichTextEditor({
             </Button>
           </div>
           <div className="h-6 w-px bg-gray-200 dark:bg-gray-700 mx-1" />
-          {/* Lists */}
           <div className="flex items-center gap-1">
             <Button
               variant="ghost"
@@ -452,79 +548,6 @@ export function RichTextEditor({
             </Button>
           </div>
           <div className="h-6 w-px bg-gray-200 dark:bg-gray-700 mx-1" />
-          {/* Colors */}
-          <div className="flex items-center gap-1 relative">
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => {
-                setShowColorPicker(!showColorPicker);
-                setShowBgColorPicker(false);
-              }}
-              className="h-8 w-8 p-0 hover:bg-gray-200 dark:hover:bg-gray-700"
-              type="button"
-              title="Text Color"
-            >
-              <Palette className="h-4 w-4" />
-            </Button>
-            {showColorPicker && (
-              <div className="absolute top-full left-0 mt-1 p-2 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-xl z-50">
-                <div className="grid grid-cols-6 gap-1">
-                  {[
-                    "#000000", "#333333", "#666666", "#999999", "#cccccc", "#ffffff",
-                    "#ff0000", "#ff6600", "#ffcc00", "#33cc00", "#0066ff", "#6600ff",
-                    "#ff0066", "#ff3399", "#ff99cc", "#cc99ff", "#9999ff", "#66ccff",
-                    "#ffcccc", "#ffcc99", "#ffff99", "#ccff99", "#99ccff", "#cc99ff",
-                  ].map((color) => (
-                    <button
-                      key={color}
-                      type="button"
-                      onClick={() => handleTextColor(color)}
-                      className="w-6 h-6 rounded border border-gray-300 dark:border-gray-600 hover:scale-125 transition-transform"
-                      style={{ backgroundColor: color }}
-                      title={color}
-                    />
-                  ))}
-                </div>
-              </div>
-            )}
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => {
-                setShowBgColorPicker(!showBgColorPicker);
-                setShowColorPicker(false);
-              }}
-              className="h-8 w-8 p-0 hover:bg-gray-200 dark:hover:bg-gray-700"
-              type="button"
-              title="Background Color"
-            >
-              <Highlighter className="h-4 w-4" />
-            </Button>
-            {showBgColorPicker && (
-              <div className="absolute top-full left-9 mt-1 p-2 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-xl z-50">
-                <div className="grid grid-cols-6 gap-1">
-                  {[
-                    "#ffffcc", "#ccffcc", "#ccffff", "#ccccff", "#ffccff", "#ffcccc",
-                    "#ffff99", "#ccff99", "#99ffff", "#9999ff", "#ff99ff", "#ff9999",
-                    "#ffff66", "#ccff66", "#66ffff", "#6666ff", "#ff66ff", "#ff6666",
-                    "#ffff00", "#ccff00", "#00ffff", "#0000ff", "#ff00ff", "#ff0000",
-                  ].map((color) => (
-                    <button
-                      key={color}
-                      type="button"
-                      onClick={() => handleBgColor(color)}
-                      className="w-6 h-6 rounded border border-gray-300 dark:border-gray-600 hover:scale-125 transition-transform"
-                      style={{ backgroundColor: color }}
-                      title={color}
-                    />
-                  ))}
-                </div>
-              </div>
-            )}
-          </div>
-          <div className="h-6 w-px bg-gray-200 dark:bg-gray-700 mx-1" />
-          {/* Special Formatting */}
           <div className="flex items-center gap-1">
             <Button
               variant="ghost"
@@ -542,32 +565,35 @@ export function RichTextEditor({
             <Button
               variant="ghost"
               size="sm"
-              onClick={handleBlockquote}
+              onClick={() => setShowImageModal(true)}
               className="h-8 w-8 p-0 hover:bg-gray-200 dark:hover:bg-gray-700"
               type="button"
-              title="Quote"
+              title="Insert Image"
             >
-              <Quote className="h-4 w-4" />
+              <ImageIcon className="h-4 w-4" />
             </Button>
+            {selectedImage && (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={removeSelectedImage}
+                className="h-8 w-8 p-0 hover:bg-red-100 dark:hover:bg-red-900/20 text-red-600 dark:text-red-400"
+                type="button"
+                title="Remove Selected Image"
+              >
+                <Trash2 className="h-4 w-4" />
+              </Button>
+            )}
             <Button
               variant="ghost"
               size="sm"
-              onClick={handleCode}
-              className="h-8 w-8 p-0 hover:bg-gray-200 dark:hover:bg-gray-700"
+              onClick={() => execCommand("formatBlock", "<h2>")}
+              className="h-8 px-2 text-xs hover:bg-gray-200 dark:hover:bg-gray-700"
               type="button"
-              title="Code Block"
+              title="Heading"
             >
-              <Code className="h-4 w-4" />
-            </Button>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={handleHorizontalRule}
-              className="h-8 w-8 p-0 hover:bg-gray-200 dark:hover:bg-gray-700"
-              type="button"
-              title="Horizontal Line"
-            >
-              <Minus className="h-4 w-4" />
+              <Type className="h-3 w-3 mr-1" />
+              Heading
             </Button>
           </div>
           <div className="ml-auto">
@@ -592,22 +618,63 @@ export function RichTextEditor({
             contentEditable
             onInput={handleInput}
             onFocus={() => setIsFocused(true)}
-            onBlur={() => setIsFocused(false)}
+            onBlur={() => {
+              setIsFocused(false);
+              // Clear image selection when clicking outside
+              setTimeout(() => {
+                const selection = window.getSelection();
+                if (selection && selection.rangeCount > 0) {
+                  const range = selection.getRangeAt(0);
+                  const node = range.commonAncestorContainer;
+                  if (node.nodeType !== Node.ELEMENT_NODE || !node.closest("img")) {
+                    setSelectedImage(null);
+                    document.querySelectorAll(".editor-image").forEach((el) => {
+                      el.style.outline = "none";
+                      el.style.boxShadow = "none";
+                    });
+                  }
+                } else {
+                  setSelectedImage(null);
+                  document.querySelectorAll(".editor-image").forEach((el) => {
+                    el.style.outline = "none";
+                    el.style.boxShadow = "none";
+                  });
+                }
+              }, 100);
+            }}
+            onClick={(e) => {
+              // Handle clicks on images
+              const target = e.target;
+              if (target.tagName === "IMG" && target.classList.contains("editor-image")) {
+                setSelectedImage(target);
+                document.querySelectorAll(".editor-image").forEach((el) => {
+                  el.style.outline = "none";
+                  el.style.boxShadow = "none";
+                });
+                target.style.outline = "2px solid #ef4444";
+                target.style.boxShadow = "0 0 0 4px rgba(239, 68, 68, 0.1)";
+              } else if (!target.closest("img")) {
+                // Clear selection if clicking elsewhere
+                setSelectedImage(null);
+                document.querySelectorAll(".editor-image").forEach((el) => {
+                  el.style.outline = "none";
+                  el.style.boxShadow = "none";
+                });
+              }
+            }}
             onBeforeInput={handleBeforeInput} // Add onBeforeInput for character limit
             onPaste={handlePaste} // Add onPaste for paste limit
             className={cn(
               "w-full min-h-[250px] px-4 py-3 text-sm dark:bg-slate-800  focus:outline-none overflow-auto prose prose-sm max-w-none",
               "[&_ul]:list-disc [&_ul]:ml-6 [&_ol]:list-decimal [&_ol]:ml-6",
               "[&_li]:mb-1 [&_li]:leading-relaxed",
-              "[&_h1]:text-2xl [&_h1]:font-bold [&_h1]:mb-3 [&_h1]:mt-4",
-              "[&_h2]:text-xl [&_h2]:font-bold [&_h2]:mb-2 [&_h2]:mt-3",
-              "[&_h3]:text-lg [&_h3]:font-semibold [&_h3]:mb-2 [&_h3]:mt-2",
+              "[&_h1]:text-xl [&_h1]:font-bold [&_h1]:mb-2",
+              "[&_h2]:text-lg [&_h2]:font-semibold [&_h2]:mb-2",
               "[&_a]:text-blue-600 [&_a]:underline hover:[&_a]:text-blue-800",
-              "[&_strong]:font-bold [&_em]:italic [&_u]:underline [&_s]:line-through",
-              "[&_blockquote]:border-l-4 [&_blockquote]:border-gray-300 [&_blockquote]:pl-4 [&_blockquote]:italic [&_blockquote]:my-2",
-              "[&_pre]:bg-gray-100 [&_pre]:dark:bg-gray-800 [&_pre]:p-3 [&_pre]:rounded [&_pre]:my-2 [&_pre]:overflow-x-auto",
-              "[&_code]:bg-gray-100 [&_code]:dark:bg-gray-800 [&_code]:px-1 [&_code]:py-0.5 [&_code]:rounded [&_code]:text-sm",
-              "[&_hr]:border-t [&_hr]:border-gray-300 [&_hr]:my-4",
+              "[&_strong]:font-bold [&_em]:italic [&_u]:underline",
+              "[&_img]:!max-w-full [&_img]:!w-auto [&_img]:!h-auto [&_img]:!block [&_img]:!my-2 [&_img]:!mx-auto [&_img]:!rounded-md [&_img]:!border [&_img]:!border-gray-200 [&_img]:!dark:border-gray-700 [&_img]:!transition-all [&_img]:!object-contain [&_img]:!opacity-100",
+              "[&_.image-container]:!block [&_.image-container]:!w-full [&_.image-container]:!my-2 [&_.image-container]:!relative",
+              "[&_img]:!visible",
               isExpanded ? "min-h-[calc(100vh-12rem)]" : "",
               "scrollbar-thin scrollbar-thumb-gray-300 dark:scrollbar-thumb-gray-600 scrollbar-track-transparent"
             )}
@@ -617,6 +684,12 @@ export function RichTextEditor({
             }}
             data-placeholder={placeholder}
             onKeyDown={(e) => {
+              // Handle Delete/Backspace key when image is selected
+              if ((e.key === "Delete" || e.key === "Backspace") && selectedImage) {
+                e.preventDefault();
+                removeSelectedImage();
+                return;
+              }
               // Handle Enter key in lists
               if (e.key === "Enter") {
                 const selection = window.getSelection();
@@ -745,15 +818,181 @@ export function RichTextEditor({
           onClick={toggleExpanded}
         />
       )}
-      {/* Click outside to close color pickers */}
-      {(showColorPicker || showBgColorPicker) && (
-        <div
-          className="fixed inset-0 z-30"
-          onClick={() => {
-            setShowColorPicker(false);
-            setShowBgColorPicker(false);
+      
+      {/* Image Insert Modal */}
+      {showImageModal && (
+        <div 
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm"
+          onClick={(e) => {
+            // Close modal only if clicking the backdrop, not the modal content
+            if (e.target === e.currentTarget) {
+              setShowImageModal(false);
+              setImageUrl("");
+              setImageTab("url");
+            }
           }}
-        />
+        >
+          <div 
+            className="bg-white dark:bg-gray-800 rounded-lg shadow-xl w-full max-w-md mx-4"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Modal Header */}
+            <div className="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700">
+              <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
+                Insert Image
+              </h3>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => {
+                  setShowImageModal(false);
+                  setImageUrl("");
+                  setImageTab("url");
+                }}
+                className="h-8 w-8 p-0"
+                type="button"
+              >
+                <X className="h-4 w-4" />
+              </Button>
+            </div>
+            
+            {/* Tabs */}
+            <div className="flex border-b border-gray-200 dark:border-gray-700">
+              <button
+                type="button"
+                onClick={() => setImageTab("url")}
+                className={cn(
+                  "flex-1 px-4 py-3 text-sm font-medium transition-colors",
+                  imageTab === "url"
+                    ? "text-red-600 border-b-2 border-red-600 dark:text-red-400 dark:border-red-400"
+                    : "text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-100"
+                )}
+              >
+                <div className="flex items-center justify-center gap-2">
+                  <LinkIcon className="h-4 w-4" />
+                  Image URL
+                </div>
+              </button>
+              <button
+                type="button"
+                onClick={() => setImageTab("upload")}
+                className={cn(
+                  "flex-1 px-4 py-3 text-sm font-medium transition-colors",
+                  imageTab === "upload"
+                    ? "text-red-600 border-b-2 border-red-600 dark:text-red-400 dark:border-red-400"
+                    : "text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-100"
+                )}
+              >
+                <div className="flex items-center justify-center gap-2">
+                  <Upload className="h-4 w-4" />
+                  Upload Image
+                </div>
+              </button>
+            </div>
+            
+            {/* Modal Content */}
+            <div className="p-4">
+              {imageTab === "url" ? (
+                <div className="space-y-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                      Image URL
+                    </label>
+                    <input
+                      type="url"
+                      value={imageUrl}
+                      onChange={(e) => setImageUrl(e.target.value)}
+                      placeholder="https://example.com/image.jpg"
+                      className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-red-500 dark:bg-gray-700 dark:text-gray-100"
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter") {
+                          handleImageUrlSubmit();
+                        }
+                      }}
+                    />
+                  </div>
+                  <div className="flex gap-2">
+                    <Button
+                      onClick={handleImageUrlSubmit}
+                      className="flex-1 bg-red-600 hover:bg-red-700 text-white"
+                      type="button"
+                    >
+                      Insert Image
+                    </Button>
+                    <Button
+                      onClick={() => {
+                        setShowImageModal(false);
+                        setImageUrl("");
+                      }}
+                      variant="outline"
+                      className="flex-1"
+                      type="button"
+                    >
+                      Cancel
+                    </Button>
+                  </div>
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                      Upload Image
+                    </label>
+                    <div className="border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg p-6 text-center">
+                      <input
+                        ref={fileInputRef}
+                        type="file"
+                        accept="image/*"
+                        onChange={handleImageUpload}
+                        className="hidden"
+                        id="image-upload"
+                        onClick={(e) => e.stopPropagation()}
+                      />
+                      <label
+                        htmlFor="image-upload"
+                        className="cursor-pointer flex flex-col items-center gap-2"
+                        onClick={(e) => e.stopPropagation()}
+                      >
+                        {uploadingImage ? (
+                          <>
+                            <Loader2 className="h-8 w-8 text-red-600 animate-spin" />
+                            <span className="text-sm text-gray-600 dark:text-gray-400">
+                              Uploading...
+                            </span>
+                          </>
+                        ) : (
+                          <>
+                            <Upload className="h-8 w-8 text-gray-400" />
+                            <span className="text-sm text-gray-600 dark:text-gray-400">
+                              Click to upload or drag and drop
+                            </span>
+                            <span className="text-xs text-gray-500 dark:text-gray-500">
+                              PNG, JPG, GIF up to 10MB
+                            </span>
+                          </>
+                        )}
+                      </label>
+                    </div>
+                  </div>
+                  <Button
+                    onClick={() => {
+                      setShowImageModal(false);
+                      if (fileInputRef.current) {
+                        fileInputRef.current.value = "";
+                      }
+                    }}
+                    variant="outline"
+                    className="w-full"
+                    type="button"
+                    disabled={uploadingImage}
+                  >
+                    Cancel
+                  </Button>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );
